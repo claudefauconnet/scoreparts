@@ -1,9 +1,8 @@
-
-
 var fs = require('fs');
 //var PDFImage = require("pdf-image").PDFImage;
-var Jimp = require("jimp");
-
+/*var JimpModule = require("jimp");
+var Jimp = JimpModule;
+*/
 var JimpProxy = null;
 
 var async = require('async');
@@ -26,7 +25,6 @@ var scoreSplitter = {
     pageHeight: 842,
     imageScaleCoef: 1.10,//agrandit chaque image
     imageBackOffset: -150,//retrait de l'image vers la gauche
-    leftMargin:50,
 
     listScores: function (callback) {
         var pdfs = [];
@@ -139,11 +137,11 @@ var scoreSplitter = {
     ,
 
 
-    cropImages: function (pdfName, zones, margin, scale, callbackWaterfall) {
+    cropImages: function (pdfName, zones, margin, scale, _callbackWaterfall) {
         ///  var zonesWithImages = []
         var pageNums = Object.keys(zones)
 
-        async.eachSeries(pageNums, function (pageNum, callbackEachPage) {
+           async.eachSeries( pageNums,function(pageNum,callbackEachPage){
             var pageZones = zones[pageNum]
             if (pageZones.length == 0) {
                 return callbackEachPage();
@@ -153,38 +151,41 @@ var scoreSplitter = {
             var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
             var imageFile = imageDir + path.sep + sourceImg;
 
-                async.eachSeries(pageZones, function (zone, callbackEachZone) {
-                        JimpProxy.crop(imageFile,
-                            Math.round(zone.x / scale),
-                            Math.round(zone.y / scale),
-                            Math.round(zone.width / scale),
-                            Math.round(zone.height / scale),
-                            function (err, zoneImg) {
-                           // JimpProxy.getImageColors(zoneImg)
-                                var w = zoneImg.bitmap.width
-                                var h = zoneImg.bitmap.height
-                                zone.bitmap = zoneImg.bitmap
-                                return callbackEachZone(err)
-                            })
-                    }
-                    , function (err) {
-                        return callbackEachPage(err)
-                    })
+         JimpProxy.getImage(imageFile,function(err,image) {
+                 var w = image.bitmap.width
+                 var h = image.bitmap.height
 
-        },function(err){
-            return callbackWaterfall(null,zones,scale)
-        })
+
+                 pageZones.forEach(function (zone) {
+
+                     var promise2 = JimpProxy.crop(zone.x / scale, zone.y / scale, zone.width / scale, zone.height / scale);
+                     promise2.then((zoneImg) => {
+                         var w = zoneImg.bitmap.width
+                         var h = zoneImg.bitmap.height
+                         zone.bitmap = zoneImg.bitmap
+                     })
+
+
+
+
+             })
+         })
+
+
+            })
+
+
 
     },
 
 
     setTargetPages: function (zonesWithImages, scale, callbackWaterfall) {
-        var initialYOffset = 20 / scale
-        var offsetX = 20 / scale
+        var initialYOffset = 20/scale
+        var offsetX =  20/scale
         var offsetY = initialYOffset;
-        var vertStep = 5 / scale;
+        var vertStep = 5/scale;
         var currentPage = [];
-        var maxPageYoffset = 800 / scale;
+        var maxPageYoffset = 800/scale ;
         var pageFull = false;
         var pages = [];
 
@@ -197,8 +198,9 @@ var scoreSplitter = {
 
 
                 currentPage.push(zone);
-
-                offsetY += (zone.bitmap.height) + (vertStep);
+                zone.yOnPage=offsetY
+                zone.xOnPage=zone.x/scale
+                offsetY += (zone.bitmap.height) + (vertStep );
                 if (offsetY + (zone.bitmap.height) > maxPageYoffset) {
                     pageFull = true;
                     pages.push(currentPage);
@@ -208,8 +210,6 @@ var scoreSplitter = {
                 } else {
                     pageFull = false;
                 }
-                zone.yOnPage = offsetY
-                zone.xOnPage = (zone.x+scoreSplitter.leftMargin) / scale
 
 
             })
@@ -231,22 +231,30 @@ var scoreSplitter = {
             targetImages.scale = scale;
             var w = Math.round((scoreSplitter.pageWidth - margin) / scale);
             var h = Math.round((scoreSplitter.pageHeight - margin) / scale);
+            var blanckImg = new Jimp(w, h, 0xFFFFFFFF, function (err, blanckImg) {
+                // this image is 256 x 256, every pixel is set to 0x00000000
 
-            JimpProxy.createImage(w, h, function (err, blanckImg) {
+                //     blanckImg.resize(blankWidth,blankHeight);
+
+
                 async.eachSeries(page, function (pageZone, callbackZones) {
                         try {
-                            JimpProxy.blitImage(blanckImg,pageZone.bitmap, pageZone.xOnPage, pageZone.yOnPage,function(err, image){
-                                blanckImg=image
-                                    callbackZones();
+                          /*  Jimp.read(pageZone.image, function (err, image) {
+                                if (err) {
+                                    console.log(err);
+                                    return callbackZones(err);
+                                }*/
 
-                            });
 
+                                //   console.log("blit"+ pageZone.x);
+                           var zoneImage= Jimp.fromBitmap(pageZone.bitmap)
+                                blanckImg.blit(zoneImage, pageZone.yOnPage, pageZone.yOnPage);
 
+                                callbackZones();
 
-                            // })
+                           // })
                         } catch (e) {
                             if (e) {
-
                                 return callbackZones(e)
                             }
                         }
@@ -258,11 +266,8 @@ var scoreSplitter = {
                         if (err) {
                             return callbackPages(err);
                         }
-                      //  JimpProxy.getImageColors(blanckImg)
 
-
-
-                       JimpProxy.getBuffer(blanckImg, function (err, imgBuffer) {
+                        blanckImg.getBuffer(Jimp.MIME_PNG, function (err, imgBuffer) {
                             targetImages.push(imgBuffer);
                             callbackPages();
                         });
@@ -329,30 +334,6 @@ var scoreSplitter = {
     }
     ,
 
-    findPageZones:function(pdfName, pageNum, callback){
-        import("../bin/jimpProxy.mjs").then((mod) => {
-            JimpProxy = mod;
-            var sourceImg = pdfName + "-" + pageNum + ".png";
-            var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-            var imageFile = imageDir + path.sep + sourceImg;
-            JimpProxy.getImage(imageFile, function (err, image) {
-                var colorsMap = JimpProxy.getImageColors(image)
-              /*  console.log("-------------------")
-                console.log(JSON.stringify(colorsMap))*/
-
-                var colors=Object.keys(colorsMap);
-                colors.sort()
-             var octalcolors=[]
-              colors.forEach(function(decimalStr){
-            console.log(decimalStr+"   "+parseInt(decimalStr).toString(8))
-              })
-
-            })
-        })
-
-
-    }
-
 
 }
 /*scoreSplitter.pdfToImages("12.3._Coro_Alcina_2_flûtes.pdf", function (err, result) {
@@ -371,19 +352,12 @@ var obj = {
 }
 
 
-if (false) {
+if (true) {
     scoreSplitter
         .generatePart(obj.pdfName, obj.part, obj.zonesStr, obj.margin, obj.imgScaleCoef, function (err, result) {
             var x = err;
         })
 }
-if (true) {
 
-
-        scoreSplitter.findPageZones(obj.pdfName, 1, function (err, result) {
-
-        })
-
-}
 
 

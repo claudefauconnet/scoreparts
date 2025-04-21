@@ -4,21 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="add conductor.js">
-      <change afterPath="$PROJECT_DIR$/bin/jimpProxy.mjs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bin/splitter2.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="integrate new version of Jimp">
+      <change afterPath="$PROJECT_DIR$/bin/scoreSplitter2..js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/jimpProxy.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/bin/jimpProxy.mjs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/scoreSplitter..js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/scoreSplitter..js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/old/imageSplitter.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/old/imageSplitter.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/old/scoreD3b.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/old/scoreD3b.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/scoreD3.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreD3.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -122,23 +112,24 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "true",
     "git-widget-placeholder": "2025-04-19",
-    "last_opened_file_path": "D:/projects/scoreparts/public",
+    "last_opened_file_path": "D:/projects/scoreparts/bin",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2024.1.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\projects\scoreparts\bin" />
       <recent name="D:\projects\scoreparts\public" />
       <recent name="D:\webstorm\scoreparts\public\js" />
       <recent name="D:\webstorm\scoreparts\data\pdf" />
       <recent name="D:\webstorm\scoreparts\bin" />
-      <recent name="D:\GitHub\scoreparts\public\data\images" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\GitHub\scoreparts\public\js\old" />
@@ -148,7 +139,7 @@
       <recent name="D:\GitHub\scoreparts\java" />
     </key>
   </component>
-  <component name="RunManager" selected="Node.js.jimpProxy.mjs">
+  <component name="RunManager" selected="Node.js.scoreSplitter..js">
     <configuration name="BezierTool.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://vps254642.ovh.net/public/paperjs/examples/Tools/BezierTool.html">
       <method v="2" />
     </configuration>
@@ -252,7 +243,7 @@
       <workItem from="1694423001256" duration="10478000" />
       <workItem from="1744898137570" duration="53534000" />
       <workItem from="1745162622359" duration="8769000" />
-      <workItem from="1745216516880" duration="318000" />
+      <workItem from="1745216516880" duration="21727000" />
     </task>
     <task id="LOCAL-00001" summary="add conductor.js">
       <created>1694363133077</created>
@@ -268,7 +259,15 @@
       <option name="project" value="LOCAL" />
       <updated>1694367784007</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="integrate new version of Jimp">
+      <option name="closed" value="true" />
+      <created>1745217341226</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1745217341226</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -288,7 +287,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="implements ScoreDraw with canvas instead of d3" />
     <MESSAGE value="add conductor.js" />
-    <option name="LAST_COMMIT_MESSAGE" value="add conductor.js" />
+    <MESSAGE value="integrate new version of Jimp" />
+    <option name="LAST_COMMIT_MESSAGE" value="integrate new version of Jimp" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -319,36 +319,6 @@
           <option name="timeStamp" value="316" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>287</line>
-          <option name="timeStamp" value="407" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>288</line>
-          <option name="timeStamp" value="408" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>295</line>
-          <option name="timeStamp" value="409" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>294</line>
-          <option name="timeStamp" value="410" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>167</line>
-          <option name="timeStamp" value="411" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>168</line>
-          <option name="timeStamp" value="413" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/bin/splitter2.js</url>
           <line>58</line>
           <option name="timeStamp" value="414" />
@@ -359,29 +329,22 @@
           <option name="timeStamp" value="415" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>166</line>
-          <option name="timeStamp" value="416" />
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter2..js</url>
+          <line>153</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="443" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/node_modules/zod/lib/index.mjs</url>
+          <line>662</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="451" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>165</line>
-          <option name="timeStamp" value="417" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>151</line>
-          <option name="timeStamp" value="418" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>15</line>
-          <option name="timeStamp" value="419" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>13</line>
-          <option name="timeStamp" value="420" />
+          <line>247</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="513" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
