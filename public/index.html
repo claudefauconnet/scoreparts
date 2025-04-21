@@ -21,14 +21,23 @@
     <script src="./js/jquery/jquery.printElement.js"></script>
 
     <script src="./js/d3/d3.js"></script>
-    <script src="./js/scoreD3.js" charset="UTF-8"></script><!--
-    <script src="./js/scoreDraw.js" charset="UTF-8"></script>-->
+    <script src="./js/scoreD3.js" charset="UTF-8"></script>
+    <script src="./js/scoreDraw.js" charset="UTF-8"></script>
     <script src="./js/scoreParts.js" charset="UTF-8"></script>
     <script src="./js/common.js" charset="UTF-8"></script>
-    <script src="./js/conductor.js" charset="UTF-8"></script>
+    <!--  <script src="./js/conductor.js" charset="UTF-8"></script>-->
 
 
     <script src="./js/async.js" charset="UTF-8"></script>
+
+
+    <script src="
+https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
+"></script>
+    <script src="./js/paper.js" charset="UTF-8"></script>
+
+
+
 
 
     <!--script src="js/devisuProxy.js" charset="UTF-8"></script
@@ -119,7 +128,7 @@
         var currentZoneInPage = 0;
         $(function () {
             scoreParts.listScores();
-            Conductor.loadInstruments()
+            //  Conductor.loadInstruments()
 
         });
 
@@ -168,106 +177,109 @@
         </td>
     </tr>
 </table>
+<div style="display: flex;flex-direction: row">
+
+    <div id="controlPanelDivxxx" style="width:400px;height:600px;visibility: visible">
+        <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
+        <div id="message"></div>
+        <table>
+            <tr>
+                <td>
+                    page<span id="page"></span>
 
 
-<div id="controlPanelDiv" style="visibility: hidden">
-    <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
-    <div id="message"></div>
-    <table>
-        <tr>
-            <td>
-                page<span id="page"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <button onclick="scoreParts.previousPage()">page précédente</button>
+                    <button onclick="scoreParts.nextPage()">page suivante</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    hauteur zone<input id="zoneHeight" value="55" size="3"> marge<input id="zoneMargin" value="15"
+                                                                                        size="3">
+                    <br>
+                    coef<input id="imgScaleCoef" value="1.1" size="3"> <br>
+                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: hidden"
+                            id="duplicateZonesButton">dupliquer les zones
+                    </button>
+                    <br>
+                    <!--      <button onclick="scoreParts.repeatZonesFromPreviousPart(this)" style="visibility: hidden"
+                                  id="duplicateZonesButton2">dupliquer les zones 2
+                          </button>-->
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                    &nbsp;&nbsp;
+                    <button onclick=scoreParts.startAllOver()>tout recommencer</button>
+                    <button onclick=scoreD3.deleteZonesInpage(currentPage)>effacer Page</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="buttonImportant" id="generatePartButton" style="visibility:visible"
+                            onclick="scoreParts.generateInstrumentScore()">Générer voix (pdf)
+
+                    </button>
+                </td>
+            </tr>
+            <tr>
+
+            </tr>
+            <tr>
+                <td colspan="3"></td>
+            </tr>
+        </table>
 
 
-            </td>
-        </tr>
+        <div>
 
-        <tr>
-            <td>
-                <button onclick="scoreParts.previousPage()">page précédente</button>
-                <button onclick="scoreParts.nextPage()">page suivante</button>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                hauteur zone<input id="zoneHeight" value="55" size="3"> marge<input id="zoneMargin" value="15" size="3">
-                <br>
-                coef<input id="imgScaleCoef" value="1.1" size="3"> <br>
-                <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: hidden"
-                        id="duplicateZonesButton">dupliquer les zones
-                </button>
-                <br>
-                <!--      <button onclick="scoreParts.repeatZonesFromPreviousPart(this)" style="visibility: hidden"
-                              id="duplicateZonesButton2">dupliquer les zones 2
-                      </button>-->
-
-            </td>
-        </tr>
-        <tr>
-            <td>
-
-                &nbsp;&nbsp;
-                <button onclick=scoreParts.startAllOver()>tout recommencer</button>
-                <button onclick=scoreD3.deleteZonesInpage(currentPage)>effacer Page</button>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <button class="buttonImportant" id="generatePartButton" style="visibility:hidden"
-                        onclick="scoreParts.generateInstrumentScore()">Générer voix (pdf)
-
-                </button>
-            </td>
-        </tr>
-        <tr>
-
-        </tr>
-        <tr>
-            <td colspan="3"></td>
-        </tr>
-    </table>
+            Conducteur
+            Instrument <select id="instrumentSelect" onchange=Conductor.registerInstrument()></select>
+            <br>
+            <button onclick="Conductor.registerAllInstruments()">register allInstruments</button>
+            <br>
+            <button onclick="Conductor.saveConductorPartsPositions()">Save positions</button>
+            <button onclick="Conductor.loadConductorPartsPositions()">Load positions</button>
+            <button onclick="Conductor.clearConductorPartsPositions()">Clear positions</button>
 
 
-    <div>
+            <br>
+            <button onclick="Conductor.moveAllZones('up')">up</button>
+            <button onclick="Conductor.moveAllZones('down')">down</button>
+            <button onclick="Conductor.moveAllZones('left')"><-</button>
+            <button onclick="Conductor.moveAllZones('right')">-></button>
 
-        Conducteur
-        Instrument <select id="instrumentSelect" onchange=Conductor.registerInstrument()></select>
-        <br>
-        <button onclick="Conductor.registerAllInstruments()">register allInstruments</button>
-        <br>
-        <button onclick="Conductor.saveConductorPartsPositions()">Save positions</button>
-        <button onclick="Conductor.loadConductorPartsPositions()">Load positions</button>
-        <button onclick="Conductor.clearConductorPartsPositions()">Clear positions</button>
+            <br>
+            <button onclick="Conductor.registerPagePositions('up')">registerPagePositions</button>
+            <button onclick="Conductor.savePagesPositions('up')">savePagesPositions</button>
+            <button onclick="Conductor.clearPagePositions('up')">clearPagesPositions</button>
+            <br>
+
+            <button onclick="Conductor.generateConductorParts('up')">generateConductorParts</button>
 
 
-        <br>
-        <button onclick="Conductor.moveAllZones('up')">up</button>
-        <button onclick="Conductor.moveAllZones('down')">down</button>
-        <button onclick="Conductor.moveAllZones('left')"><-</button>
-        <button onclick="Conductor.moveAllZones('right')">-></button>
-
-        <br>
-        <button onclick="Conductor.registerPagePositions('up')">registerPagePositions</button>
-        <button onclick="Conductor.savePagesPositions('up')">savePagesPositions</button>
-        <button onclick="Conductor.clearPagePositions('up')">clearPagesPositions</button>
-<br>
-
-        <button onclick="Conductor.generateConductorParts('up')">generateConductorParts</button>
-
+        </div>
 
     </div>
 
-</div>
 
 
-<div id="imageSplitterDiv">
-    <img id="myImg" style="position:relative;top:0;left:0"/>
+<div id="imageSplitterDivXX" style="width:400px;visibility: visible">
     <canvas id="myCanvas" style="position:relative;top:0;left:0">
 
 
     </canvas>
 
 </div>
-<div id="resultDiv"></div>
+<!-- <div id="resultDiv"></div>-->
+
+</div>
 
 </body>

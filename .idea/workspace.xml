@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="add conductor.js">
-      <change afterPath="$PROJECT_DIR$/public/js/async.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/jimpProxy.mjs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/splitter2.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/test.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/scoreSplitter..js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/scoreSplitter..js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/common.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/common.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/conductor.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/conductor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/old/imageSplitter.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/old/imageSplitter.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/old/scoreD3b.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/old/scoreD3b.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/scoreD3.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreD3.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +30,8 @@
       <list>
         <option value="package_json" />
         <option value="JS module" />
-        <option value="HTML File" />
         <option value="package.json" />
+        <option value="HTML File" />
         <option value="JavaScript File" />
       </list>
     </option>
@@ -70,11 +81,31 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="3.0.1" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;claudefauconnet&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/claudefauconnet/scoreparts&quot;,
+    &quot;accountId&quot;: &quot;95bab1c7-0180-4c55-bbe6-72cc7837f5aa&quot;
+  }
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="1SI1znYKhPY5XIctvsRwxgIVfYn" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -83,18 +114,31 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.BezierTool.html.executor": "Debug",
+    "Node.js.bin\\www.executor": "Debug",
+    "Node.js.jimpProxy.mjs.executor": "Debug",
+    "Node.js.scoreSplitter..js.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "true",
-    "last_opened_file_path": "D:/webstorm/scoreparts/public/js",
+    "git-widget-placeholder": "2025-04-19",
+    "last_opened_file_path": "D:/projects/scoreparts/public",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\projects\scoreparts\public" />
       <recent name="D:\webstorm\scoreparts\public\js" />
       <recent name="D:\webstorm\scoreparts\data\pdf" />
       <recent name="D:\webstorm\scoreparts\bin" />
       <recent name="D:\GitHub\scoreparts\public\data\images" />
-      <recent name="D:\GitHub\scoreparts\bin" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\GitHub\scoreparts\public\js\old" />
@@ -104,14 +148,17 @@
       <recent name="D:\GitHub\scoreparts\java" />
     </key>
   </component>
-  <component name="RunManager" selected="Node.js.bin\www">
+  <component name="RunManager" selected="Node.js.jimpProxy.mjs">
+    <configuration name="BezierTool.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://vps254642.ovh.net/public/paperjs/examples/Tools/BezierTool.html">
+      <method v="2" />
+    </configuration>
+    <configuration name="jimpProxy.mjs" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/jimpProxy.mjs" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
     <configuration name="pdfSplitter2..js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/pdfSplitter2..js" working-dir="$PROJECT_DIR$/bin">
       <method v="2" />
     </configuration>
     <configuration name="pdfToHtml.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/pdfToHtml.js" working-dir="$PROJECT_DIR$/bin">
-      <method v="2" />
-    </configuration>
-    <configuration name="resizeImg..js" type="NodeJSConfigurationType" temporary="true" path-to-js-file="resizeImg..js" working-dir="$PROJECT_DIR$/bin">
       <method v="2" />
     </configuration>
     <configuration name="scoreSplitter..js" type="NodeJSConfigurationType" path-to-js-file="scoreSplitter..js" working-dir="$PROJECT_DIR$/bin">
@@ -121,21 +168,30 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="JavaScript Debug.BezierTool.html" />
       <item itemvalue="Node.js.bin\www" />
       <item itemvalue="Node.js.scoreSplitter..js" />
+      <item itemvalue="Node.js.jimpProxy.mjs" />
       <item itemvalue="Node.js.splitPDF..js" />
-      <item itemvalue="Node.js.resizeImg..js" />
       <item itemvalue="Node.js.pdfSplitter2..js" />
       <item itemvalue="Node.js.pdfToHtml.js" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Node.js.jimpProxy.mjs" />
+        <item itemvalue="JavaScript Debug.BezierTool.html" />
         <item itemvalue="Node.js.splitPDF..js" />
         <item itemvalue="Node.js.pdfToHtml.js" />
         <item itemvalue="Node.js.pdfSplitter2..js" />
-        <item itemvalue="Node.js.resizeImg..js" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-WS-241.18034.50" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
@@ -194,6 +250,9 @@
       <workItem from="1694345081419" duration="3414000" />
       <workItem from="1694356796217" duration="7622000" />
       <workItem from="1694423001256" duration="10478000" />
+      <workItem from="1744898137570" duration="53534000" />
+      <workItem from="1745162622359" duration="8769000" />
+      <workItem from="1745216516880" duration="318000" />
     </task>
     <task id="LOCAL-00001" summary="add conductor.js">
       <created>1694363133077</created>
@@ -252,8 +311,77 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/conductor.js</url>
           <line>158</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="309" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/scoreParts.js</url>
+          <line>172</line>
+          <option name="timeStamp" value="316" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>287</line>
+          <option name="timeStamp" value="407" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>288</line>
+          <option name="timeStamp" value="408" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>295</line>
+          <option name="timeStamp" value="409" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>294</line>
+          <option name="timeStamp" value="410" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>167</line>
+          <option name="timeStamp" value="411" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>168</line>
+          <option name="timeStamp" value="413" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/splitter2.js</url>
+          <line>58</line>
+          <option name="timeStamp" value="414" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/splitter2.js</url>
+          <line>57</line>
+          <option name="timeStamp" value="415" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>166</line>
+          <option name="timeStamp" value="416" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>165</line>
+          <option name="timeStamp" value="417" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>151</line>
+          <option name="timeStamp" value="418" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>15</line>
+          <option name="timeStamp" value="419" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
+          <line>13</line>
+          <option name="timeStamp" value="420" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

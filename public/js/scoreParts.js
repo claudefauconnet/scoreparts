@@ -1,6 +1,6 @@
 var scoreParts = (function () {
     var self = {};
-
+self.zones={}
 
     var imagesDir = "./data/images/";
 
@@ -46,10 +46,12 @@ var scoreParts = (function () {
         // ScoreDraw.drawImage(name2);
         ///  return
         scoreD3.deleteAllZones();
-        scoreD3.drawImage(name2);
+      //  scoreD3.drawImage(name2);
+        Paper.drawImage(name2)
+        self.zones= {}
         self.currentPage = 0;
         $("#page").html(" " + (self.currentPage + 1));
-        $('#controlPanelDiv').css('visibility', 'visible');
+      //  $('#controlPanelDiv').css('visibility', 'visible');
         if (!message)
             message = "";
         message += "<ul> <li>pour créer une zone de découpage : clic sur le milieu d'une portée</li>";
@@ -63,16 +65,19 @@ var scoreParts = (function () {
     }
 
     self.updateImage = function (link) {
-        scoreD3.clearAllZonesRect();
+
+        Paper.drawImage(link)
+     /*   scoreD3.clearAllZonesRect();
         self.drawRectsForPage(self.currentPage);
         d3.select("svg").selectAll(".clipZone").remove();
         d3.selectAll(".img").attr("xlink:href", function (d) {
             return link;
-        });
+        });*/
     }
 
 
     self.nextPage = function () {
+        Paper.createPagesZones()
         self.currentPage += 1;
         currentZoneInPage = 0;
         var name = $('#scoresSelect').val() + "-" + (self.currentPage);
@@ -97,7 +102,7 @@ var scoreParts = (function () {
     }
 
     self.uploadFormData = function () {
-        $('#controlPanelDiv').css('visibility', 'hidden');
+      //  $('#controlPanelDiv').css('visibility', 'hidden');
         // $("#pdfFile").value="";
         var form = $("#uploadForm")[0]
         var formData = new FormData(form);
@@ -163,10 +168,9 @@ var scoreParts = (function () {
     }
 
     self.generateInstrumentScore = function (part, orderedZones, callback) {
+
+        Paper.createPagesZones()
         if (!part) {
-            if (Object.keys(scoreD3.pagesZoneData).length == 0) {
-                return alert("Il faut decouper les zones avant de générer la partie");
-            }
 
             part = prompt("nom de la partie");
         }
@@ -177,19 +181,18 @@ var scoreParts = (function () {
         var pdfName = $('#scoresSelect').val();
 
 
-        if (!orderedZones)
-            orderedZones = self.getOrderedZones();
+      /*  if (!orderedZones)
+            orderedZones = self.getOrderedZones();*/
 
         var margin = parseInt($("#zoneMargin").val());
-        var zonesStr = JSON.stringify(orderedZones);
-        var imgScaleCoef = $("#imgScaleCoef").val()
+        var zonesStr = JSON.stringify(self.zones);
         var payload = {
             generatePart: 1,
             part: part,
             margin: margin,
             pdfName: pdfName,
             zonesStr: zonesStr,
-            imgScaleCoef: imgScaleCoef,
+            imgScaleCoef: scoreParts.coef,
         }
 
         $("#waitImg").css("visibility", "visible");
@@ -224,48 +227,7 @@ var scoreParts = (function () {
     }
 
 
-    /***
-     *
-     * rearrange zoneIndex in each zone according to y
-     *
-     */
-    self.getOrderedZones = function () {
-        var pdfName = $('#scoresSelect').val();
-        var orderedZones = [];
-        for (var key in scoreD3.pagesZoneData) {
-            var zone = scoreD3.pagesZoneData[key];
-            orderedZones.push({yIndex: ((zone.page * 1000) + zone.y), zone: zone})
 
-        }
-        orderedZones.sort(function (a, b) {
-            if (a.yIndex > b.yIndex)
-                return 1;
-            if (a.yIndex < b.yIndex)
-                return -1;
-            return 0;
-
-        });
-        self.currentPage = "";
-        var zoneIndex = 0;
-        var orderedZones2 = []
-        for (var i = 0; i < orderedZones.length; i++) {
-            var page = orderedZones[i].zone.page;
-            if (page != self.currentPage) {
-                self.currentPage = page;
-                zoneIndex = 0
-            } else
-                zoneIndex += 1;
-            var zone = orderedZones[i].zone;
-            zone.zoneIndex = zoneIndex;
-            zone.pdfName = pdfName
-            orderedZones2.push(zone)
-
-
-        }
-        return orderedZones2;
-
-
-    }
 
 
     self.repeatZonesFromPreviousPage = function (button) {// from previous page
@@ -324,7 +286,7 @@ var scoreParts = (function () {
             scoreD3.drawZoneRect(zones);
     }
     self.startAllOver = function () {
-        scoreD3.deleteAllZones();
+        if(confirm("recommencer tout ?"))
         self.openFirstPdfPage();
     }
 

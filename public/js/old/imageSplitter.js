@@ -108,7 +108,7 @@ function drawImage(name) {
 		d3.select(".dragRect").attr("width", x - mouseClip.x1).attr("height", y - mouseClip.y1);
 	}).on("dragend", function(d) {
 
-		var label = "p" + currentPage + "z" + currentZoneInPage;
+		var label = "p" + scoreParts.currentPage + "z" + currentZoneInPage;
 		if (label && label.length > 0) {
 
 			drawZoneRect(mouseClip, "Z", label);
@@ -121,7 +121,7 @@ function drawImage(name) {
 	});
 
 	d3.selectAll(".img").call(drag);
-	if (currentPage == 1)
+	if (scoreParts.currentPage == 1)
 		canDrawRect = true;
 
 	// **************************DragRect************************
@@ -159,7 +159,7 @@ function drawZoneRect(clipRect, type, label) {
 		width : clipRect.x2 - clipRect.x1,
 		height : clipRect.y2 - clipRect.y1
 	} ];
-	pagesZoneData["p" + currentPage + "z" + currentZoneInPage] = zoneData[0];
+	pagesZoneData["p" + scoreParts.currentPage + "z" + currentZoneInPage] = zoneData[0];
 	currentZoneInPage++;
 	aDiv = svgSplitter.selectAll().data(zoneData).enter().append("svg:g").on("click", click).attr("class", "clipZone")
 	// .attr("class", label)
@@ -321,34 +321,34 @@ function openFile() {
 		return;
 	var name2=name+"1";
 	drawImage(name2);
-	currentPage = 1;
-	$("#page").html("" + currentPage);
+	scoreParts.currentPage = 1;
+	$("#page").html("" + scoreParts.currentPage);
 	$('#scrappingCommandsDiv').css('visibility', 'visible');
 
 }
 function nextPage() {
-	currentPage += 1;
+	scoreParts.currentPage += 1;
 	currentZoneInPage = 0;
 	if (false) {
-		if (!pagesZoneData["p" + currentPage + "z" + currentZoneInPage]) {
-			pagesZoneData["p" + currentPage + "z" + currentZoneInPage] = jQuery.extend({}, zoneData[0]);
+		if (!pagesZoneData["p" + scoreParts.currentPage + "z" + currentZoneInPage]) {
+			pagesZoneData["p" + scoreParts.currentPage + "z" + currentZoneInPage] = jQuery.extend({}, zoneData[0]);
 		}
 	}
 
-	var name = $('#fileName').val() + (currentPage);
+	var name = $('#fileName').val() + (scoreParts.currentPage);
 	// drawImage(name);
 	updateImage("data/" + name + ".jpg");
 	// drawZoneRect(mouseClip, "Z", name);
-	$("#page").html("" + currentPage);
+	$("#page").html("" + scoreParts.currentPage);
 
 }
 function previousPage() {
-	currentPage -= 1;
-	var name = $('#fileName').val() + (currentPage);
+	scoreParts.currentPage -= 1;
+	var name = $('#fileName').val() + (scoreParts.currentPage);
 	// drawImage(name);
 	updateImage("data/" + name + ".jpg");
 	// drawZoneRect(mouseClip, "Z", name);
-	$("#page").html("" + currentPage);
+	$("#page").html("" + scoreParts.currentPage);
 
 }
 
@@ -366,7 +366,7 @@ function generateInstrumentScore() {
 			globalHeight : globalHeight,
 			label : label,
 			fileName : fileName,
-			startPage : currentPage
+			startPage : scoreParts.currentPage
 		}
 
 		for (key in pagesZoneData) {
@@ -411,6 +411,6 @@ function hideResultDiv() {
 function clearZones() {
 	d3.select("svg").selectAll(".clipZone").remove();
 	pagesZoneData = {};
-	currentPage = 1;
+	scoreParts.currentPage = 1;
 	currentZoneInPage = 0;
 }

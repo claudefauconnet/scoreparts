@@ -82,7 +82,7 @@ scoreD3 = (function () {
                     return;
 
 
-                var label = "p" + currentPage + "z" + currentZoneInPage;
+                var label = "p" + scoreParts.currentPage + "z" + currentZoneInPage;
 
 
                 var h = parseInt($("#zoneHeight").val());
@@ -102,7 +102,7 @@ scoreD3 = (function () {
             d3.selectAll(".img").call(drag);
 
 
-            if (currentPage == 1)
+            if (scoreParts.currentPage == 1)
                 canDrawRect = true;
 
             // **************************DragRect************************
@@ -139,7 +139,7 @@ scoreD3 = (function () {
                 y: clipRect.y1,
                 width: imageWidth - (2 * zoneMargin),
                 height: zoneHeight,
-                page: currentPage,
+                page: scoreParts.currentPage,
                 zoneIndex: currentZoneInPage
             }];
             self.pagesZoneData[id] = zone[0];
@@ -273,13 +273,7 @@ scoreD3 = (function () {
         }
 
         self.deleteZonesInpage = function (page) {
-
-            d3.selectAll(".zone").each(function (d, i) {
-                if (d.page == page) {
-                    d3.select(this).remove()
-                    delete self.pagesZoneData[d.divId];
-                }
-            })
+         delete self.zones[page]
 
         }
         self.clearAllZonesRect = function (page) {

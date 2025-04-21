@@ -37,7 +37,7 @@ scoreD3 = (function () {
        function  clickImg() {
            var x = d3.event.offsetX;
            var y = d3.event.offsetY;
-           var label = "p" + currentPage + "z" + currentZoneInPage;
+           var label = "p" + scoreParts.currentPage + "z" + currentZoneInPage;
 
 
            if (label && label.length > 0) {
@@ -117,7 +117,7 @@ scoreD3 = (function () {
             width: clipRect.x2 - clipRect.x1,
             height: clipRect.y2 - clipRect.y1
         }];
-        self.pagesZoneData["p" + currentPage + "z" + currentZoneInPage] = zoneData[0];
+        self.pagesZoneData["p" + scoreParts.currentPage + "z" + currentZoneInPage] = zoneData[0];
         currentZoneInPage++;
         aDiv = svgSplitter.selectAll().data(zoneData).enter().append("svg:g").on("click", click).attr("class", "clipZone")
             .attr("id", function (d) {
