@@ -67,17 +67,12 @@ self.zones={}
     self.updateImage = function (link) {
 
         Paper.drawImage(link)
-     /*   scoreD3.clearAllZonesRect();
-        self.drawRectsForPage(self.currentPage);
-        d3.select("svg").selectAll(".clipZone").remove();
-        d3.selectAll(".img").attr("xlink:href", function (d) {
-            return link;
-        });*/
+
     }
 
 
     self.nextPage = function () {
-        Paper.createPagesZones()
+        Paper.getPageZones()
         self.currentPage += 1;
         currentZoneInPage = 0;
         var name = $('#scoresSelect').val() + "-" + (self.currentPage);
@@ -168,8 +163,10 @@ self.zones={}
     }
 
     self.generateInstrumentScore = function (part, orderedZones, callback) {
-
-        Paper.createPagesZones()
+        var page = scoreParts.currentPage
+       var  zones= Paper.getPageZones()
+        self.currentZones=zones
+        scoreParts.zones[page]=zones
         if (!part) {
 
             part = prompt("nom de la partie");
@@ -186,6 +183,7 @@ self.zones={}
 
         var margin = parseInt($("#zoneMargin").val());
         var zonesStr = JSON.stringify(self.zones);
+        self.currentZones=self.zones
         var payload = {
             generatePart: 1,
             part: part,
@@ -226,6 +224,44 @@ self.zones={}
 
     }
 
+self.autoDetectPageZones=function(callback){
+    var pdfName = $('#scoresSelect').val();
+    var payload = {
+        findPageZones: 1,
+        pdfName: pdfName,
+        pageNum:self.currentPage
+
+    }
+
+    $("#waitImg").css("visibility", "visible");
+    $.ajax({
+        type: "POST",
+        url: "./score",
+        data: payload,
+        dataType: "json",
+        success: function (data, textStatus, jqXHR) {
+            if(callback){
+                return callback(null,data)
+            }
+        var zoneHeight=parseInt($("#zoneHeight").val())
+            Paper.drawZonesFromY(data,zoneHeight)
+
+        },
+        error: function (err) {
+            $("#waitImg").css("visibility", "hidden");
+            self.setMessage(err, "red")
+
+        }
+    });
+
+
+}
+
+
+self.registerZoneVoices=function(){
+   self.currentZones= Paper.getPageZones()
+
+}
 
 
 
@@ -233,58 +269,21 @@ self.zones={}
     self.repeatZonesFromPreviousPage = function (button) {// from previous page
 
 
-        var newZones = [];
-        for (var key in scoreD3.pagesZoneData) {
-
-            var zone = scoreD3.pagesZoneData[key];
-            if (zone.page == self.currentPage - 1) {
-                var newZone = jQuery.extend(true, {}, zone);//clone
-                var zoneId = "p" + (zone.page + 1) + "z" + zone.zoneIndex;
-                newZone.label = zoneId;
-                newZone.divId = zoneId;
-                newZone.page = self.currentPage;
-                newZones.push(newZone);
-
-            }
-        }
-        for (var i = 0; i < newZones.length; i++) {
-            scoreD3.pagesZoneData[newZones[i].divId] = newZones[i];
-
-        }
-        scoreD3.drawZoneRect(newZones);
-        $(button).css("visibility", "hidden");
+        self.autoDetectPageZones(function(err, yArray) {
+          var newZones=[]
+            self.currentZones.forEach(function(zone,index){
+                if(index<yArray.length) {
+                    zone.y = yArray[index] * scoreParts.coef
+                    newZones.push(zone)
+                }
+            })
+            Paper.drawZones( newZones)
 
 
+        })
     }
-    self.repeatZonesFromPreviousPart = function (button) {
 
 
-        var zones = [];
-        for (var key in scoreD3.pagesZoneData) {
-
-            var zone = scoreD3.pagesZoneData[key];
-            if (zone.page == self.currentPage) {
-                zones.push(zone);
-
-            }
-        }
-
-        scoreD3.drawZoneRect(zones);
-        $(button).css("visibility", "hidden");
-    }
-    self.drawRectsForPage = function (page) {
-        var zones = [];
-        for (var key in scoreD3.pagesZoneData) {
-
-            var zone = scoreD3.pagesZoneData[key];
-            if (zone.page == page) {
-                zones.push(zone);
-
-            }
-        }
-        if (zones.length > 0)
-            scoreD3.drawZoneRect(zones);
-    }
     self.startAllOver = function () {
         if(confirm("recommencer tout ?"))
         self.openFirstPdfPage();
@@ -302,16 +301,6 @@ self.zones={}
 
     }
 
-    self.getPageNextZoneIndex = function (page) {
-        for (var key in self.pagesZoneData) {
-            var index = 0;
-            if (self.pagesZoneData[key].page == page)
-                index = Math.max(index, self.pagesZoneData[key].zoneIndex)
-
-
-        }
-        return index;
-    }
 
     self.getInfos = function () {
 

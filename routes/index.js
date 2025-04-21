@@ -52,6 +52,13 @@ router.post('/score', function (req, response, next) {
 
 
     }
+    if (req.body && req.body.findPageZones) {
+        scoreSplitter.findPageZones(req.body.pdfName, req.body.pageNum,function (error, result) {
+            processResponse(response, error, result)
+        })
+
+
+    }
 
 
 });

@@ -199,17 +199,19 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
             </tr>
             <tr>
                 <td>
-                    hauteur zone<input id="zoneHeight" value="55" size="3"> marge<input id="zoneMargin" value="15"
-                                                                                        size="3">
+                    hauteur zone<input id="zoneHeight" value="55" size="3">
+
                     <br>
-                    coef<input id="imgScaleCoef" value="1.1" size="3"> <br>
-                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: hidden"
-                            id="duplicateZonesButton">dupliquer les zones
+                        <button onclick="scoreParts.autoDetectPageZones()" style="visibility: visible"
+                                  id="duplicateZonesButton2">autoDetect Zones
+                          </button>
+                    <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
+                            id="duplicateZonesButton">enregister Zones
                     </button>
-                    <br>
-                    <!--      <button onclick="scoreParts.repeatZonesFromPreviousPart(this)" style="visibility: hidden"
-                                  id="duplicateZonesButton2">dupliquer les zones 2
-                          </button>-->
+                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">répéter Zones
+                    </button>
+
+
 
                 </td>
             </tr>
@@ -238,34 +240,7 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
         </table>
 
 
-        <div>
 
-            Conducteur
-            Instrument <select id="instrumentSelect" onchange=Conductor.registerInstrument()></select>
-            <br>
-            <button onclick="Conductor.registerAllInstruments()">register allInstruments</button>
-            <br>
-            <button onclick="Conductor.saveConductorPartsPositions()">Save positions</button>
-            <button onclick="Conductor.loadConductorPartsPositions()">Load positions</button>
-            <button onclick="Conductor.clearConductorPartsPositions()">Clear positions</button>
-
-
-            <br>
-            <button onclick="Conductor.moveAllZones('up')">up</button>
-            <button onclick="Conductor.moveAllZones('down')">down</button>
-            <button onclick="Conductor.moveAllZones('left')"><-</button>
-            <button onclick="Conductor.moveAllZones('right')">-></button>
-
-            <br>
-            <button onclick="Conductor.registerPagePositions('up')">registerPagePositions</button>
-            <button onclick="Conductor.savePagesPositions('up')">savePagesPositions</button>
-            <button onclick="Conductor.clearPagePositions('up')">clearPagesPositions</button>
-            <br>
-
-            <button onclick="Conductor.generateConductorParts('up')">generateConductorParts</button>
-
-
-        </div>
 
     </div>
 

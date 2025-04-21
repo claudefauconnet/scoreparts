@@ -7,7 +7,7 @@ var Paper = (function () {
         self.imgLoaded = false;
         var currentZone = null;
 
-        var zoneHeight = 50;
+      //  var zoneHeight = 50;
         var imageWidth = 595;
         var imageHeight = 842;
         var zoneDragMode;
@@ -28,6 +28,7 @@ var Paper = (function () {
             Paper.imgLoaded = false;
             $("#waitImg").css("visibility", "visible");
             $("#generatePartButton").css("visibility", "hidden");
+            var zoneHeight=parseInt($("#zoneHeight").val())
 
 
             var canvas = document.getElementById('myCanvas');
@@ -108,6 +109,7 @@ var Paper = (function () {
             }
 
             self.dragPath = function (event) {
+                var item=event.target
                 if (self.isClicking) {
                     return;
                 }
@@ -121,12 +123,12 @@ var Paper = (function () {
                         elem.scale(scaleX, scaleY);
                     }
 
-                    var newHeight = self.currentPath.bounds.height + event.delta.y;
-                    resizeDimensions(self.currentPath, self.currentPath.bounds.width, newHeight)
+                    var newHeight =item.bounds.height + event.delta.y;
+                    resizeDimensions(item, self.currentPath.bounds.width, newHeight)
 
 
                 } else {
-                    self.currentPath.position.y += event.delta.y;
+                    item.position.y += event.delta.y;
                 }
 
             }
@@ -139,8 +141,7 @@ var Paper = (function () {
 
         }
 
-        self.createPagesZones = function () {
-            var page = scoreParts.currentPage
+        self.getPageZones = function () {
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             var zones = []
@@ -157,11 +158,55 @@ var Paper = (function () {
                 }
             })
 
-            scoreParts.zones[page] = zones
+         return zones
 
         }
 
-        self
+        self.drawZonesFromY = function (zones,zoneHeight) {
+
+
+
+            zones.forEach(function (zoneY) {
+                zoneY-=10
+                var w = $("#myCanvas").width()
+                var h = (zoneHeight / 2)
+                var rectangle = new paper.Rectangle(
+                    new paper.Point(10, zoneY*scoreParts.coef),
+                    new paper.Point(w, (zoneY*scoreParts.coef) + h)
+                );
+
+                var path = new paper.Path.Rectangle(rectangle);
+                path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
+                path.selected = true;
+                self.currentPath = path
+                path.onMouseDrag = self.dragPath
+                //  path.onMouseDown = self.clickPath
+                path.data.page = scoreParts.currentPage
+                path.data.type = "zone"
+            })
+        }
+
+        self.drawZones = function (zones,zoneHeight) {
+
+            zones.forEach(function (zone) {
+                zone.y-=10
+
+                var rectangle = new paper.Rectangle(
+                    new paper.Point(zone.x, zone.y),
+                    new paper.Point(zone.width,  zone.y+zone.height)
+                );
+
+                var path = new paper.Path.Rectangle(rectangle);
+                path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
+                path.selected = true;
+                self.currentPath = path
+                path.onMouseDrag = self.dragPath
+                //  path.onMouseDown = self.clickPath
+                path.data.page = scoreParts.currentPage
+                path.data.type = "zone"
+            })
+        }
+
 
 
         return self;

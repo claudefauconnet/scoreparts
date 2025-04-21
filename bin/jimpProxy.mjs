@@ -48,6 +48,8 @@ async function _crop(imageFile,x,y,w,h){
 export  function getImage(imageFile,callback){
     var promise=_getImage(imageFile)
     promise.then((image) => {
+       image= image.greyscale();
+        image= image.contrast(1);
         return callback(null, image)
     })
 }
