@@ -10,38 +10,20 @@
     <link rel="stylesheet" media="screen" type="text/css" title="Design" href="./css/index.css"/>
     <link rel="stylesheet" media="print" type="text/css" title="Design" href="./css/index.css"/>
 
-    <!--   <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.css"/>
-     <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.min.css"/>
-     <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.structure.min.css"/>
 
-   link rel="stylesheet" media="screen" href="js/others/jquery.handsontable.full.min.css"-->
 
     <script src="./js/jquery/jquery.js"></script>
     <script src="./js/jquery/jquery-ui.min.js"></script>
     <script src="./js/jquery/jquery.printElement.js"></script>
-
-    <script src="./js/d3/d3.js"></script>
-    <script src="./js/scoreD3.js" charset="UTF-8"></script>
-    <script src="./js/scoreDraw.js" charset="UTF-8"></script>
     <script src="./js/scoreParts.js" charset="UTF-8"></script>
+    <script src="./js/proxy.js" charset="UTF-8"></script>
     <script src="./js/common.js" charset="UTF-8"></script>
-    <!--  <script src="./js/conductor.js" charset="UTF-8"></script>-->
-
-
     <script src="./js/async.js" charset="UTF-8"></script>
 
-
-    <script src="
-https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
-"></script>
+    <script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
     <script src="./js/paper.js" charset="UTF-8"></script>
 
 
-
-
-
-    <!--script src="js/devisuProxy.js" charset="UTF-8"></script
-    <script src="js/imageSplitter.js" charset="UTF-8"></script>-->
 
     <style>
         body {
@@ -127,8 +109,8 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
         var currentPage = 0;
         var currentZoneInPage = 0;
         $(function () {
-            scoreParts.listScores();
-            //  Conductor.loadInstruments()
+            Proxy.listScores();
+
 
         });
 
@@ -159,7 +141,7 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
 
                 <form enctype="multipart/form-data" id="uploadForm">
 
-                    <input type="file" name="pdfFile" id="pdfFileInput" onchange="scoreParts.uploadFormData()">
+                    <input type="file" name="pdfFile" id="pdfFileInput" onchange="Proxy.uploadFormData()">
                     Qualite <select name="imageQuality">
                     <option value="low">faible</option>
                     <option value="medium" selected>moyenne</option>
@@ -193,6 +175,7 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
 
             <tr>
                 <td>
+                    <div id="mousePositionDiv"></div>
                     <button onclick="scoreParts.previousPage()">page précédente</button>
                     <button onclick="scoreParts.nextPage()">page suivante</button>
                 </td>
@@ -202,7 +185,7 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
                     hauteur zone<input id="zoneHeight" value="55" size="3">
 
                     <br>
-                        <button onclick="scoreParts.autoDetectPageZones()" style="visibility: visible"
+                        <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
                                   id="duplicateZonesButton2">autoDetect Zones
                           </button>
                     <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
@@ -219,14 +202,14 @@ https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js
                 <td>
 
                     &nbsp;&nbsp;
-                    <button onclick=scoreParts.startAllOver()>tout recommencer</button>
-                    <button onclick=scoreD3.deleteZonesInpage(currentPage)>effacer Page</button>
+                    <button onclick=scoreParts.restartAll()>tout recommencer</button>
+                    <button onclick=scoreParts.deletePageZones()>effacer Page</button>
                 </td>
             </tr>
             <tr>
                 <td>
                     <button class="buttonImportant" id="generatePartButton" style="visibility:visible"
-                            onclick="scoreParts.generateInstrumentScore()">Générer voix (pdf)
+                            onclick="Proxy.generateInstrumentScore()">Générer voix (pdf)
 
                     </button>
                 </td>

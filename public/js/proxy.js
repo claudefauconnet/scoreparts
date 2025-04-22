@@ -1,0 +1,175 @@
+var Proxy = (function () {
+
+    self.listScores = function () {
+        $('#scoresSelect')
+            .find('option')
+            .remove()
+        var payload = {
+            listScores: 1
+        }
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                data.splice(0, 0, "");
+                for (var i = 0; i < data.length; i++) {
+                    item = data[i].replace(".pdf", "");
+                    $("#scoresSelect").append($('<option>', {
+                        text: item,
+                        value: item
+                    }));
+                }
+                ;
+
+            }, error: function (err) {
+                console.log(err);
+            }
+        });
+
+    }
+
+
+
+
+
+
+    self.uploadFormData = function () {
+        var form = $("#uploadForm")[0]
+        var formData = new FormData(form);
+        $("#waitImg").css("visibility", "visible");
+        scoreParts.setMessage("import en cours <br>cela peut prendre plusieurs minutes, <br>merci de patienter ...", "blue")
+        $.ajax({
+            url: './pdfUpload',
+            data: formData,
+            type: 'POST',
+            contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+            processData: false, // NEEDED, DON'T OMIT THIS
+            success: function (data, textStatus, jqXHR) {
+                $("#waitImg").css("visibility", "hidden");
+                if (data.bigFile) {
+                    scoreParts.setMessage("big file " + data.bigFile);
+                }
+                var durationStr = "durée :" + Math.round(data.duration / 1000) + "sec."
+                var message = "Import terminé " + durationStr + " pages,<br> vous pouvez commencer le découpage"
+
+                scoreParts.setMessage(message, "blue")
+                var xx = data;
+                $("#scoresSelect").append($('<option>', {
+                    text: data.pdfName,
+                    value: data.pdfName,
+                    selected: "selected"
+                }));
+                scoreParts.openFirstPdfPage(message);
+                document.getElementById("pdfFileInput").value = "";
+            },
+            error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                scoreParts.setMessage("ERREUR lors del'import" + err.responseText, "red")
+                document.getElementById("pdfFileInput").value = "";
+
+                var xx = err;
+
+            }
+
+        });
+    }
+
+
+    self.generateInstrumentScore = function (part, orderedZones, callback) {
+        var page = scoreParts.currentPage
+       var  zones= Paper.getPageZones()
+        scoreParts.currentZones=zones
+        scoreParts.allPagesZones[page]=zones
+        if (!part) {
+
+            part = prompt("nom de la partie");
+        }
+        if (!part || part == "")
+            return;
+        scoreParts.setMessage("  La partie est en cours de génération , merci de patienter ...", " blue");
+        $('body').css("cursor", "progress");
+        var pdfName = $('#scoresSelect').val();
+
+        var margin = parseInt($("#zoneMargin").val());
+        var zonesStr = JSON.stringify(scoreParts.allPagesZones);
+        var payload = {
+            generatePart: 1,
+            part: part,
+            margin: margin,
+            pdfName: pdfName,
+            zonesStr: zonesStr,
+            imgScaleCoef: scoreParts.coef,
+        }
+
+        $("#waitImg").css("visibility", "visible");
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                $("#waitImg").css("visibility", "hidden");
+
+                $("#duplicateZonesButton2").css("visibility", "visible");
+                var message = "la partition " + part + " est générée , <a target='_blanck' href='" + document.location.href + data.result + "'>télécharger</a>"
+                message += "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression "
+                scoreParts.setMessage(message, "blue");
+
+
+                $('body').css('cursor', 'default');
+                if (callback)
+                    return callback()
+
+            },
+            error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                scoreParts.setMessage(err, "red")
+                if (callback)
+                    return callback(err)
+            }
+        });
+
+
+    }
+
+self.autoDetectPageZones=function(callback){
+    var pdfName = $('#scoresSelect').val();
+    var payload = {
+        findPageZones: 1,
+        pdfName: pdfName,
+        pageNum:scoreParts.currentPage
+
+    }
+
+    $("#waitImg").css("visibility", "visible");
+    $.ajax({
+        type: "POST",
+        url: "./score",
+        data: payload,
+        dataType: "json",
+        success: function (data, textStatus, jqXHR) {
+            if(callback){
+                return callback(null,data)
+            }
+        var zoneHeight=parseInt($("#zoneHeight").val())
+            Paper.drawZonesFromY(data,zoneHeight)
+
+        },
+        error: function (err) {
+            $("#waitImg").css("visibility", "hidden");
+            scoreParts.setMessage(err, "red")
+
+        }
+    });
+
+
+}
+
+
+
+    return self;
+
+
+})()

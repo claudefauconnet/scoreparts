@@ -89,6 +89,13 @@ var Paper = (function () {
 
 
             }
+
+
+            tool.onMouseMove=function(event){
+                $("#mousePositionDiv").html(""+event.point.x+"  "+event.point.y)
+
+
+            }
             self.clickPath = function (event) {
                 var hitResult = paper.project.hitTest(event.point, paper.hitOptions);
                 if (!hitResult || hitResult.type == "pixel") {
@@ -183,6 +190,7 @@ var Paper = (function () {
                 //  path.onMouseDown = self.clickPath
                 path.data.page = scoreParts.currentPage
                 path.data.type = "zone"
+                $("#generatePartButton").css("visibility", "visible");
             })
         }
 
@@ -204,7 +212,12 @@ var Paper = (function () {
                 //  path.onMouseDown = self.clickPath
                 path.data.page = scoreParts.currentPage
                 path.data.type = "zone"
+                $("#generatePartButton").css("visibility", "visible");
             })
+        }
+
+        self.deletePageZones=function(){
+
         }
 
 

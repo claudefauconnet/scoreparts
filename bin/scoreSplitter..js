@@ -1,14 +1,11 @@
 var fs = require('fs');
 //var PDFImage = require("pdf-image").PDFImage;
-var Jimp = require("jimp");
-
+//var Jimp = require("jimp");
 var JimpProxy = null;
-
 var async = require('async');
 var PDFDocument = require('pdfkit');
-var path = require('path');
 var exec = require('child_process').exec;
-
+var path = require('path');
 
 var scoreSplitter = {
     zones: [],
@@ -332,14 +329,13 @@ var scoreSplitter = {
 
     }
     ,
-
     findPageZones: function (pdfName, pageNum, callback) {
         import("../bin/jimpProxy.mjs").then((mod) => {
-            JimpProxy = mod;
-            var sourceImg = pdfName + "-" + pageNum + ".png";
-            var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-            var imageFile = imageDir + path.sep + sourceImg;
-            JimpProxy.getImage(imageFile, function (err, image) {
+                JimpProxy = mod;
+                var sourceImg = pdfName + "-" + pageNum + ".png";
+                var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
+                var imageFile = imageDir + path.sep + sourceImg;
+                JimpProxy.getImage(imageFile, function (err, image) {
 //image.bitmap.width
 
                     var previousJ = 0
@@ -356,46 +352,28 @@ var scoreSplitter = {
                                 var b = parseInt(hexaStr.substring(4, 6), 16)
                                 const brightness = (r + g + b) / 3;
                                 const bw = brightness < 128 ? brightness : 255;
-                                if ((r==255 || brightness > 128) && j - previousJ > (100)) {//} && previousBrightness==255){
+                                if ((r == 255 || brightness > 128) && j - previousJ > (100)) {//} && previousBrightness==255){
                                     //  console.log(""+i+"  "+j)
                                     previousJ = j
                                     zones.push(j)
                                 } else {
 
                                 }
-
                             }
-
                         }
-
 
                     }
                     var x = zones
                     return callback(null, zones)
-
-                    var colorsMap = JimpProxy.getImageColors(image)
-                    /*  console.log("-------------------")
-                      console.log(JSON.stringify(colorsMap))*/
-
-                    var colors = Object.keys(colorsMap);
-                    colors.sort()
-                    var octalcolors = []
-                    colors.forEach(function (decimalStr) {
-                        console.log(decimalStr + "   " + parseInt(decimalStr).toString(16))
-                    })
-
-                }
-            )
-        })
+                })
+            })
+    },
 
 
-    }
 
 
 }
-/*scoreSplitter.pdfToImages("12.3._Coro_Alcina_2_flûtes.pdf", function (err, result) {
-    xx = err;
-});*/
+
 module.exports = scoreSplitter;
 
 
@@ -409,8 +387,7 @@ var obj = {
 }
 
 
-if (false
-) {
+if (false) {
     scoreSplitter
         .generatePart(obj.pdfName, obj.part, obj.zonesStr, obj.margin, obj.imgScaleCoef, function (err, result) {
             var x = err;

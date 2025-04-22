@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var scoreSplitter = require("../bin/scoreSplitter..js");
+var ZonesDetector= require("../bin/zonesDetector.js");
 var fileUpload = require('../bin/fileUpload.js');
 
 var fs=require('fs')
@@ -53,7 +54,7 @@ router.post('/score', function (req, response, next) {
 
     }
     if (req.body && req.body.findPageZones) {
-        scoreSplitter.findPageZones(req.body.pdfName, req.body.pageNum,function (error, result) {
+        ZonesDetector.findPageZones(req.body.pdfName, req.body.pageNum,function (error, result) {
             processResponse(response, error, result)
         })
 
