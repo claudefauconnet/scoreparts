@@ -77,11 +77,16 @@ var Proxy = (function () {
     }
 
 
-    self.generateInstrumentScore = function (part, orderedZones, callback) {
-        var page = scoreParts.currentPage
-       var  zones= Paper.getPageZones()
-        scoreParts.currentZones=zones
-        scoreParts.allPagesZones[page]=zones
+    self.generateInstrumentScore = function (part, selectedZones, callback) {
+
+        if(!selectedZones) {
+            var page = scoreParts.currentPage
+            var zones = Paper.getPageZones()
+            scoreParts.currentZones = zones
+            scoreParts.allPagesZones[page] = zones
+            selectedZones= scoreParts.allPagesZones
+        }
+
         if (!part) {
 
             part = prompt("nom de la partie");
@@ -93,7 +98,7 @@ var Proxy = (function () {
         var pdfName = $('#scoresSelect').val();
 
         var margin = parseInt($("#zoneMargin").val());
-        var zonesStr = JSON.stringify(scoreParts.allPagesZones);
+        var zonesStr = JSON.stringify(selectedZones);
         var payload = {
             generatePart: 1,
             part: part,
@@ -112,6 +117,9 @@ var Proxy = (function () {
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
 
+                if (callback)
+                    return callback(null, data.result)
+
                 $("#duplicateZonesButton2").css("visibility", "visible");
                 var message = "la partition " + part + " est générée , <a target='_blanck' href='" + document.location.href + data.result + "'>télécharger</a>"
                 message += "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression "
@@ -119,8 +127,7 @@ var Proxy = (function () {
 
 
                 $('body').css('cursor', 'default');
-                if (callback)
-                    return callback()
+
 
             },
             error: function (err) {

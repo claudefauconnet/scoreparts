@@ -7,7 +7,7 @@ var Paper = (function () {
         self.imgLoaded = false;
         var currentZone = null;
 
-      //  var zoneHeight = 50;
+        //  var zoneHeight = 50;
         var imageWidth = 595;
         var imageHeight = 842;
         var zoneDragMode;
@@ -28,7 +28,7 @@ var Paper = (function () {
             Paper.imgLoaded = false;
             $("#waitImg").css("visibility", "visible");
             $("#generatePartButton").css("visibility", "hidden");
-            var zoneHeight=parseInt($("#zoneHeight").val())
+            var zoneHeight = parseInt($("#zoneHeight").val())
 
 
             var canvas = document.getElementById('myCanvas');
@@ -57,6 +57,7 @@ var Paper = (function () {
 
 
                     var w = $("#myCanvas").width()
+                    var zoneHeight=parseInt($("#zoneHeight").val())
                     var h = (zoneHeight / 2)
                     var rectangle = new paper.Rectangle(
                         new paper.Point(10, event.point.y - h),
@@ -67,61 +68,58 @@ var Paper = (function () {
                     path.selected = true;
                     self.currentPath = path
                     path.onMouseDrag = self.dragPath
-                    //  path.onMouseDown = self.clickPath
+                    path.onMouseDown = self.onItemMouseDown
                     path.data.page = scoreParts.currentPage
                     path.data.type = "zone"
+                    path.data.voice = ""+self.getPageZones().length
                     $("#generatePartButton").css("visibility", "visible");
 
 
-                } else {
-                    if (event.modifiers.alt) {
-                        self.isClicking = true
-                        var voice = prompt("enter voice name")
-                        if (voice) {
-                            var text = new paper.PointText(new paper.Point(20, event.point.y));
-                            text.fillColor = 'black';
-                            text.content = voice;
-                            text.strokeColor = '#096eac';
-                            hitResult.item._data.voice = voice
-                        }
-                    }
                 }
+            }
+
+
+            tool.onMouseMove = function (event) {
+                $("#mousePositionDiv").html("" + event.point.x + "  " + event.point.y)
 
 
             }
 
+            self.onItemMouseDown = function (event) {
+                self.currentZoneAction = null;
+                var item = event.target
+                if (event.modifiers.alt && event.modifiers.control) {
+                    self.currentZoneAction = "removeZone"
 
-            tool.onMouseMove=function(event){
-                $("#mousePositionDiv").html(""+event.point.x+"  "+event.point.y)
-
-
-            }
-            self.clickPath = function (event) {
-                var hitResult = paper.project.hitTest(event.point, paper.hitOptions);
-                if (!hitResult || hitResult.type == "pixel") {
-                    return;
-                }
-                event.stopPropagation()
-                if (event.modifiers.alt) {
-                    self.isClicking = true
+                    var x = item.remove()
+                    paper.project.view.update()
+                    self.currentZoneAction = null;
+                    event.stopPropagation()
+                } else if (event.modifiers.shift) {
+                    self.currentZoneAction = "enterVoice"
                     var voice = prompt("enter voice name")
                     if (voice) {
-                        var text = new paper.PointText(new paper.Point(20, event.point.y));
-                        text.fillColor = 'black';
+                        scoreParts.voices.push(voice)
+                        var text = new paper.PointText(new paper.Point(20, item.bounds.y + (item.bounds.height) / 2));
+                        text.fillColor = '#061a27';
                         text.content = voice;
-                        text.strokeColor = '#096eac';
-                        hitResult.data.voice = voice
+                        //   text.strokeColor = '#061a27';
+                        item.data.voice = voice
+                        self.currentZoneAction = null;
+                        event.stopPropagation()
                     }
+                } else if (event.modifiers.control) {
+                    self.currentZoneAction = "resizeZone"
+                } else {//  if (event.modifiers.alt) {
+                    self.currentZoneAction = "moveZone"
                 }
-            }
 
-            self.dragPath = function (event) {
-                var item=event.target
-                if (self.isClicking) {
-                    return;
-                }
-                self.isClicking = false
-                if (event.modifiers.control) {
+
+            }
+            self.dragPath = function (event) {//clear zone
+
+                var item = event.target
+                if (self.currentZoneAction == "resizeZone") {//resize
                     function resizeDimensions(elem, width, height) {
                         //calc scale coefficients and store current position
                         var scaleX = width / elem.bounds.width;
@@ -130,11 +128,11 @@ var Paper = (function () {
                         elem.scale(scaleX, scaleY);
                     }
 
-                    var newHeight =item.bounds.height + event.delta.y;
+                    var newHeight = item.bounds.height + event.delta.y;
                     resizeDimensions(item, self.currentPath.bounds.width, newHeight)
 
 
-                } else {
+                } else if (self.currentZoneAction == "moveZone") {//move
                     item.position.y += event.delta.y;
                 }
 
@@ -165,21 +163,20 @@ var Paper = (function () {
                 }
             })
 
-         return zones
+            return zones
 
         }
 
-        self.drawZonesFromY = function (zones,zoneHeight) {
+        self.drawZonesFromY = function (zones, zoneHeight) {
 
 
-
-            zones.forEach(function (zoneY) {
-                zoneY-=10
+            zones.forEach(function (zoneY, index) {
+                zoneY -= 10
                 var w = $("#myCanvas").width()
                 var h = (zoneHeight / 2)
                 var rectangle = new paper.Rectangle(
-                    new paper.Point(10, zoneY*scoreParts.coef),
-                    new paper.Point(w, (zoneY*scoreParts.coef) + h)
+                    new paper.Point(10, zoneY * scoreParts.coef),
+                    new paper.Point(w, (zoneY * scoreParts.coef) + h)
                 );
 
                 var path = new paper.Path.Rectangle(rectangle);
@@ -187,21 +184,22 @@ var Paper = (function () {
                 path.selected = true;
                 self.currentPath = path
                 path.onMouseDrag = self.dragPath
-                //  path.onMouseDown = self.clickPath
+                path.onMouseDown = self.onItemMouseDown
                 path.data.page = scoreParts.currentPage
                 path.data.type = "zone"
+                path.data.voice = ""+index
                 $("#generatePartButton").css("visibility", "visible");
             })
         }
 
-        self.drawZones = function (zones,zoneHeight) {
+        self.drawZones = function (zones, zoneHeight) {
 
-            zones.forEach(function (zone) {
-                zone.y-=10
+            zones.forEach(function (zone, index) {
+                zone.y -= 10
 
                 var rectangle = new paper.Rectangle(
                     new paper.Point(zone.x, zone.y),
-                    new paper.Point(zone.width,  zone.y+zone.height)
+                    new paper.Point(zone.width, zone.y + zone.height)
                 );
 
                 var path = new paper.Path.Rectangle(rectangle);
@@ -209,17 +207,39 @@ var Paper = (function () {
                 path.selected = true;
                 self.currentPath = path
                 path.onMouseDrag = self.dragPath
-                //  path.onMouseDown = self.clickPath
+                path.onMouseDown = self.onItemMouseDown
                 path.data.page = scoreParts.currentPage
                 path.data.type = "zone"
+
+                if (zone.voice) {
+                    path.data.voice = zone.voice
+                } else {
+                    path.data.voice = ""+index
+                }
+                var text = new paper.PointText(new paper.Point(20, zone.y + (zone.height) / 2));
+                text.fillColor = 'black';
+                text.content = zone.voice;
+                //  text.strokeColor = '#096eac';
+
+
                 $("#generatePartButton").css("visibility", "visible");
+
             })
         }
 
-        self.deletePageZones=function(){
+        self.deleteZones = function (zoneIndex) {
+            paper.project.selectAll()
+            var items = paper.project.selectedItems;
+            items.forEach(function (item, index) {
+                if (item.data.type == "zone") {
+                    if (!zoneIndex || zoneIndex == index) {
+                        var x = item.remove()
+                    }
+                }
+            })
+            paper.project.view.update()
 
         }
-
 
 
         return self;

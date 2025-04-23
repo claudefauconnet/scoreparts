@@ -15,7 +15,7 @@ bin\gswin64.exe -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER  -dFirstPage=8 -dLas
 var pdfSplitter = {
 
     splitPdf:function(filePath, nPages) {
-        scoreSplitter.pdfToImages(filePath,"medium",{},function(err,result){
+        scoreSplitter.pdfToImages(filePath,"low",{},function(err,result){
 
         })
 

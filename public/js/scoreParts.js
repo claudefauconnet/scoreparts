@@ -14,6 +14,7 @@ var scoreParts = (function () {
         var name2 = imagesDir + name + "-0.png";
         Paper.drawImage(name2)
         self.allPagesZones = {}
+        self.voices = []
         self.currentPage = 0;
         $("#page").html(" " + (self.currentPage + 1));
         //  $('#controlPanelDiv').css('visibility', 'visible');
@@ -72,7 +73,9 @@ var scoreParts = (function () {
 
     self.deletePageZones = function () {
         var page = $("#currentPage").val()
+
         delete self.allPagesZones[page]
+        Paper.deleteZones()
     }
 
 

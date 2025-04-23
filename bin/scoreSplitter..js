@@ -21,7 +21,7 @@ var scoreSplitter = {
     pageHeight: 842,
     imageScaleCoef: 1.10,//agrandit chaque image
     imageBackOffset: -150,//retrait de l'image vers la gauche
-    leftMargin: 50,
+    leftMargin:33,
     anamorphoseCoef:1.5,
 
     listScores: function (callback) {
@@ -38,19 +38,7 @@ var scoreSplitter = {
     },
 
 
-    /* pdfToImages: function (pdfPath, callback) {
-         var  pdfName=path.basename(pdfPath)
 
-         var time=new Date();
-         var time0=time;
-         pdfName=pdfName.substring(0,pdfName.lastIndexOf('.'));
-         var outputPrefix = pdfPath.substring(0, pdfPath.lastIndexOf(".")) + "-";
-
-         gm().command('convert').in('+adjoin').in(pdfPath).write(outputPrefix+"%02d.png", function (err) {
-             var x=err;
-             // something
-         });
-     },*/
 
 
 
@@ -163,8 +151,8 @@ var scoreSplitter = {
 
                             //anamorphose image
 
-                            var h2 =Math.round(  h * scoreSplitter.anamorphoseCoef)
-                            zoneImg =zoneImg.resize({ w: w, h: h2 })
+                         /*   var h2 =Math.round(  h * scoreSplitter.anamorphoseCoef)
+                            zoneImg =zoneImg.resize({ w: w, h: h2 })*/
 
                             zone.bitmap = zoneImg.bitmap
                             return callbackEachZone(err)
