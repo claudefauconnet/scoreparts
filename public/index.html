@@ -10,8 +10,8 @@
     <link rel="stylesheet" media="screen" type="text/css" title="Design" href="./css/index.css"/>
     <link rel="stylesheet" media="print" type="text/css" title="Design" href="./css/index.css"/>
 
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css"/>
 
     <script src="./js/jquery/jquery.js"></script>
     <script src="./js/jquery/jquery-ui.min.js"></script>
@@ -23,11 +23,10 @@
     <script src="./js/async.js" charset="UTF-8"></script>
     <script type="module" src="./js/jstreeWidget.js"></script>
 
-    <script  src="./js/jsTree/jstree.js"></script>
+    <script src="./js/jsTree/jstree.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
     <script src="./js/paper.js" charset="UTF-8"></script>
-
 
 
     <style>
@@ -121,7 +120,7 @@
                 height: "auto",
                 width: "auto",
                 modal: false,
-                position: { my: "center", at: "center", of: window },
+                position: {my: "center", at: "center", of: window},
                 open: function (event, ui) {
                     //  $("#mainDialogDiv").css("width","80%")
                 },
@@ -181,36 +180,34 @@
         <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
         <div id="message"></div>
         <table>
-            <tr>
-                <td>
-                    page<span id="page"></span>
 
-
-                </td>
-            </tr>
 
             <tr>
                 <td>
                     <div id="mousePositionDiv"></div>
                     <button onclick="scoreParts.previousPage()">page précédente</button>
                     <button onclick="scoreParts.nextPage()">page suivante</button>
+                    <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
+                            id="duplicateZonesButton2">autoDetect Zones
+                    </button>
                 </td>
             </tr>
             <tr>
                 <td>
-                    hauteur zone<input id="zoneHeight" value="50" size="3">
-
-                    <br>
-                        <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
-                                  id="duplicateZonesButton2">autoDetect Zones
-                          </button>
                     <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
                             id="duplicateZonesButton">enregister Zones
                     </button>
-                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">répéter Zones
+                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">répéter
+                        Zones
                     </button>
 
 
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    page<span id="page"></span>
+                    hauteur zone<input id="zoneHeight" value="50" size="3">
 
                 </td>
             </tr>
@@ -226,7 +223,7 @@
                 <td>
 
 
-                    <button class="buttonImportant" id="generatePartButton" style="visibility:visible"
+                    <button class="buttonImportant" id="generatePartButton2" style="visibility:visible"
                             onclick=" Voices.showVoicesDialog()">Générer multiples voix (pdf)
 
                     </button>
@@ -237,7 +234,10 @@
                 </td>
             </tr>
             <tr>
-
+                <td>
+                    <button onclick='Proxy.saveZones()'>Save Zones</button>
+                    <button onclick='Proxy.loadZones()'>Load Zones</button>
+                </td>
             </tr>
             <tr>
                 <td colspan="3"></td>
@@ -245,20 +245,17 @@
         </table>
 
 
-
-
     </div>
 
 
+    <div id="imageSplitterDivXX" style="width:400px;visibility: visible">
+        <canvas id="myCanvas" style="position:relative;top:0;left:0">
 
-<div id="imageSplitterDivXX" style="width:400px;visibility: visible">
-    <canvas id="myCanvas" style="position:relative;top:0;left:0">
 
+        </canvas>
 
-    </canvas>
-
-</div>
-<div id="mainDialogDiv"></div>
+    </div>
+    <div id="mainDialogDiv"></div>
 
 </div>
 

@@ -31,10 +31,6 @@ var Proxy = (function () {
     }
 
 
-
-
-
-
     self.uploadFormData = function () {
         var form = $("#uploadForm")[0]
         var formData = new FormData(form);
@@ -61,6 +57,7 @@ var Proxy = (function () {
                     value: data.pdfName,
                     selected: "selected"
                 }));
+
                 scoreParts.openFirstPdfPage(message);
                 document.getElementById("pdfFileInput").value = "";
             },
@@ -69,7 +66,7 @@ var Proxy = (function () {
                 scoreParts.setMessage("ERREUR lors del'import" + err.responseText, "red")
                 document.getElementById("pdfFileInput").value = "";
 
-                var xx = err;
+
 
             }
 
@@ -79,20 +76,21 @@ var Proxy = (function () {
 
     self.generateInstrumentScore = function (part, selectedZones, callback) {
 
-        if(!selectedZones) {
+        if (!selectedZones) {
             var page = scoreParts.currentPage
             var zones = Paper.getPageZones()
             scoreParts.currentZones = zones
-            scoreParts.allPagesZones[page] = zones
-            selectedZones= scoreParts.allPagesZones
+            scoreParts.allPagesZones.pages[page] = zones
+            selectedZones = scoreParts.allPagesZones.pages
         }
 
         if (!part) {
 
             part = prompt("nom de la partie");
         }
-        if (!part || part == "")
+        if (!part || part == "") {
             return;
+        }
         scoreParts.setMessage("  La partie est en cours de génération , merci de patienter ...", " blue");
         $('body').css("cursor", "progress");
         var pdfName = $('#scoresSelect').val();
@@ -117,8 +115,9 @@ var Proxy = (function () {
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
 
-                if (callback)
+                if (callback) {
                     return callback(null, data.result)
+                }
 
                 $("#duplicateZonesButton2").css("visibility", "visible");
                 var message = "la partition " + part + " est générée , <a target='_blanck' href='" + document.location.href + data.result + "'>télécharger</a>"
@@ -133,47 +132,108 @@ var Proxy = (function () {
             error: function (err) {
                 $("#waitImg").css("visibility", "hidden");
                 scoreParts.setMessage(err, "red")
-                if (callback)
+                if (callback) {
                     return callback(err)
+                }
             }
         });
 
 
     }
 
-self.autoDetectPageZones=function(callback){
-    var pdfName = $('#scoresSelect').val();
-    var payload = {
-        findPageZones: 1,
-        pdfName: pdfName,
-        pageNum:scoreParts.currentPage
-
-    }
-
-    $("#waitImg").css("visibility", "visible");
-    $.ajax({
-        type: "POST",
-        url: "./score",
-        data: payload,
-        dataType: "json",
-        success: function (data, textStatus, jqXHR) {
-            if(callback){
-                return callback(null,data)
-            }
-        var zoneHeight=parseInt($("#zoneHeight").val())
-            Paper.drawZonesFromY(data,zoneHeight)
-
-        },
-        error: function (err) {
-            $("#waitImg").css("visibility", "hidden");
-            scoreParts.setMessage(err, "red")
+    self.autoDetectPageZones = function (callback) {
+        var pdfName = $('#scoresSelect').val();
+        var payload = {
+            findPageZones: 1,
+            pdfName: pdfName,
+            pageNum: scoreParts.currentPage
 
         }
-    });
+
+        $("#waitImg").css("visibility", "visible");
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (callback) {
+                    return callback(null, data)
+                }
+
+                Paper.drawAutoDetectedZones(data)
+
+            },
+            error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                scoreParts.setMessage(err, "red")
+
+            }
+        });
 
 
-}
+    }
+    self.saveZones = function () {
+        var page = scoreParts.currentPage
+        var zones = Paper.getPageZones()
+        scoreParts.currentZones = zones
+        scoreParts.allPagesZones.pages[page] = zones
 
+
+
+        var pdfName = $('#scoresSelect').val();
+
+        var margin = parseInt($("#zoneMargin").val());
+        var zonesStr = JSON.stringify(scoreParts.allPagesZones);
+        var payload = {
+            saveZones: 1,
+            fileName: pdfName+"_zones.json",
+            zonesStr: zonesStr,
+
+        }
+
+        $("#waitImg").css("visibility", "visible");
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                $("#waitImg").css("visibility", "hidden");
+            }, error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                scoreParts.setMessage(err, "red")
+            }
+        })
+    }
+
+    self.loadZones = function (callback) {
+        var pdfName = $('#scoresSelect').val();
+        var payload = {
+            loadZones: 1,
+            fileName: pdfName+"_zones.json",
+        }
+
+        $("#waitImg").css("visibility", "visible");
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                $("#waitImg").css("visibility", "hidden");
+                var data=JSON.parse(data.result)
+               if(callback)
+                  return callback(null,data)
+                scoreParts.allPagesZones=data
+            }, error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                if(callback)
+                    return callback(err)
+                scoreParts.setMessage(err, "red")
+            }
+        })
+    }
 
 
     return self;

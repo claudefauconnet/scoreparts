@@ -21,8 +21,9 @@ var scoreSplitter = {
     pageHeight: 842,
     imageScaleCoef: 1.10,//agrandit chaque image
     imageBackOffset: -150,//retrait de l'image vers la gauche
-    leftMargin:33,
-    anamorphoseCoef:1.5,
+    leftMargin: 60,
+    anamorphoseCoef: 1.5,
+    interScale: 10 ,// espace entre les portées
 
     listScores: function (callback) {
         var pdfs = [];
@@ -36,10 +37,6 @@ var scoreSplitter = {
         }
         return callback(null, pdfs);
     },
-
-
-
-
 
 
     pdfToImages: function (pdfPath, quality, options, callback) {
@@ -94,7 +91,9 @@ var scoreSplitter = {
 
     generatePart: function (pdfName, part, zonesStr, margin, imgScaleCoef, callback) {
 
-        var zones = JSON.parse(zonesStr);
+        var obj = JSON.parse(zonesStr);
+        var zones = obj.pages
+        var title = obj.title
 
         //store the zones coordinates for a replay (eventually)
         //  fs.writeFileSync(scoreSplitter.imagesDir + "zones-" + pdfName + "-" + part + ".json", zonesStr)
@@ -109,7 +108,7 @@ var scoreSplitter = {
                 scoreSplitter.blitImages,
 
             ], function (err, pagesImagesArray) {
-                scoreSplitter.writePagesToPdf(pdfName, part, pagesImagesArray, function (err, result) {
+                scoreSplitter.writePagesToPdf(pdfName, title, part, pagesImagesArray, function (err, result) {
                     if (err) {
                         return callback(err);
                     }
@@ -151,8 +150,8 @@ var scoreSplitter = {
 
                             //anamorphose image
 
-                         /*   var h2 =Math.round(  h * scoreSplitter.anamorphoseCoef)
-                            zoneImg =zoneImg.resize({ w: w, h: h2 })*/
+                            /*   var h2 =Math.round(  h * scoreSplitter.anamorphoseCoef)
+                               zoneImg =zoneImg.resize({ w: w, h: h2 })*/
 
                             zone.bitmap = zoneImg.bitmap
                             return callbackEachZone(err)
@@ -173,7 +172,7 @@ var scoreSplitter = {
         var initialYOffset = 20 / scale
         var offsetX = 20 / scale
         var offsetY = initialYOffset;
-        var vertStep = 5 / scale;
+        var vertStep = scoreSplitter.interScale / scale;
         var currentPage = [];
         var maxPageYoffset = 800 / scale;
         var pageFull = false;
@@ -200,7 +199,7 @@ var scoreSplitter = {
                     pageFull = false;
                 }
                 zone.yOnPage = offsetY
-                zone.xOnPage = (zone.x + scoreSplitter.leftMargin) / scale
+                zone.xOnPage = (scoreSplitter.leftMargin) / scale
 
 
             })
@@ -273,8 +272,8 @@ var scoreSplitter = {
     ,
 
 
-    writePagesToPdf: function (pdfName, part, pagesImagesArray, callback) {
-        var title = pdfName + "-" + part;
+    writePagesToPdf: function (pdfName, title, part, pagesImagesArray, callback) {
+        var title = title + "-" + part;
         var pdfsDir = path.resolve(__dirname, scoreSplitter.targetPdfDir);
         var partPdfFile = pdfsDir + path.sep + pdfName + "-" + part + ".pdf";
         if (fs.existsSync(partPdfFile)) {
@@ -319,45 +318,43 @@ var scoreSplitter = {
     ,
     findPageZones: function (pdfName, pageNum, callback) {
         import("../bin/jimpProxy.mjs").then((mod) => {
-                JimpProxy = mod;
-                var sourceImg = pdfName + "-" + pageNum + ".png";
-                var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-                var imageFile = imageDir + path.sep + sourceImg;
-                JimpProxy.getImage(imageFile, function (err, image) {
+            JimpProxy = mod;
+            var sourceImg = pdfName + "-" + pageNum + ".png";
+            var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
+            var imageFile = imageDir + path.sep + sourceImg;
+            JimpProxy.getImage(imageFile, function (err, image) {
 //image.bitmap.width
 
-                    var previousJ = 0
-                    var zones = []
-                    for (var i = 200; i < 201; i++) {
-                        for (var j = 0; j < image.bitmap.height; j++) {
+                var previousJ = 0
+                var zones = []
+                for (var i = 200; i < 201; i++) {
+                    for (var j = 0; j < image.bitmap.height; j++) {
 
-                            var color = image.getPixelColor(i, j);
-                            var x = color
-                            if (color != 4294967295) {
-                                var hexaStr = (color).toString(16)
-                                var r = parseInt(hexaStr.substring(0, 2), 16)
-                                var g = parseInt(hexaStr.substring(2, 4), 16)
-                                var b = parseInt(hexaStr.substring(4, 6), 16)
-                                const brightness = (r + g + b) / 3;
-                                const bw = brightness < 128 ? brightness : 255;
-                                if ((r == 255 || brightness > 128) && j - previousJ > (100)) {//} && previousBrightness==255){
-                                    //  console.log(""+i+"  "+j)
-                                    previousJ = j
-                                    zones.push(j)
-                                } else {
+                        var color = image.getPixelColor(i, j);
+                        var x = color
+                        if (color != 4294967295) {
+                            var hexaStr = (color).toString(16)
+                            var r = parseInt(hexaStr.substring(0, 2), 16)
+                            var g = parseInt(hexaStr.substring(2, 4), 16)
+                            var b = parseInt(hexaStr.substring(4, 6), 16)
+                            const brightness = (r + g + b) / 3;
+                            const bw = brightness < 128 ? brightness : 255;
+                            if ((r == 255 || brightness > 128) && j - previousJ > (100)) {//} && previousBrightness==255){
+                                //  console.log(""+i+"  "+j)
+                                previousJ = j
+                                zones.push(j)
+                            } else {
 
-                                }
                             }
                         }
-
                     }
-                    var x = zones
-                    return callback(null, zones)
-                })
+
+                }
+                var x = zones
+                return callback(null, zones)
             })
+        })
     },
-
-
 
 
 }

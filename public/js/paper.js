@@ -57,7 +57,7 @@ var Paper = (function () {
 
 
                     var w = $("#myCanvas").width()
-                    var zoneHeight=parseInt($("#zoneHeight").val())
+                    var zoneHeight = parseInt($("#zoneHeight").val())
                     var h = (zoneHeight / 2)
                     var rectangle = new paper.Rectangle(
                         new paper.Point(10, event.point.y - h),
@@ -71,7 +71,7 @@ var Paper = (function () {
                     path.onMouseDown = self.onItemMouseDown
                     path.data.page = scoreParts.currentPage
                     path.data.type = "zone"
-                    path.data.voice = ""+self.getPageZones().length
+                    path.data.voice = "" + self.getPageZones().length
                     $("#generatePartButton").css("visibility", "visible");
 
 
@@ -167,64 +167,58 @@ var Paper = (function () {
 
         }
 
-        self.drawZonesFromY = function (zones, zoneHeight) {
-
-
-            zones.forEach(function (zoneY, index) {
-                zoneY -= 10
-                var w = $("#myCanvas").width()
-                var h = (zoneHeight / 2)
-                var rectangle = new paper.Rectangle(
-                    new paper.Point(10, zoneY * scoreParts.coef),
-                    new paper.Point(w, (zoneY * scoreParts.coef) + h)
-                );
-
-                var path = new paper.Path.Rectangle(rectangle);
-                path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
-                path.selected = true;
-                self.currentPath = path
-                path.onMouseDrag = self.dragPath
-                path.onMouseDown = self.onItemMouseDown
-                path.data.page = scoreParts.currentPage
-                path.data.type = "zone"
-                path.data.voice = ""+index
-                $("#generatePartButton").css("visibility", "visible");
+        self.drawAutoDetectedZones = function (data, zoneHeight) {
+            var zoneHeight = parseInt($("#zoneHeight").val())
+            var width = $("#myCanvas").width()
+            var interline = data.interline * scoreParts.coef
+            var x=(data.firstVerticalLine* scoreParts.coef)-5
+            data.topLines.forEach(function (zoneY, index) {
+                var zone = {
+                    x: x,
+                    y: (zoneY * scoreParts.coef) - (2 * interline),
+                    width: width-10,
+                    height: (8 * interline),
+                    voice: "" + index
+                }
+                self.drawZone(zone)
             })
+            $("#generatePartButton").css("visibility", "visible");
         }
 
         self.drawZones = function (zones, zoneHeight) {
-
             zones.forEach(function (zone, index) {
-                zone.y -= 10
-
-                var rectangle = new paper.Rectangle(
-                    new paper.Point(zone.x, zone.y),
-                    new paper.Point(zone.width, zone.y + zone.height)
-                );
-
-                var path = new paper.Path.Rectangle(rectangle);
-                path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
-                path.selected = true;
-                self.currentPath = path
-                path.onMouseDrag = self.dragPath
-                path.onMouseDown = self.onItemMouseDown
-                path.data.page = scoreParts.currentPage
-                path.data.type = "zone"
-
-                if (zone.voice) {
-                    path.data.voice = zone.voice
-                } else {
-                    path.data.voice = ""+index
-                }
-                var text = new paper.PointText(new paper.Point(20, zone.y + (zone.height) / 2));
-                text.fillColor = 'black';
-                text.content = zone.voice;
-                //  text.strokeColor = '#096eac';
-
-
-                $("#generatePartButton").css("visibility", "visible");
-
+                self.drawZone(zone)
             })
+            $("#generatePartButton").css("visibility", "visible");
+        }
+
+
+        self.drawZone = function (zone) {
+            var width = $("#myCanvas").width()-10
+            var rectangle = new paper.Rectangle(
+                new paper.Point(Math.round(zone.x), Math.round(zone.y)),
+                new paper.Point(Math.round(width), Math.round(zone.y + zone.height))
+            );
+
+            var path = new paper.Path.Rectangle(rectangle);
+            path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
+            path.selected = true;
+            self.currentPath = path
+            path.onMouseDrag = self.dragPath
+            path.onMouseDown = self.onItemMouseDown
+            path.data.page = scoreParts.currentPage
+            path.data.type = "zone"
+
+            if (zone.voice) {
+                path.data.voice = zone.voice
+            } else {
+                path.data.voice = "" + index
+            }
+            var text = new paper.PointText(new paper.Point(20, Math.round(zone.y + (zone.height) / 2)));
+            text.fillColor = 'black';
+            text.content = zone.voice;
+
+
         }
 
         self.deleteZones = function (zoneIndex) {
@@ -240,6 +234,12 @@ var Paper = (function () {
             paper.project.view.update()
 
         }
+
+
+       // zoom
+      //  https://stackoverflow.com/questions/56694938/zoom-and-pan-fix
+
+
 
 
         return self;

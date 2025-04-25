@@ -3,24 +3,56 @@ var Voices = (function () {
     var self = {}
 
 
+    self.getDistinctVoices=function(){
+        var voices=[]
+        for(var page in scoreParts.allPagesZones.pages){
+            scoreParts.allPagesZones.pages[page].forEach(function(zone){
+                if(voices.indexOf(zone.voice)<0)
+                    voices.push(zone.voice)
+            })
+        }
+     //  $("#voices_numberOfVoices").val(voices.length)
+
+        return voices
+
+    }
+
     self.showVoicesDialog = function () {
 
-        var zones = Paper.getPageZones()
-        scoreParts.allPagesZones[scoreParts.currentPage] = zones
+        var currentZones = Paper.getPageZones()
+        scoreParts.allPagesZones.pages[scoreParts.currentPage] = currentZones
         var jstreedata = [{
             id: "voices",
             text: "voices",
             parent: "#"
         }];
 
-        zones.forEach(function (zone, index) {
+        var voices= self.getDistinctVoices()
 
-            var label=zone.voice + " <span style='font-style:italic;color:blue' id='pdfLinkDiv_" + zone.voice + "'>...</span>"
+
+       self.numberOfVoices=parseInt(prompt("nombre total de voix ",voices.length))
+
+
+       self.nunmberOfSystems=voices.length/self.numberOfVoices
+        if(!Number.isInteger(self.nunmberOfSystems))
+            return alert("mauvais nombre de voix  "+self.nunmberOfSystems)
+
+        if(self.numberOfVoices!=voices.length) {
+            voices = voices.slice(0,self.numberOfVoices);
+
+        }
+
+
+
+
+        voices.forEach(function (voice, index) {
+
+            var label=voice + " <span style='font-style:italic;color:blue' id='pdfLinkDiv_" + voice + "'>...</span>"
             jstreedata.push({
-                id: "voice_"+zone.voice,
+                id: "voice_"+voice,
                 text: label,
                 parent: "voices",
-                data: {voice: zone.voice}
+                data: {voice: voice,index:index}
             })
         })
         var options = {
@@ -34,12 +66,23 @@ var Voices = (function () {
             "<div id='voicesTreeContainer' style='width:400px;height:600px'>" +
             " <div id='voicesTreeDiv'></div>" +
             "</div>" +
+            "<div>" +
+            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;"  +
             "<button onclick='Voices.validateDialog()'>OK</button>" +
+            "<number of voices <input id='voices_numberOfVoices'/>" +
+
+            "</div>" +
             "</div>"
 
 
         $("#mainDialogDiv").html(html)
         $("#mainDialogDiv").dialog("open")
+
+
+        var title=scoreParts.allPagesZones.title || scoreParts.pdfName
+       $("#voices_scoreTitle").val(title)
+
+
         JstreeWidget.loadJsTree("voicesTreeDiv", jstreedata, options)
 
 
@@ -52,7 +95,7 @@ var Voices = (function () {
         var voices = []
         nodes.forEach(function (node) {
             if (node.data && node.data.voice!==null) {
-                voices.push({id: node.data.voice, label: node.data.voiceLabel || node.data.voice})
+                voices.push({id: node.data.voice,index:node.data.index, label: node.data.voiceLabel || node.data.voice})
             }
         })
 
@@ -60,17 +103,35 @@ var Voices = (function () {
         async.eachSeries(voices, function (voice, callbackEachVoice) {
 
 
-            var voicePagesZones = {}
-            for (var pageNum in scoreParts.allPagesZones) {
-                voicePagesZones[pageNum]=[]
-                scoreParts.allPagesZones[pageNum].forEach(function (zone) {
+            var voicePagesZones = {pages:{}}
+
+            var title=$("#voices_scoreTitle").val()
+            voicePagesZones.title=title
+            scoreParts.allPagesZones.title=title
+            Proxy.saveZones()
+
+            for (var pageNum in scoreParts.allPagesZones.pages) {
+                voicePagesZones.pages[pageNum]=[]
+                var zones=scoreParts.allPagesZones.pages[pageNum]
+                zones.forEach(function (zone,index) {
+                // reaffect voice  depending of number of systems in page
+                        if (index % self.numberOfVoices === 0) {
+                            zone=JSON.parse(JSON.stringify(zone))
+                            zone.voice=zones[voice.index].voice
+                        }
+
+
+
                     if (zone.voice  ==voice.id) {
-                        voicePagesZones[pageNum].push(zone)
+                        voicePagesZones.pages[pageNum].push(zone)
                     }
                 })
             }
 
+
             $("#pdfLinkDiv_" + voice.id).html("processing...");
+
+
             Proxy.generateInstrumentScore(voice.label, voicePagesZones, function (err, result) {
                 if (err) {
                     return callbackEachVoice(err)
