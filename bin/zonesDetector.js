@@ -73,15 +73,40 @@ var ZonesDetector = {
 
         }
 
+var measures= {}
+        var topLines = []
+        for (var i = 0; i < lines.length; i += 5) {
+            topLines.push(lines[i])
+        }
+        var barHeight=interline*4
+        var barTopLine=topLines.indexOf(j)
+        var barPoints=0
+
         //detect vertical line;
         for (var i = 0; i < image.bitmap.width; i ++) {
-            var vPoints = 0
+
+
+
         for (var j = 10; j < image.bitmap.height; j+=3) {
 
             if (ZonesDetector.isPixelBlack(image, i, j)) {
                 vPoints += 1
 
 
+            }
+            var barTopLine=topLines.indexOf(j)
+            if(barTopLine>0) {
+                var bar = {
+                    topLine: barTopLine,
+                    height: barHeight,
+                    x: i,
+                    points: 1
+
+                }
+
+                if (barPoints > barHeight) {
+
+                }
             }
 
 
@@ -95,12 +120,9 @@ var ZonesDetector = {
 
 
 
-        var y = interline
-        var x = lines;
-        var topLines = []
-        for (var i = 0; i < lines.length; i += 5) {
-            topLines.push(lines[i])
-        }
+       /* var y = interline
+        var x = lines;*/
+
 
         return {topLines:topLines,interline:interline,firstVerticalLine:firstVerticalLine}
 

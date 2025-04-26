@@ -47,6 +47,7 @@ var scoreParts = (function () {
         var zones = Paper.getPageZones()
         self.currentZones = zones
         self.allPagesZones.pages[self.currentPage] = zones
+
         self.currentPage = newPage;
         var name = $('#scoresSelect').val() + "-" + (self.currentPage);
 
@@ -78,6 +79,14 @@ var scoreParts = (function () {
         self.changePage(self.currentPage - 1)
         $("#duplicateZonesButton").css("visibility", "visible");
 
+    }
+
+    self.goToPage=function(){
+        var page=prompt("Aller à page numero" )
+        if( page) {
+            var page = parseInt(page)
+            self.changePage(page)
+        }
     }
 
     self.restartAll = function () {

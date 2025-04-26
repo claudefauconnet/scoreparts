@@ -184,9 +184,12 @@
 
             <tr>
                 <td>
-                    <div id="mousePositionDiv"></div>
+
+                    page<span id="page"></span>
+                    <br>
                     <button onclick="scoreParts.previousPage()">page précédente</button>
                     <button onclick="scoreParts.nextPage()">page suivante</button>
+                    <button onclick="scoreParts.goToPage()">aller à page</button>
                     <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
                             id="duplicateZonesButton2">autoDetect Zones
                     </button>
@@ -195,9 +198,9 @@
             <tr>
                 <td>
                     <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
-                            id="duplicateZonesButton">enregister Zones
+                            id="duplicateZonesButton">Copier Zones
                     </button>
-                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">répéter
+                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">Coller
                         Zones
                     </button>
 
@@ -206,9 +209,9 @@
             </tr>
             <tr>
                 <td>
-                    page<span id="page"></span>
-                    hauteur zone<input id="zoneHeight" value="50" size="3">
 
+                    hauteur zone<input id="zoneHeight" value="50" size="3">
+                    <div id="mousePositionDiv"></div>
                 </td>
             </tr>
             <tr>

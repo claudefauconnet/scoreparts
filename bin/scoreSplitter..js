@@ -60,7 +60,7 @@ var scoreSplitter = {
             outputPrefix = options.targetDir;
         }
 
-        var pages = "[0-30]"
+        var pages = "[0-300]"
         var GraphicsMagickExe = "gm";
         if (path.sep == "\\") {//windows
             GraphicsMagickExe = "\"C:\\Program Files\\GraphicsMagick-1.3.36-Q8\\gm.exe\"";
@@ -183,28 +183,29 @@ var scoreSplitter = {
 
         pageNums.forEach(function (pageNum) {
 
-            zonesWithImages[pageNum].forEach(function (zone) {
-
+            zonesWithImages[pageNum].forEach(function (zone,index) {
 
                 currentPage.push(zone);
-
-                offsetY += (zone.bitmap.height) + (vertStep);
-                if (offsetY + (zone.bitmap.height) > maxPageYoffset) {
-                    pageFull = true;
-                    pages.push(currentPage);
-                    currentPage = [];
-                    offsetY = initialYOffset;
-
-                } else {
-                    pageFull = false;
-                }
                 zone.yOnPage = offsetY
                 zone.xOnPage = (scoreSplitter.leftMargin) / scale
 
 
+
+                offsetY += (zone.bitmap.height) + (vertStep);
+                if((offsetY+vertStep)>maxPageYoffset){
+                    pages.push(currentPage);
+                    currentPage = [];
+                    offsetY = initialYOffset;
+                }
+
+
+
+
+
+
             })
         })
-        if (!pageFull) {
+     if (currentPage.length>0) {
             pages.push(currentPage);
         }
         callbackWaterfall(null, pages, scale)
@@ -217,6 +218,9 @@ var scoreSplitter = {
     blitImages: function (pages, scale, callbackWaterfall) {
         var targetImages = [];
         var margin = 0
+
+
+
         async.eachSeries(pages, function (page, callbackPages) {
             targetImages.scale = scale;
             var w = Math.round((scoreSplitter.pageWidth - margin) / scale);

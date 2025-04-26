@@ -9,11 +9,8 @@
       <change beforePath="$PROJECT_DIR$/bin/scoreSplitter..js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/scoreSplitter..js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/zonesDetector.js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/zonesDetector.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/paper.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/proxy.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/proxy.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/voices.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/voices.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,27 +104,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.BezierTool.html.executor": "Debug",
-    "Node.js.bin\\www.executor": "Debug",
-    "Node.js.jimpProxy.mjs.executor": "Debug",
-    "Node.js.scoreSplitter..js.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "true",
-    "git-widget-placeholder": "2025-04-21",
-    "last_opened_file_path": "D:/projects/scoreparts/bin",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
-    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2024.1.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.BezierTool.html.executor&quot;: &quot;Debug&quot;,
+    &quot;Node.js.bin\\www.executor&quot;: &quot;Debug&quot;,
+    &quot;Node.js.jimpProxy.mjs.executor&quot;: &quot;Debug&quot;,
+    &quot;Node.js.scoreSplitter..js.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;2025-04-21&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/projects/scoreparts/bin&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.DirectoryMappings&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\WebStorm 2024.1.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\projects\scoreparts\bin" />
@@ -249,7 +246,11 @@
       <workItem from="1744898137570" duration="53534000" />
       <workItem from="1745162622359" duration="8769000" />
       <workItem from="1745216516880" duration="36974000" />
-      <workItem from="1745485203509" duration="21861000" />
+      <workItem from="1745485203509" duration="22842000" />
+      <workItem from="1745573739957" duration="717000" />
+      <workItem from="1745590272069" duration="6625000" />
+      <workItem from="1745600995743" duration="514000" />
+      <workItem from="1745601850877" duration="7665000" />
     </task>
     <task id="LOCAL-00001" summary="add conductor.js">
       <created>1694363133077</created>
@@ -289,7 +290,15 @@
       <option name="project" value="LOCAL" />
       <updated>1745259167180</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1745568458872</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1745568458872</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
