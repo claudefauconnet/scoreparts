@@ -319,46 +319,7 @@ var scoreSplitter = {
         callback(null, partPdfUrl)
 
     }
-    ,
-    findPageZones: function (pdfName, pageNum, callback) {
-        import("../bin/jimpProxy.mjs").then((mod) => {
-            JimpProxy = mod;
-            var sourceImg = pdfName + "-" + pageNum + ".png";
-            var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-            var imageFile = imageDir + path.sep + sourceImg;
-            JimpProxy.getImage(imageFile, function (err, image) {
-//image.bitmap.width
 
-                var previousJ = 0
-                var zones = []
-                for (var i = 200; i < 201; i++) {
-                    for (var j = 0; j < image.bitmap.height; j++) {
-
-                        var color = image.getPixelColor(i, j);
-                        var x = color
-                        if (color != 4294967295) {
-                            var hexaStr = (color).toString(16)
-                            var r = parseInt(hexaStr.substring(0, 2), 16)
-                            var g = parseInt(hexaStr.substring(2, 4), 16)
-                            var b = parseInt(hexaStr.substring(4, 6), 16)
-                            const brightness = (r + g + b) / 3;
-                            const bw = brightness < 128 ? brightness : 255;
-                            if ((r == 255 || brightness > 128) && j - previousJ > (100)) {//} && previousBrightness==255){
-                                //  console.log(""+i+"  "+j)
-                                previousJ = j
-                                zones.push(j)
-                            } else {
-
-                            }
-                        }
-                    }
-
-                }
-                var x = zones
-                return callback(null, zones)
-            })
-        })
-    },
 
 
 }
@@ -382,13 +343,6 @@ if (false) {
             var x = err;
         })
 }
-if (false) {
 
-
-    scoreSplitter.findPageZones(obj.pdfName, 2, function (err, result) {
-
-    })
-
-}
 
 

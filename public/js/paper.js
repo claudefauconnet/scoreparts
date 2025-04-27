@@ -88,6 +88,10 @@ var Paper = (function () {
             self.onItemMouseDown = function (event) {
                 self.currentZoneAction = null;
                 var item = event.target
+
+
+
+
                 if (event.modifiers.alt && event.modifiers.control) {
                     self.currentZoneAction = "removeZone"
 
@@ -95,7 +99,22 @@ var Paper = (function () {
                     paper.project.view.update()
                     self.currentZoneAction = null;
                     event.stopPropagation()
-                } else if (event.modifiers.shift) {
+                }
+                else if (event.modifiers.shift) {//measure number
+                    self.currentZoneAction = "measure number"
+                    var number = prompt("measure number")
+                    if (number) {
+
+                        var text = new paper.PointText(new paper.Point(event.point.x, item.bounds.y -5));
+                        text.fillColor = 'blue';
+                        text.content = number;
+                        //   text.strokeColor = '#061a27';
+                        item.data.measure = number
+                        self.currentZoneAction = null;
+                        event.stopPropagation()
+                    }
+                }
+                else if (event.modifiers.XXXX) {//"enterVoice"
                     self.currentZoneAction = "enterVoice"
                     var voice = prompt("enter voice name")
                     if (voice) {
@@ -108,7 +127,8 @@ var Paper = (function () {
                         self.currentZoneAction = null;
                         event.stopPropagation()
                     }
-                } else if (event.modifiers.control) {
+                }
+                else if (event.modifiers.control) {
                     self.currentZoneAction = "resizeZone"
                 } else {//  if (event.modifiers.alt) {
                     self.currentZoneAction = "moveZone"
@@ -171,19 +191,39 @@ var Paper = (function () {
             var zoneHeight = parseInt($("#zoneHeight").val())
             var width = $("#myCanvas").width()
             var interline = data.interline * scoreParts.coef
-            var x=(data.firstVerticalLine* scoreParts.coef)-5
+            var x = (data.firstVerticalLine * scoreParts.coef) - 5
             data.topLines.forEach(function (zoneY, index) {
                 var zone = {
                     x: x,
                     y: (zoneY * scoreParts.coef) - (2 * interline),
-                    width: width-10,
+                    width: width - 10,
                     height: (8 * interline),
                     voice: "" + index
                 }
                 self.drawZone(zone)
             })
+            self.drawMeasures(data)
             $("#generatePartButton").css("visibility", "visible");
         }
+
+
+        self.drawMeasures = function (data) {
+            var barNumber = 0
+            data.topLines.forEach(function (zoneY, index) {
+                var bars = data.bars[index]
+                bars.forEach(function (barX) {
+                    barNumber++;
+                    var x = Math.round(barX*scoreParts.coef)
+                    var y = Math.round(zoneY * scoreParts.coef)-10
+                    var text = new paper.PointText(new paper.Point(x, y));
+                    text.fillColor = 'blue';
+                    text.content = "" + barNumber;
+
+                })
+            })
+
+        }
+
 
         self.drawZones = function (zones, zoneHeight) {
             zones.forEach(function (zone, index) {
@@ -194,7 +234,7 @@ var Paper = (function () {
 
 
         self.drawZone = function (zone) {
-            var width = $("#myCanvas").width()-10
+            var width = $("#myCanvas").width() - 10
             var rectangle = new paper.Rectangle(
                 new paper.Point(Math.round(zone.x), Math.round(zone.y)),
                 new paper.Point(Math.round(width), Math.round(zone.y + zone.height))
@@ -236,10 +276,8 @@ var Paper = (function () {
         }
 
 
-       // zoom
-      //  https://stackoverflow.com/questions/56694938/zoom-and-pan-fix
-
-
+        // zoom
+        //  https://stackoverflow.com/questions/56694938/zoom-and-pan-fix
 
 
         return self;
