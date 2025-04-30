@@ -22,6 +22,21 @@ var scoreParts = (function () {
                 self.allPagesZones = data
             }
 
+            var movements= ["all"]
+            for( var page in scoreParts.allPagesZones.pages) {
+                scoreParts.allPagesZones.pages[page].forEach(function(zone){
+                    if(zone.movement && movements.indexOf(zone.movement)<0){
+                        movements.push(zone.movement)
+                    }
+
+                })
+            }
+
+            Common.fillSelectOptions("movementSelect",movements,false)
+
+
+
+
 
             var pageImage = imagesDir + pdfName + "-0.png";
             Paper.drawImage(pageImage)
@@ -138,6 +153,25 @@ var scoreParts = (function () {
         $("#message").html(message);
 
 
+    }
+
+    self.openSelectMovement=function(){
+        var movement=$("#movementSelect").val()
+        if(!movement || movement=="all")
+            return;
+        self.currentMovement=movement
+        var stop =false
+        var movementPage=0
+        for( var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function(zone){
+                if(!stop && zone.movement== self.currentMovement){
+                    movementPage=zone.page;
+                  return stop=true
+                }
+
+            })
+        }
+        scoreParts.changePage(parseInt(movementPage));
     }
 
 

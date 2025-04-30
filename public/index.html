@@ -142,9 +142,8 @@
     <tr>
         <td>
             <input type="image" onclick='scoreParts.getInfos()' width="20px" src="images/infos.png">
-            Ouvrir partition : <select id="scoresSelect" onchange="scoreParts.openFirstPdfPage('')">
-            <option>&nbsp;</option>
-        </select>
+            Ouvrir partition : <select id="scoresSelect" onchange="scoreParts.openFirstPdfPage('')"> </select>
+
         </td>
 
         <td>
@@ -182,6 +181,11 @@
         <table>
 
 
+            <tr>
+                <td>
+                    Mouvement: <select id="movementSelect" onchange="scoreParts.openSelectMovement()"> </select>
+                </td>
+            </tr>
             <tr>
                 <td>
 

@@ -50,32 +50,36 @@ var Paper = (function () {
 
             var tool = new paper.Tool()
             tool.onMouseDown = function (event) {
-
+                if (self.currentZoneAction == "removeZone") {// call after delete zone
+                    self.currentZoneAction = null;
+                    return;
+                }
 
                 var hitResult = paper.project.hitTest(event.point, paper.hitOptions);
                 if (!hitResult || hitResult.type == "pixel") {
-
-
                     var w = $("#myCanvas").width()
                     var zoneHeight = parseInt($("#zoneHeight").val())
-                    var h = (zoneHeight / 2)
-                    var rectangle = new paper.Rectangle(
-                        new paper.Point(10, event.point.y - h),
-                        new paper.Point(w, event.point.y + h)
-                    );
-                    var path = new paper.Path.Rectangle(rectangle);
-                    path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
-                    path.selected = true;
-                    self.currentPath = path
-                    path.onMouseDrag = self.dragPath
-                    path.onMouseDown = self.onItemMouseDown
-                    path.data.page = scoreParts.currentPage
-                    path.data.type = "zone"
-                    path.data.voice = "" + self.getPageZones().length
+
+
+                    var zone = {
+                        x: 10,
+                        y: event.point.y,
+                        width: w,
+                        height: zoneHeight,
+                        page: scoreParts.currentPage,
+                        type: "zone",
+                        voice: "",
+
+                    }
+                    if (scoreParts.currentMovement) {
+                        zone.movement = zone.currentMovement
+                    }
+                    self.drawZone(zone)
                     $("#generatePartButton").css("visibility", "visible");
 
 
                 }
+
             }
 
 
@@ -88,33 +92,26 @@ var Paper = (function () {
             self.onItemMouseDown = function (event) {
                 self.currentZoneAction = null;
                 var item = event.target
-
-
-
+                event.preventDefault()
 
                 if (event.modifiers.alt && event.modifiers.control) {
                     self.currentZoneAction = "removeZone"
-
-                    var x = item.remove()
+                    item.removeChildren()
+                    item.remove()
                     paper.project.view.update()
-                    self.currentZoneAction = null;
+                    //  self.currentZoneAction = null;
                     event.stopPropagation()
-                }
-                else if (event.modifiers.shift) {//measure number
+                } else if (event.modifiers.shift) {//measure number
                     self.currentZoneAction = "measure number"
                     var number = prompt("measure number")
                     if (number) {
-
-                        var text = new paper.PointText(new paper.Point(event.point.x, item.bounds.y -5));
-                        text.fillColor = 'blue';
-                        text.content = number;
-                        //   text.strokeColor = '#061a27';
-                        item.data.measure = number
+                        var zone = item.getItems()[0]// zone à l'interieur du groupe
+                        zone.data.measure = {x:  event.point.x, y: item.bounds.y , number: number}
+                        self.drawMeasure(item, event.point.x, item.bounds.y, number)
                         self.currentZoneAction = null;
                         event.stopPropagation()
                     }
-                }
-                else if (event.modifiers.XXXX) {//"enterVoice"
+                } else if (event.modifiers.XXXX) {//"enterVoice"
                     self.currentZoneAction = "enterVoice"
                     var voice = prompt("enter voice name")
                     if (voice) {
@@ -127,8 +124,7 @@ var Paper = (function () {
                         self.currentZoneAction = null;
                         event.stopPropagation()
                     }
-                }
-                else if (event.modifiers.control) {
+                } else if (event.modifiers.control) {
                     self.currentZoneAction = "resizeZone"
                 } else {//  if (event.modifiers.alt) {
                     self.currentZoneAction = "moveZone"
@@ -154,6 +150,10 @@ var Paper = (function () {
 
                 } else if (self.currentZoneAction == "moveZone") {//move
                     item.position.y += event.delta.y;
+
+                    /*  item.children.forEach(function (child) {
+                          child.position.y += event.delta.y;
+                      })*/
                 }
 
             }
@@ -178,7 +178,9 @@ var Paper = (function () {
                         width: item.bounds.width,
                         height: item.bounds.height,
                         page: item.data.page,
-                        voice: item.data.voice
+                        voice: item.data.voice,
+                        movement: item.data.movement,
+                        measure: item.data.measure
                     })
                 }
             })
@@ -202,7 +204,7 @@ var Paper = (function () {
                 }
                 self.drawZone(zone)
             })
-            self.drawMeasures(data)
+            //   self.drawMeasures(data)
             $("#generatePartButton").css("visibility", "visible");
         }
 
@@ -213,14 +215,33 @@ var Paper = (function () {
                 var bars = data.bars[index]
                 bars.forEach(function (barX) {
                     barNumber++;
-                    var x = Math.round(barX*scoreParts.coef)
-                    var y = Math.round(zoneY * scoreParts.coef)-10
+                    var x = Math.round(barX * scoreParts.coef)
+                    var y = Math.round(zoneY * scoreParts.coef) - 10
                     var text = new paper.PointText(new paper.Point(x, y));
                     text.fillColor = 'blue';
                     text.content = "" + barNumber;
 
                 })
             })
+
+        }
+
+        self.drawMeasure = function (measureGroup, x, y, number) {
+
+            var text = new paper.PointText(new paper.Point(x, y - 1));
+            text.fillColor = 'green';
+            text.content = number;
+
+        var rect = new paper.Path.Rectangle(text.bounds);
+            rect.fillColor = '#ddd';
+          //  rect.strokeColor = 'black';
+            text.insertAbove(rect);
+            var group = new paper.Group([ rect,text])
+            measureGroup.addChild(group)
+
+
+
+
 
         }
 
@@ -244,20 +265,35 @@ var Paper = (function () {
             path.fillColor = new paper.Color(0.5, 0.5, 0.3, .2);// '#e9e9ff';
             path.selected = true;
             self.currentPath = path
-            path.onMouseDrag = self.dragPath
-            path.onMouseDown = self.onItemMouseDown
+            //   path.onMouseDrag = self.dragPath
+            //  path.onMouseDown = self.onItemMouseDown
             path.data.page = scoreParts.currentPage
             path.data.type = "zone"
 
+            if (zone.movement) {
+                path.data.movement = zone.movement
+            }
             if (zone.voice) {
                 path.data.voice = zone.voice
-            } else {
-                path.data.voice = "" + index
             }
-            var text = new paper.PointText(new paper.Point(20, Math.round(zone.y + (zone.height) / 2)));
-            text.fillColor = 'black';
-            text.content = zone.voice;
+            var text = new paper.PointText(new paper.Point(40, Math.round(zone.y + (zone.height/2))));
 
+
+            text.fillColor = 'blue';
+            text.content = zone.voice;
+            var rect = new paper.Path.Rectangle(text.bounds);
+            rect.fillColor = 'white';
+            rect.strokeColor = 'white';
+            text.insertAbove(rect);
+
+            var group = new paper.Group([path, rect, text, ,])
+
+            group.onMouseDrag = self.dragPath
+            group.onMouseDown = self.onItemMouseDown
+            if (zone.measure) {
+                path.data.measure=zone.measure
+                self.drawMeasure(group, zone.measure.x, zone.measure.y, zone.measure.number)
+            }
 
         }
 

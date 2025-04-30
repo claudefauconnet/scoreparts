@@ -185,6 +185,8 @@ var Proxy = (function () {
 
         var margin = parseInt($("#zoneMargin").val());
         var zonesStr = JSON.stringify(scoreParts.allPagesZones);
+        var movementStr=""
+
         var payload = {
             saveZones: 1,
             fileName: pdfName+"_zones.json",

@@ -99,7 +99,7 @@ var ZonesDetector = {
 
         var bars = {}
         topLines.forEach(function (topLine, index) {
-            bars[index] = ZonesDetector.findBarsInScale(image, firstVerticalLine, topLine, interline)
+          //  bars[index] = ZonesDetector.findBarsInScale(image, firstVerticalLine, topLine, interline)
         })
 
 

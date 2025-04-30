@@ -3,25 +3,28 @@ var Voices = (function () {
     var self = {}
 
 
-    self.getDistinctVoices=function(){
-        var voices=[]
-        for(var page in scoreParts.allPagesZones.pages){
-            scoreParts.allPagesZones.pages[page].forEach(function(zone){
-                if(voices.indexOf(zone.voice)<0)
-                    voices.push(zone.voice)
+    self.getDistinctVoices = function () {
+        var voices = []
+        for (var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                if (!scoreParts.currentMovement || scoreParts.currentMovement == zone.movement) {
+                    if (voices.indexOf(zone.voice) < 0) {
+                        voices.push(zone.voice)
+                    }
+                }
             })
         }
-     //  $("#voices_numberOfVoices").val(voices.length)
 
         return voices
 
     }
 
-    self.detectWrongPages=function(numberOfVoices){
-        for(var page in scoreParts.allPagesZones.pages){
-         //   console.log(page+" "+scoreParts.allPagesZones.pages[page].length)
-            if(scoreParts.allPagesZones.pages.length >0 && scoreParts.allPagesZones.pages.length%numberOfVoices!=0)
-                alert (" wrong  number of scales in page "+page)
+    self.detectWrongPages = function (numberOfVoices) {
+        for (var page in scoreParts.allPagesZones.pages) {
+            //   console.log(page+" "+scoreParts.allPagesZones.pages[page].length)
+            if (scoreParts.allPagesZones.pages.length > 0 && scoreParts.allPagesZones.pages.length % numberOfVoices != 0) {
+                alert(" wrong  number of scales in page " + page)
+            }
 
 
         }
@@ -37,34 +40,32 @@ var Voices = (function () {
             parent: "#"
         }];
 
-        var voices= self.getDistinctVoices()
+        var voices = self.getDistinctVoices()
 
 
-       self.numberOfVoices=parseInt(prompt("nombre total de voix ",  scoreParts.allPagesZones.numberOfVoices || voices.length))
+        self.numberOfVoices = parseInt(prompt("nombre total de voix ",  voices.length))
 
 
-       self.nunmberOfSystems=voices.length/self.numberOfVoices
-        if(!Number.isInteger(self.nunmberOfSystems)) {
+        self.nunmberOfSystems = voices.length / self.numberOfVoices
+        if (!Number.isInteger(self.nunmberOfSystems)) {
             self.detectWrongPages(self.numberOfVoices)
-         //   return alert("mauvais nombre de voix  " + self.nunmberOfSystems)
+            //   return alert("mauvais nombre de voix  " + self.nunmberOfSystems)
         }
 
-        if(self.numberOfVoices!=voices.length) {
-            voices = voices.slice(0,self.numberOfVoices);
+        if (self.numberOfVoices != voices.length) {
+            voices = voices.slice(0, self.numberOfVoices);
 
         }
-
-
 
 
         voices.forEach(function (voice, index) {
 
-            var label=voice + " <span style='font-style:italic;color:blue' id='pdfLinkDiv_" + voice + "'>...</span>"
+            var label = voice + " <span style='font-style:italic;color:blue' id='pdfLinkDiv_" + voice.replace(/ /, "_") + "'>...</span>"
             jstreedata.push({
-                id: "voice_"+voice,
+                id: "voice_" + voice,
                 text: label,
                 parent: "voices",
-                data: {voice: voice,index:index}
+                data: {voice: voice, index: index}
             })
         })
         var options = {
@@ -79,9 +80,9 @@ var Voices = (function () {
             " <div id='voicesTreeDiv'></div>" +
             "</div>" +
             "<div>" +
-            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;"  +
+            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;" +
             "<button onclick='Voices.validateDialog()'>OK</button>" +
-            "<number of voices <input id='voices_numberOfVoices'/>" +
+            "<button onclick='Voices.saveMovement()'>enregister Mouvement</button>" +
 
             "</div>" +
             "</div>"
@@ -91,8 +92,10 @@ var Voices = (function () {
         $("#mainDialogDiv").dialog("open")
 
 
-        var title=scoreParts.allPagesZones.title || scoreParts.pdfName
-       $("#voices_scoreTitle").val(title)
+        var title = scoreParts.allPagesZones.title || scoreParts.pdfName
+        if(scoreParts.currentMovement)
+            title+= " "+scoreParts.currentMovement
+        $("#voices_scoreTitle").val(title)
 
 
         JstreeWidget.loadJsTree("voicesTreeDiv", jstreedata, options)
@@ -106,8 +109,12 @@ var Voices = (function () {
 
         var voices = []
         nodes.forEach(function (node) {
-            if (node.data && node.data.voice!==null) {
-                voices.push({id: node.data.voice,index:node.data.index, label: node.data.voiceLabel || node.data.voice})
+            if (node.data && node.data.voice !== null) {
+                voices.push({
+                    id: node.data.voice,
+                    index: node.data.index,
+                    label: node.data.voiceLabel || node.data.voice
+                })
             }
         })
 
@@ -115,29 +122,31 @@ var Voices = (function () {
         async.eachSeries(voices, function (voice, callbackEachVoice) {
 
 
-            var voicePagesZones = {pages:{}}
+            var voicePagesZones = {pages: {}}
 
-            var title=$("#voices_scoreTitle").val()
-            voicePagesZones.title=title
-            scoreParts.allPagesZones.numberOfVoices=self.numberOfVoices
-            scoreParts.allPagesZones.title=title
+            var title = $("#voices_scoreTitle").val()
+            voicePagesZones.title = title
+            scoreParts.allPagesZones.numberOfVoices = self.numberOfVoices
+            scoreParts.allPagesZones.title = title
             Proxy.saveZones()
 
             for (var pageNum in scoreParts.allPagesZones.pages) {
-                voicePagesZones.pages[pageNum]=[]
-                var zones=scoreParts.allPagesZones.pages[pageNum]
+                voicePagesZones.pages[pageNum] = []
+                var zones = scoreParts.allPagesZones.pages[pageNum]
 
 
-                for (var i=voice.index;i<zones.length;i+=self.numberOfVoices){
-                    voicePagesZones.pages[pageNum].push(zones[i])
+                for (var i = voice.index; i < zones.length; i += self.numberOfVoices) {
+                    if (!scoreParts.currentMovement || scoreParts.currentMovement == zones[i].movement) {
+                        voicePagesZones.pages[pageNum].push(zones[i])
+                    }
                 }
 
             }
 
 
-            $("#pdfLinkDiv_" + voice.id).html("processing...");
+            $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html("processing...");
 
-           // $('#voicesTreeDiv').jstree().uncheck_node(voice.id)
+            // $('#voicesTreeDiv').jstree().uncheck_node(voice.id)
             Proxy.generateInstrumentScore(voice.label, voicePagesZones, function (err, result) {
                 if (err) {
                     return callbackEachVoice(err)
@@ -148,20 +157,34 @@ var Voices = (function () {
                         node.data.pdfLink = result
                     }
                 })
-                $("#pdfLinkDiv_" + voice.id).html(" <a target='_blank' href='" + document.location.href + result + "'>télécharger</a>")
+                $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html(" <a target='_blank' href='" + document.location.href + result + "'>télécharger</a>")
                 callbackEachVoice()
 
             })
-        }, function(err){
+        }, function (err) {
 
         })
 
 
     }
 
+    self.saveMovement = function () {
+
+        var movementLabel = prompt("nom du mouvement")
+        if (movementLabel) {
+            for (var page in scoreParts.allPagesZones.pages) {
+                scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                    if(!   zone.movement)
+                    zone.movement = movementLabel
+                })
+            }
+            Proxy.saveZones()
+        }
+    }
+
     self.onSelectVoice = function (event, obj) {
-        if(obj.node.data.pdfLink){
-            window.open( document.location.href + obj.node.data.pdfLink , '_blank')
+        if (obj.node.data.pdfLink) {
+            window.open(document.location.href + obj.node.data.pdfLink, '_blank')
 
             return;
         }
@@ -170,23 +193,23 @@ var Voices = (function () {
         if (obj.node.data) {
             var voiceLabel = prompt("voice name")
             if (voiceLabel) {
-                var label=voiceLabel + " <span id='pdfLinkDiv_" + obj.node.data.voice + "'>...</span>"
+                var label = voiceLabel + " <span id='pdfLinkDiv_" + obj.node.data.voice + "'>...</span>"
                 $('#voicesTreeDiv').jstree('rename_node', obj.node, label)
                 obj.node.data.voiceLabel = voiceLabel
                 $('#voicesTreeDiv').jstree().check_node(obj.node)
 
 
                 for (var pageNum in scoreParts.allPagesZones.pages) {
-                    var zones=scoreParts.allPagesZones.pages[pageNum]
+                    var zones = scoreParts.allPagesZones.pages[pageNum]
 
 
-                    for (var i=obj.node.data.index;i<zones.length;i+=self.numberOfVoices){
-                        zones[i].voice=voiceLabel
+                    for (var i = obj.node.data.index; i < zones.length; i += self.numberOfVoices) {
+                        zones[i].voice = voiceLabel
                     }
 
                 }
 
-               var x= scoreParts.allPagesZones.pages
+                var x = scoreParts.allPagesZones.pages
                 Proxy.saveZones()
 
             }
