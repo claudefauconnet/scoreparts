@@ -7,6 +7,10 @@ var PDFDocument = require('pdfkit');
 var exec = require('child_process').exec;
 var path = require('path');
 
+var zip = new require('node-zip')();
+
+
+
 var scoreSplitter = {
     zones: [],
     //  imagesDir: "./public/data/images/",
@@ -23,7 +27,8 @@ var scoreSplitter = {
     imageBackOffset: -150,//retrait de l'image vers la gauche
     leftMargin: 60,
     anamorphoseCoef: 1.5,
-    interScale: 10 ,// espace entre les portées
+   firstScaleY:70,
+    interScale: 10,// espace entre les portées
 
     listScores: function (callback) {
         var pdfs = [];
@@ -108,7 +113,8 @@ var scoreSplitter = {
                 scoreSplitter.blitImages,
 
             ], function (err, pagesImagesArray) {
-                scoreSplitter.writePagesToPdf(pdfName, title, part, pagesImagesArray, function (err, result) {
+                var outputpdfName=(obj.title+" "+part).replace(/ /g,"_")
+                scoreSplitter.writePagesToPdf(outputpdfName, title, part, pagesImagesArray, function (err, result) {
                     if (err) {
                         return callback(err);
                     }
@@ -183,29 +189,31 @@ var scoreSplitter = {
 
         pageNums.forEach(function (pageNum) {
 
-            zonesWithImages[pageNum].forEach(function (zone,index) {
+            zonesWithImages[pageNum].forEach(function (zone, index) {
+
+
 
                 currentPage.push(zone);
                 zone.yOnPage = offsetY
                 zone.xOnPage = (scoreSplitter.leftMargin) / scale
 
+                if (zone.measure) {
+                    console.log(zone.measure.number+" "+offsetY)
+                    zone.measure.y=offsetY
+                }
 
 
                 offsetY += (zone.bitmap.height) + (vertStep);
-                if((offsetY+vertStep)>maxPageYoffset){
+                if ((offsetY + vertStep+zone.bitmap.height) > maxPageYoffset) {
                     pages.push(currentPage);
                     currentPage = [];
                     offsetY = initialYOffset;
                 }
 
 
-
-
-
-
             })
         })
-     if (currentPage.length>0) {
+        if (currentPage.length > 0) {
             pages.push(currentPage);
         }
         callbackWaterfall(null, pages, scale)
@@ -216,18 +224,28 @@ var scoreSplitter = {
 
 
     blitImages: function (pages, scale, callbackWaterfall) {
-        var targetImages = [];
+        var targetPages = [];
+        targetPages.scale = scale;
         var margin = 0
 
 
-
         async.eachSeries(pages, function (page, callbackPages) {
-            targetImages.scale = scale;
+
             var w = Math.round((scoreSplitter.pageWidth - margin) / scale);
             var h = Math.round((scoreSplitter.pageHeight - margin) / scale);
 
+            var targetPage = {imageBuffer: null, measures: []}
             JimpProxy.createImage(w, h, function (err, blanckImg) {
+
                 async.eachSeries(page, function (pageZone, callbackZones) {
+                       /* if(pageZone.movement ){
+                            targetPages.movement=pageZone.movement.replace (/ /g,"_")
+                        }*/
+
+                        if (pageZone.measure) {
+                            targetPage.measures.push(pageZone.measure)
+                        }
+
                         try {
                             JimpProxy.blitImage(blanckImg, pageZone.bitmap, pageZone.xOnPage, pageZone.yOnPage, function (err, image) {
                                 blanckImg = image
@@ -255,7 +273,8 @@ var scoreSplitter = {
 
 
                         JimpProxy.getBuffer(blanckImg, function (err, imgBuffer) {
-                            targetImages.push(imgBuffer);
+                            targetPage.imageBuffer = imgBuffer
+                            targetPages.push(targetPage);
                             callbackPages();
                         });
 
@@ -267,7 +286,7 @@ var scoreSplitter = {
             if (err) {
                 return callbackWaterfall(err);
             }
-            callbackWaterfall(null, targetImages);
+            callbackWaterfall(null, targetPages);
 
         })
 
@@ -277,40 +296,54 @@ var scoreSplitter = {
 
 
     writePagesToPdf: function (pdfName, title, part, pagesImagesArray, callback) {
-        var title = title + "-" + part;
-        var pdfsDir = path.resolve(__dirname, scoreSplitter.targetPdfDir);
-        var partPdfFile = pdfsDir + path.sep + pdfName + "-" + part + ".pdf";
+
+
+        var pdfFiles=[]
+         var pdfsDir = path.resolve(__dirname, scoreSplitter.targetPdfDir);
+        var partPdfFile = pdfsDir + path.sep + pdfName+ ".pdf";
         if (fs.existsSync(partPdfFile)) {
 
             try {
                 fs.unlinkSync(partPdfFile);
             } catch (e) {
-                return callback("fichier existant et ouvert impossible d'enrgistrer le nouveau fichier");
+                return callback("fichier existant et ouvert impossible d'enregistrer le nouveau fichier");
             }
         }
-        var partPdfUrl = "data/pdfs/" + pdfName + "-" + part + ".pdf";
+       // var movement=""
+       /* if(pagesImagesArray.movement)
+            movement="-"+pagesImagesArray.movement;*/
+        var partPdfUrl = "data/pdfs/" + pdfName + ".pdf";
         var doc = new PDFDocument({size: [scoreSplitter.pageWidth / pagesImagesArray.scale, scoreSplitter.pageHeight / pagesImagesArray.scale]});
         var pageNumber = 1;
-        doc.on('pageAdded',
-            function () {
-                // Don't forget the reset the font family, size & color if needed
-                doc.fontSize(16)
-                var str = title + " page " + (++pageNumber)
-                doc.text(str, 10, 10, {align: 'left'});
-                //  doc.fontSize(28)
-                // doc.text(++pageNumber, 0.5 * (doc.page.width - 100), 40, {width: 100, align: 'center'});
-            }
-        );
+
 
         doc.pipe(fs.createWriteStream(partPdfFile));
-
+        pdfFiles.push(partPdfFile)
         for (var i = 0; i < pagesImagesArray.length; i++) {
+            var imageBuffer=pagesImagesArray[i].imageBuffer
             //   doc.image(pagesImagesArray[i], 0, 50, {scale: (1 / pagesImagesArray.scale)})
-            doc.image(pagesImagesArray[i], scoreSplitter.imageBackOffset, 50, {scale: scoreSplitter.imgScaleCoef})
+            doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.imgScaleCoef})
             if (i == 0) {
                 doc.fontSize(36);
-                doc.text(title, (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+                doc.text(title+" "+part, (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+            }else{
+                doc.fontSize(12);
+                doc.text(title+" "+part,30, (scoreSplitter.pageHeight-50)/ pagesImagesArray.scale , {width: 800, align: 'center'});
             }
+            if (pagesImagesArray[i].measures) {
+                pagesImagesArray[i].measures.forEach(function (measure) {
+                    doc.fontSize(18);
+                  //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
+                        doc.text(measure.number, 15 , measure.y+ scoreSplitter.firstScaleY, {
+                        width: 200,
+                        align: 'center'
+                    });
+
+                })
+            }
+            doc.fontSize(18)
+            var str = ""+(pageNumber++)
+            doc.text(str, (scoreSplitter.pageWidth-15)/ pagesImagesArray.scale,30, {align: 'left'});
 
             doc.addPage();
 
@@ -319,6 +352,23 @@ var scoreSplitter = {
         callback(null, partPdfUrl)
 
     }
+    ,
+    createZip:function(files,callback) {
+
+        setTimeout(function () {
+            var fs = require("fs");
+
+            files.forEach(function(file) {
+                zip.file('file', 'hello there');
+            })
+            var data = zip.generate({base64:false,compression:'DEFLATE'});
+            fs.writeFileSync('test.zip', data, 'binary');
+
+        }, 1000 * 5)
+
+    }
+
+
 
 
 

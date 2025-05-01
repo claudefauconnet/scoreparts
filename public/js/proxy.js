@@ -174,13 +174,14 @@ var Proxy = (function () {
 
     }
     self.saveZones = function () {
+
         var page = scoreParts.currentPage
         var zones = Paper.getPageZones()
         scoreParts.currentZones = zones
         scoreParts.allPagesZones.pages[page] = zones
 
 
-
+        scoreParts.copyMeasuresOnAllVoices()
         var pdfName = $('#scoresSelect').val();
 
         var margin = parseInt($("#zoneMargin").val());

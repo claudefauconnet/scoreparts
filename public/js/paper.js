@@ -231,6 +231,8 @@ var Paper = (function () {
             var text = new paper.PointText(new paper.Point(x, y - 1));
             text.fillColor = 'green';
             text.content = number;
+            text.fontSize=14
+            text.fontSize=14
 
         var rect = new paper.Path.Rectangle(text.bounds);
             rect.fillColor = '#ddd';

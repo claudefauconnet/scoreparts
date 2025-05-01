@@ -182,6 +182,34 @@ var scoreParts = (function () {
 
     }
 
+    self.copyMeasuresOnAllVoices=function(){
+        var zonesWithMeasures=[]
+        for( var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function(zone){
+               if(zone.measure){
+                   zonesWithMeasures.push(zone)
+               }
+
+            })
+        }
+
+        zonesWithMeasures.forEach(function(zone){
+            var targetZones=scoreParts.allPagesZones.pages[zone.page]
+
+            targetZones.forEach(function(targetZone) {
+                if(!targetZone.measure){
+                    targetZone.measure=zone.measure
+                }
+
+            })
+
+        })
+        var x= scoreParts.allPagesZones
+
+
+
+    }
+
     return self;
 
 

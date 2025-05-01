@@ -76,12 +76,15 @@ var Voices = (function () {
 
 
         var html = "<div  style='width:400px;height:700px'>" +
+            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;" +
+          //  "Mouvement<input id='voices_movementSelect' > &nbsp;" +
             "<div id='voicesTreeContainer' style='width:400px;height:600px'>" +
             " <div id='voicesTreeDiv'></div>" +
             "</div>" +
             "<div>" +
-            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;" +
+
             "<button onclick='Voices.validateDialog()'>OK</button>" +
+            "<button onclick='Voices.getZip()'>telecharger Zip</button>" +
             "<button onclick='Voices.saveMovement()'>enregister Mouvement</button>" +
 
             "</div>" +
@@ -93,8 +96,8 @@ var Voices = (function () {
 
 
         var title = scoreParts.allPagesZones.title || scoreParts.pdfName
-        if(scoreParts.currentMovement)
-            title+= " "+scoreParts.currentMovement
+      /*  if(scoreParts.currentMovement)
+            title+= " "+scoreParts.currentMovement*/
         $("#voices_scoreTitle").val(title)
 
 
@@ -215,6 +218,14 @@ var Voices = (function () {
             }
 
         }
+    }
+
+    self.getZip=function(){
+        var nodes = $('#voicesTreeDiv').jstree().get_checked(true)
+        var voices = []
+        nodes.forEach(function (node) {
+        })
+
     }
 
 
