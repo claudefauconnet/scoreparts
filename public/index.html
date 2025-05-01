@@ -115,6 +115,24 @@
         $(function () {
             Proxy.listScores();
 
+
+            $('#tabCutDiv').load("./cutParts.html", function (err) {
+
+            })
+            $('#tabGeneratePartsDiv').load("./generateParts.html", function (err) {
+
+            })
+
+
+            $("#tabsDiv").tabs({
+                activate: function (event, ui) {
+
+                    if (ui.newPanel.selector == "#tabGeneratePartsDiv") {
+                        Voices.showVoicesDialog()
+                    }
+                }
+            })
+
             $("#mainDialogDiv").dialog({
                 autoOpen: false,
                 height: "auto",
@@ -142,29 +160,19 @@
     <tr>
         <td>
             <input type="image" onclick='scoreParts.getInfos()' width="20px" src="images/infos.png">
+        </td>
+        <td>
+
             Ouvrir partition : <select id="scoresSelect" onchange="scoreParts.openFirstPdfPage('')"> </select>
 
         </td>
 
+
         <td>
-            <button id=importButton" onclick="$('#importDiv').css('visibility','visible');">Importer PDF...</button>
+            Mouvement: <select id="movementSelect" onchange="scoreParts.openSelectMovement()"> </select>
         </td>
         <td>
-            <div id="importDiv">
 
-
-                <form enctype="multipart/form-data" id="uploadForm">
-
-                    <input type="file" name="pdfFile" id="pdfFileInput" onchange="Proxy.uploadFormData()">
-                    Qualite <select name="imageQuality">
-                    <option value="low">faible</option>
-                    <option value="medium" selected>moyenne</option>
-                    <option value="high">haute</option>
-                </select>
-
-                </form>
-
-            </div>
         </td>
     </tr>
     <tr>
@@ -173,89 +181,62 @@
         </td>
     </tr>
 </table>
+
+<div id="importDiv" style="visibility:hidden">
+
+</div>
 <div style="display: flex;flex-direction: row">
 
-    <div id="controlPanelDivxxx" style="width:400px;height:600px;visibility: visible">
-        <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
-        <div id="message"></div>
-        <table>
+
+    <div id='tabsDiv'>
+
+        <ul>
+
+            <li><a href="#tabCutDiv"> Decouper voix </a></li>
+            <li><a href="#tabGeneratePartsDiv"> Generer voix </a></li>
+            <li><a href="#tabimportDiv"> Importer PDF </a></li>
+            <li><a href="#tagUsageDiv"> Usage </a></li>
+        </ul>
 
 
-            <tr>
-                <td>
-                    Mouvement: <select id="movementSelect" onchange="scoreParts.openSelectMovement()"> </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
+        <div style="width:400px;height:600px;" id='tabimportDiv'>
+            <form enctype="multipart/form-data" id="uploadForm">
 
-                    page<span id="page"></span>
-                    <br>
-                    <button onclick="scoreParts.previousPage()">page précédente</button>
-                    <button onclick="scoreParts.nextPage()">page suivante</button>
-                    <button onclick="scoreParts.goToPage()">aller à page</button>
-                    <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
-                            id="duplicateZonesButton2">autoDetect Zones
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
-                            id="duplicateZonesButton">Copier Zones
-                    </button>
-                    <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">Coller
-                        Zones
-                    </button>
+                <input type="file" name="pdfFile" id="pdfFileInput" onchange="Proxy.uploadFormData()">
+                <br>
+                <br>
+                Qualite <select name="imageQuality">
+                <option value="low">faible</option>
+                <option value="medium" selected>moyenne</option>
+                <option value="high">haute</option>
+            </select>
 
 
-                </td>
-            </tr>
-            <tr>
-                <td>
+            </form>
 
-                    hauteur zone<input id="zoneHeight" value="50" size="3">
-                    <div id="mousePositionDiv"></div>
-                </td>
-            </tr>
-            <tr>
-                <td>
+        </div>
 
-                    &nbsp;&nbsp;
-                    <button onclick=scoreParts.restartAll()>tout recommencer</button>
-                    <button onclick=scoreParts.deletePageZones()>effacer Page</button>
-                </td>
-            </tr>
-            <tr>
-                <td>
+        <div style="width:400px;height:600px;" id='tabCutDiv'></div>
 
+        <div style="width:400px;height:600px;" id='tabGeneratePartsDiv'></div>
 
-                    <button class="buttonImportant" id="generatePartButton2" style="visibility:visible"
-                            onclick=" Voices.showVoicesDialog()">Générer multiples voix (pdf)
-
-                    </button>
-                    <button class="buttonImportant" id="generatePartButton" style="visibility:visible"
-                            onclick="Proxy.generateInstrumentScore()">Générer simple voix (pdf)
-
-                    </button>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button onclick='Proxy.saveZones()'>Save Zones</button>
-                    <button onclick='Proxy.loadZones()'>Load Zones</button>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="3"></td>
-            </tr>
-        </table>
+        <div style="width:400px;height:600px;" id='tagUsageDiv'></div>
 
 
     </div>
 
 
-    <div id="imageSplitterDivXX" style="width:400px;visibility: visible">
+    <div id="imageSplitterDivXX">
+
+        <div>
+            page<span id="page"></span>
+            <button onclick="scoreParts.previousPage()">page précédente</button>
+            <button onclick="scoreParts.nextPage()">page suivante</button>
+            <button onclick="scoreParts.goToPage()">aller à page</button>
+            <button onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
+                    id="duplicateZonesButton2">autoDetect Zones
+            </button>
+        </div>
         <canvas id="myCanvas" style="position:relative;top:0;left:0">
 
 

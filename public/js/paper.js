@@ -55,6 +55,10 @@ var Paper = (function () {
                     return;
                 }
 
+                if(!scoreParts.currentMovement){
+                    return alert ("selectionnez ou déclarez un mouvement")
+                }
+
                 var hitResult = paper.project.hitTest(event.point, paper.hitOptions);
                 if (!hitResult || hitResult.type == "pixel") {
                     var w = $("#myCanvas").width()
@@ -72,7 +76,7 @@ var Paper = (function () {
 
                     }
                     if (scoreParts.currentMovement) {
-                        zone.movement = zone.currentMovement
+                        zone.movement = scoreParts.currentMovement
                     }
                     self.drawZone(zone)
                     $("#generatePartButton").css("visibility", "visible");

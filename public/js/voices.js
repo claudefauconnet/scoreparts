@@ -2,6 +2,20 @@ var Voices = (function () {
 
     var self = {}
 
+    self.html = "<div  style='width:400px;height:700px'>" +
+        "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;" +
+        "Mouvement<input id='voices_movementSelect' > &nbsp;" +
+        "<div id='voicesTreeContainer' style='width:400px;height:600px'>" +
+        " <div id='voicesTreeDiv'></div>" +
+        "</div>" +
+        "<div>" +
+
+        "<button onclick='Voices.validateDialog()'>OK</button>" +
+        "<button onclick='Voices.getZip()'>telecharger Zip</button>" +
+        "<button onclick='Voices.saveMovement()'>enregister Mouvement</button>" +
+
+        "</div>" +
+        "</div>"
 
     self.getDistinctVoices = function () {
         var voices = []
@@ -43,7 +57,7 @@ var Voices = (function () {
         var voices = self.getDistinctVoices()
 
 
-        self.numberOfVoices = parseInt(prompt("nombre total de voix ",  voices.length))
+        self.numberOfVoices = parseInt(prompt("nombre total de voix ", voices.length))
 
 
         self.nunmberOfSystems = voices.length / self.numberOfVoices
@@ -75,29 +89,16 @@ var Voices = (function () {
         };
 
 
-        var html = "<div  style='width:400px;height:700px'>" +
-            "Titre pièce<input id='voices_scoreTitle' size='200px'> &nbsp;" +
-          //  "Mouvement<input id='voices_movementSelect' > &nbsp;" +
-            "<div id='voicesTreeContainer' style='width:400px;height:600px'>" +
-            " <div id='voicesTreeDiv'></div>" +
-            "</div>" +
-            "<div>" +
-
-            "<button onclick='Voices.validateDialog()'>OK</button>" +
-            "<button onclick='Voices.getZip()'>telecharger Zip</button>" +
-            "<button onclick='Voices.saveMovement()'>enregister Mouvement</button>" +
-
-            "</div>" +
-            "</div>"
 
 
-        $("#mainDialogDiv").html(html)
-        $("#mainDialogDiv").dialog("open")
+
+     //   $("#mainDialogDiv").html(self.html)
+      //  $("#mainDialogDiv").dialog("open")
 
 
         var title = scoreParts.allPagesZones.title || scoreParts.pdfName
-      /*  if(scoreParts.currentMovement)
-            title+= " "+scoreParts.currentMovement*/
+        /*  if(scoreParts.currentMovement)
+              title+= " "+scoreParts.currentMovement*/
         $("#voices_scoreTitle").val(title)
 
 
@@ -177,8 +178,9 @@ var Voices = (function () {
         if (movementLabel) {
             for (var page in scoreParts.allPagesZones.pages) {
                 scoreParts.allPagesZones.pages[page].forEach(function (zone) {
-                    if(!   zone.movement)
-                    zone.movement = movementLabel
+                    if (!zone.movement) {
+                        zone.movement = movementLabel
+                    }
                 })
             }
             Proxy.saveZones()
@@ -220,7 +222,7 @@ var Voices = (function () {
         }
     }
 
-    self.getZip=function(){
+    self.getZip = function () {
         var nodes = $('#voicesTreeDiv').jstree().get_checked(true)
         var voices = []
         nodes.forEach(function (node) {

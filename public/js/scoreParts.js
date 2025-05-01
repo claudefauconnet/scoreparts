@@ -22,7 +22,7 @@ var scoreParts = (function () {
                 self.allPagesZones = data
             }
 
-            var movements= ["all"]
+            var movements= ["", "Nouveau"]
             for( var page in scoreParts.allPagesZones.pages) {
                 scoreParts.allPagesZones.pages[page].forEach(function(zone){
                     if(zone.movement && movements.indexOf(zone.movement)<0){
@@ -157,8 +157,20 @@ var scoreParts = (function () {
 
     self.openSelectMovement=function(){
         var movement=$("#movementSelect").val()
-        if(!movement || movement=="all")
+        if(!movement )
             return;
+        if(movement=="Nouveau" ){
+            var movement=prompt ("nom du mouvement")
+            if(!movement)
+                return;
+            $('#movementSelect').append($('<option>', {
+                value: movement,
+                text: movement
+            }));
+            $('#movementSelect').val(movement)
+        }
+
+
         self.currentMovement=movement
         var stop =false
         var movementPage=0
