@@ -20,8 +20,10 @@ var Voices = (function () {
     self.getDistinctVoices = function () {
         var voices = []
         for (var page in scoreParts.allPagesZones.pages) {
-            scoreParts.allPagesZones.pages[page].forEach(function (zone) {
-                if (!scoreParts.currentMovement || scoreParts.currentMovement == zone.movement) {
+            scoreParts.allPagesZones.pages[page].forEach(function (zone,index) {
+                if ( scoreParts.currentMovement == zone.movement) {
+                    if(!zone.voice)
+                        zone.voice=index
                     if (voices.indexOf(zone.voice) < 0) {
                         voices.push(zone.voice)
                     }
@@ -73,7 +75,9 @@ var Voices = (function () {
 
 
         voices.forEach(function (voice, index) {
-
+            if (!voice) {
+                voice = "" + index
+            }
             var label = voice + " <span style='font-style:italic;color:blue' id='pdfLinkDiv_" + voice.replace(/ /, "_") + "'>...</span>"
             jstreedata.push({
                 id: "voice_" + voice,
@@ -89,11 +93,8 @@ var Voices = (function () {
         };
 
 
-
-
-
-     //   $("#mainDialogDiv").html(self.html)
-      //  $("#mainDialogDiv").dialog("open")
+        //   $("#mainDialogDiv").html(self.html)
+        //  $("#mainDialogDiv").dialog("open")
 
 
         var title = scoreParts.allPagesZones.title || scoreParts.pdfName

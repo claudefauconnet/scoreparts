@@ -22,20 +22,17 @@ var scoreParts = (function () {
                 self.allPagesZones = data
             }
 
-            var movements= ["", "Nouveau"]
-            for( var page in scoreParts.allPagesZones.pages) {
-                scoreParts.allPagesZones.pages[page].forEach(function(zone){
-                    if(zone.movement && movements.indexOf(zone.movement)<0){
+            var movements = ["", "Nouveau"]
+            for (var page in scoreParts.allPagesZones.pages) {
+                scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                    if (zone.movement && movements.indexOf(zone.movement) < 0) {
                         movements.push(zone.movement)
                     }
 
                 })
             }
 
-            Common.fillSelectOptions("movementSelect",movements,false)
-
-
-
+            Common.fillSelectOptions("movementSelect", movements, false)
 
 
             var pageImage = imagesDir + pdfName + "-0.png";
@@ -57,11 +54,21 @@ var scoreParts = (function () {
     }
 
 
-    self.changePage = function (newPage) {
-
+    self.saveCurrentPageZones=function () {
         var zones = Paper.getPageZones()
+        if(zones.length==0)
+            return
         self.currentZones = zones
         self.allPagesZones.pages[self.currentPage] = zones
+        Proxy.saveZones()
+
+    }
+
+    self.changePage = function (newPage) {
+
+        self.saveCurrentPageZones()
+
+
 
         self.currentPage = newPage;
         var name = $('#scoresSelect').val() + "-" + (self.currentPage);
@@ -96,9 +103,9 @@ var scoreParts = (function () {
 
     }
 
-    self.goToPage=function(){
-        var page=prompt("Aller à page numero" )
-        if( page) {
+    self.goToPage = function () {
+        var page = prompt("Aller à page numero")
+        if (page) {
             var page = parseInt(page)
             self.changePage(page)
         }
@@ -155,14 +162,16 @@ var scoreParts = (function () {
 
     }
 
-    self.openSelectMovement=function(){
-        var movement=$("#movementSelect").val()
-        if(!movement )
+    self.openSelectMovement = function () {
+        var movement = $("#movementSelect").val()
+        if (!movement) {
             return;
-        if(movement=="Nouveau" ){
-            var movement=prompt ("nom du mouvement")
-            if(!movement)
+        }
+        if (movement == "Nouveau") {
+            var movement = prompt("nom du mouvement")
+            if (!movement) {
                 return;
+            }
             $('#movementSelect').append($('<option>', {
                 value: movement,
                 text: movement
@@ -171,14 +180,14 @@ var scoreParts = (function () {
         }
 
 
-        self.currentMovement=movement
-        var stop =false
-        var movementPage=0
-        for( var page in scoreParts.allPagesZones.pages) {
-            scoreParts.allPagesZones.pages[page].forEach(function(zone){
-                if(!stop && zone.movement== self.currentMovement){
-                    movementPage=zone.page;
-                  return stop=true
+        self.currentMovement = movement
+        var stop = false
+        var movementPage = 0
+        for (var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                if (!stop && zone.movement == self.currentMovement) {
+                    movementPage = zone.page;
+                    return stop = true
                 }
 
             })
@@ -194,30 +203,29 @@ var scoreParts = (function () {
 
     }
 
-    self.copyMeasuresOnAllVoices=function(){
-        var zonesWithMeasures=[]
-        for( var page in scoreParts.allPagesZones.pages) {
-            scoreParts.allPagesZones.pages[page].forEach(function(zone){
-               if(zone.measure){
-                   zonesWithMeasures.push(zone)
-               }
+    self.copyMeasuresOnAllVoices = function () {
+        var zonesWithMeasures = []
+        for (var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                if (zone.measure) {
+                    zonesWithMeasures.push(zone)
+                }
 
             })
         }
 
-        zonesWithMeasures.forEach(function(zone){
-            var targetZones=scoreParts.allPagesZones.pages[zone.page]
+        zonesWithMeasures.forEach(function (zone) {
+            var targetZones = scoreParts.allPagesZones.pages[zone.page]
 
-            targetZones.forEach(function(targetZone) {
-                if(!targetZone.measure){
-                    targetZone.measure=zone.measure
+            targetZones.forEach(function (targetZone) {
+                if (!targetZone.measure) {
+                    targetZone.measure = zone.measure
                 }
 
             })
 
         })
-        var x= scoreParts.allPagesZones
-
+        var x = scoreParts.allPagesZones
 
 
     }

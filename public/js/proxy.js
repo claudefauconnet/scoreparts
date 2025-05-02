@@ -94,6 +94,9 @@ var Proxy = (function () {
         scoreParts.setMessage("  La partie est en cours de génération , merci de patienter ...", " blue");
         $('body').css("cursor", "progress");
         var pdfName = $('#scoresSelect').val();
+        if(!scoreParts.currentMovement){
+            return alert("selectionnez un mouvement ou declarez le")
+        }
 
         var margin = parseInt($("#zoneMargin").val());
         var zonesStr = JSON.stringify(selectedZones);
@@ -104,6 +107,7 @@ var Proxy = (function () {
             pdfName: pdfName,
             zonesStr: zonesStr,
             imgScaleCoef: scoreParts.coef,
+            movement:scoreParts.currentMovement
         }
 
         $("#waitImg").css("visibility", "visible");
@@ -142,6 +146,11 @@ var Proxy = (function () {
     }
 
     self.autoDetectPageZones = function (callback) {
+
+        if(!scoreParts.currentMovement)
+            return alert( "selectionnez ou déclarer un mouvement")
+
+
         var pdfName = $('#scoresSelect').val();
         var payload = {
             findPageZones: 1,

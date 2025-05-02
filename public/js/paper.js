@@ -35,6 +35,7 @@ var Paper = (function () {
             // Create an empty project and a view for the canvas:
             paper.setup(canvas);
             self.raster = new paper.Raster(imageUrl);
+            self.raster.data.type=="image"
 
 
             self.raster.onLoad = function () {
@@ -64,6 +65,7 @@ var Paper = (function () {
                     var w = $("#myCanvas").width()
                     var zoneHeight = parseInt($("#zoneHeight").val())
 
+                  //  var voiceIndex=scoreParts.allPagesZones.pages[scoreParts.currentPage].length
 
                     var zone = {
                         x: 10,
@@ -72,7 +74,7 @@ var Paper = (function () {
                         height: zoneHeight,
                         page: scoreParts.currentPage,
                         type: "zone",
-                        voice: "",
+                        voice: ""//+voiceIndex,
 
                     }
                     if (scoreParts.currentMovement) {
@@ -96,7 +98,7 @@ var Paper = (function () {
             self.onItemMouseDown = function (event) {
                 self.currentZoneAction = null;
                 var item = event.target
-                event.preventDefault()
+
 
                 if (event.modifiers.alt && event.modifiers.control) {
                     self.currentZoneAction = "removeZone"
@@ -104,6 +106,7 @@ var Paper = (function () {
                     item.remove()
                     paper.project.view.update()
                     //  self.currentZoneAction = null;
+                    event.preventDefault()
                     event.stopPropagation()
                 } else if (event.modifiers.shift) {//measure number
                     self.currentZoneAction = "measure number"
@@ -113,6 +116,7 @@ var Paper = (function () {
                         zone.data.measure = {x:  event.point.x, y: item.bounds.y , number: number}
                         self.drawMeasure(item, event.point.x, item.bounds.y, number)
                         self.currentZoneAction = null;
+                        event.preventDefault()
                         event.stopPropagation()
                     }
                 } else if (event.modifiers.XXXX) {//"enterVoice"
@@ -127,6 +131,7 @@ var Paper = (function () {
                         item.data.voice = voice
                         self.currentZoneAction = null;
                         event.stopPropagation()
+                        event.preventDefault()
                     }
                 } else if (event.modifiers.control) {
                     self.currentZoneAction = "resizeZone"
@@ -189,6 +194,20 @@ var Paper = (function () {
                 }
             })
 
+            zones.sort(function(a,b){
+                if(a.y>b.y)
+                    return 1;
+                if(a.y<b.y)
+                    return -1;
+                return 0;
+
+            })
+            zones.forEach(function (zone,index) {
+            if(!zone.voice){
+                zone.voice=""+(index+1)
+            }
+            })
+
             return zones
 
         }
@@ -204,7 +223,8 @@ var Paper = (function () {
                     y: (zoneY * scoreParts.coef) - (2 * interline),
                     width: width - 10,
                     height: (8 * interline),
-                    voice: "" + index
+                   // voice: "" + index,
+                    movement:scoreParts.currentMovement
                 }
                 self.drawZone(zone)
             })
@@ -307,7 +327,7 @@ var Paper = (function () {
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             items.forEach(function (item, index) {
-                if (item.data.type == "zone") {
+                if (index>0) {//tout sauf image
                     if (!zoneIndex || zoneIndex == index) {
                         var x = item.remove()
                     }

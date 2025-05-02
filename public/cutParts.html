@@ -1,21 +1,9 @@
 <div id="controlPanelDivxxx" style="width:400px;height:600px;visibility: visible">
     <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
-    <div id="message"></div>
+
     <table>
 
 
-        <tr>
-            <td>
-                <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
-                        id="duplicateZonesButton">Copier Zones
-                </button>
-                <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">Coller
-                    Zones
-                </button>
-
-
-            </td>
-        </tr>
         <tr>
             <td>
 
@@ -28,9 +16,17 @@
 
                 &nbsp;&nbsp;
                 <button onclick=scoreParts.restartAll()>tout recommencer</button>
-                <button onclick=scoreParts.deletePageZones()>effacer Page</button>
+                <button onclick=scoreParts.changePage(scoreParts.currentPage)>effacer Page</button>
+                <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
+                        id="duplicateZonesButton">Copier Zones
+                </button>
+                <button onclick="scoreParts.repeatZonesFromPreviousPage(this)" style="visibility: visible">Coller
+                    Zones
+                </button>
+
             </td>
         </tr>
+        <!--
         <tr>
             <td>
 
@@ -43,8 +39,10 @@
                         onclick="Proxy.generateInstrumentScore()">Générer simple voix (pdf)
 
                 </button>
+
             </td>
         </tr>
+           -->
         <tr>
             <td>
                 <button onclick='Proxy.saveZones()'>Save Zones</button>
@@ -56,5 +54,5 @@
         </tr>
     </table>
 
-
+    <div id="message"></div>
 </div>
