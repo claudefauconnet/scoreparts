@@ -10,7 +10,6 @@ var path = require('path');
 var zip = new require('node-zip')();
 
 
-
 var scoreSplitter = {
     zones: [],
     //  imagesDir: "./public/data/images/",
@@ -27,7 +26,7 @@ var scoreSplitter = {
     imageBackOffset: -150,//retrait de l'image vers la gauche
     leftMargin: 60,
     anamorphoseCoef: 1.5,
-   firstScaleY:70,
+    firstScaleY: 70,
     interScale: 10,// espace entre les portées
 
     listScores: function (callback) {
@@ -113,7 +112,7 @@ var scoreSplitter = {
                 scoreSplitter.blitImages,
 
             ], function (err, pagesImagesArray) {
-                var outputpdfName=(obj.title+" "+part).replace(/ /g,"_")
+                var outputpdfName = (obj.title + " " + part).replace(/ /g, "_")
                 scoreSplitter.writePagesToPdf(outputpdfName, title, part, pagesImagesArray, function (err, result) {
                     if (err) {
                         return callback(err);
@@ -192,19 +191,18 @@ var scoreSplitter = {
             zonesWithImages[pageNum].forEach(function (zone, index) {
 
 
-
                 currentPage.push(zone);
                 zone.yOnPage = offsetY
                 zone.xOnPage = (scoreSplitter.leftMargin) / scale
 
                 if (zone.measure) {
-                    console.log(zone.measure.number+" "+offsetY)
-                    zone.measure.y=offsetY
+                    console.log(zone.measure.number + " " + offsetY)
+                    zone.measure.y = offsetY
                 }
 
 
                 offsetY += (zone.bitmap.height) + (vertStep);
-                if ((offsetY + vertStep+zone.bitmap.height) > maxPageYoffset) {
+                if ((offsetY + vertStep + zone.bitmap.height) > maxPageYoffset) {
                     pages.push(currentPage);
                     currentPage = [];
                     offsetY = initialYOffset;
@@ -238,9 +236,9 @@ var scoreSplitter = {
             JimpProxy.createImage(w, h, function (err, blanckImg) {
 
                 async.eachSeries(page, function (pageZone, callbackZones) {
-                       /* if(pageZone.movement ){
-                            targetPages.movement=pageZone.movement.replace (/ /g,"_")
-                        }*/
+                        /* if(pageZone.movement ){
+                             targetPages.movement=pageZone.movement.replace (/ /g,"_")
+                         }*/
 
                         if (pageZone.measure) {
                             targetPage.measures.push(pageZone.measure)
@@ -298,9 +296,9 @@ var scoreSplitter = {
     writePagesToPdf: function (pdfName, title, part, pagesImagesArray, callback) {
 
 
-        var pdfFiles=[]
-         var pdfsDir = path.resolve(__dirname, scoreSplitter.targetPdfDir);
-        var partPdfFile = pdfsDir + path.sep + pdfName+ ".pdf";
+        var pdfFiles = []
+        var pdfsDir = path.resolve(__dirname, scoreSplitter.targetPdfDir);
+        var partPdfFile = pdfsDir + path.sep + pdfName + ".pdf";
         if (fs.existsSync(partPdfFile)) {
 
             try {
@@ -309,9 +307,9 @@ var scoreSplitter = {
                 return callback("fichier existant et ouvert impossible d'enregistrer le nouveau fichier");
             }
         }
-       // var movement=""
-       /* if(pagesImagesArray.movement)
-            movement="-"+pagesImagesArray.movement;*/
+        // var movement=""
+        /* if(pagesImagesArray.movement)
+             movement="-"+pagesImagesArray.movement;*/
         var partPdfUrl = "data/pdfs/" + pdfName + ".pdf";
         var doc = new PDFDocument({size: [scoreSplitter.pageWidth / pagesImagesArray.scale, scoreSplitter.pageHeight / pagesImagesArray.scale]});
         var pageNumber = 1;
@@ -320,21 +318,24 @@ var scoreSplitter = {
         doc.pipe(fs.createWriteStream(partPdfFile));
         pdfFiles.push(partPdfFile)
         for (var i = 0; i < pagesImagesArray.length; i++) {
-            var imageBuffer=pagesImagesArray[i].imageBuffer
+            var imageBuffer = pagesImagesArray[i].imageBuffer
             //   doc.image(pagesImagesArray[i], 0, 50, {scale: (1 / pagesImagesArray.scale)})
             doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.imgScaleCoef})
             if (i == 0) {
                 doc.fontSize(36);
-                doc.text(title+" "+part, (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
-            }else{
+                doc.text(title + " " + part, (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+            } else {
                 doc.fontSize(12);
-                doc.text(title+" "+part,30, (scoreSplitter.pageHeight-50)/ pagesImagesArray.scale , {width: 800, align: 'center'});
+                doc.text(title + " " + part, 30, (scoreSplitter.pageHeight - 50) / pagesImagesArray.scale, {
+                    width: 800,
+                    align: 'center'
+                });
             }
             if (pagesImagesArray[i].measures) {
                 pagesImagesArray[i].measures.forEach(function (measure) {
                     doc.fontSize(18);
-                  //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
-                        doc.text(measure.number, 15 , measure.y+ scoreSplitter.firstScaleY, {
+                    //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
+                    doc.text(measure.number, 15, measure.y + scoreSplitter.firstScaleY, {
                         width: 200,
                         align: 'center'
                     });
@@ -342,8 +343,8 @@ var scoreSplitter = {
                 })
             }
             doc.fontSize(18)
-            var str = ""+(pageNumber++)
-            doc.text(str, (scoreSplitter.pageWidth-15)/ pagesImagesArray.scale,30, {align: 'left'});
+            var str = "" + (pageNumber++)
+            doc.text(str, (scoreSplitter.pageWidth - 15) / pagesImagesArray.scale, 30, {align: 'left'});
 
             doc.addPage();
 
@@ -353,23 +354,20 @@ var scoreSplitter = {
 
     }
     ,
-    createZip:function(files,callback) {
+    createZip: function (files, callback) {
 
         setTimeout(function () {
             var fs = require("fs");
 
-            files.forEach(function(file) {
+            files.forEach(function (file) {
                 zip.file('file', 'hello there');
             })
-            var data = zip.generate({base64:false,compression:'DEFLATE'});
+            var data = zip.generate({base64: false, compression: 'DEFLATE'});
             fs.writeFileSync('test.zip', data, 'binary');
 
         }, 1000 * 5)
 
     }
-
-
-
 
 
 }
