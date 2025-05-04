@@ -19,9 +19,12 @@ var Voices = (function () {
 
     self.getDistinctVoices = function () {
         var voices = []
+        self.firstPageOfMovement=null
         for (var page in scoreParts.allPagesZones.pages) {
             scoreParts.allPagesZones.pages[page].forEach(function (zone,index) {
                 if ( scoreParts.currentMovement == zone.movement) {
+                    if(!self.firstPageOfMovement)
+                        self.firstPageOfMovement=parseInt(page)
                     if(!zone.voice)
                         zone.voice=index
                     if (voices.indexOf(zone.voice) < 0) {
@@ -47,9 +50,16 @@ var Voices = (function () {
     }
 
     self.showVoicesDialog = function () {
+        if( scoreParts.allPagesZones.pages==0)
+            return alert("pas de decoupage effectué")
+        if( !scoreParts.currentMovement)
+            return alert("pas de mouvement selectionne")
 
-        var currentZones = Paper.getPageZones()
-        scoreParts.allPagesZones.pages[scoreParts.currentPage] = currentZones
+        scoreParts.writeCurrentPageZones()
+        scoreParts.copyMeasuresOnAllVoices()
+
+
+
         var jstreedata = [{
             id: "voices",
             text: "voices",
@@ -60,7 +70,7 @@ var Voices = (function () {
 
 
         self.numberOfVoices = parseInt(prompt("nombre total de voix ", voices.length))
-
+        scoreParts.changePage(self.firstPageOfMovement,false)
 
         self.nunmberOfSystems = voices.length / self.numberOfVoices
         if (!Number.isInteger(self.nunmberOfSystems)) {
@@ -83,7 +93,7 @@ var Voices = (function () {
                 id: "voice_" + voice,
                 text: label,
                 parent: "voices",
-                data: {voice: voice, index: index}
+                data: {voice: voice, index: index,}
             })
         })
         var options = {
@@ -207,16 +217,15 @@ var Voices = (function () {
 
                 for (var pageNum in scoreParts.allPagesZones.pages) {
                     var zones = scoreParts.allPagesZones.pages[pageNum]
-
-
-                    for (var i = obj.node.data.index; i < zones.length; i += self.numberOfVoices) {
-                        zones[i].voice = voiceLabel
+                    for(var i=1;i<zones.length;i+=self.nunmberOfSystems) {// si plusieurs systems dans la meme page
+                        zones[obj.node.data.index*i].voice = voiceLabel
                     }
-
                 }
 
                 var x = scoreParts.allPagesZones.pages
+
                 Proxy.saveZones()
+               scoreParts.changePage(scoreParts.currentPage,false)
 
             }
 
@@ -224,11 +233,8 @@ var Voices = (function () {
     }
 
     self.getZip = function () {
-        var nodes = $('#voicesTreeDiv').jstree().get_checked(true)
-        var voices = []
-        nodes.forEach(function (node) {
-        })
 
+        Proxy.createZip()
     }
 
 

@@ -67,7 +67,6 @@ var Proxy = (function () {
                 document.getElementById("pdfFileInput").value = "";
 
 
-
             }
 
         });
@@ -83,31 +82,33 @@ var Proxy = (function () {
             scoreParts.allPagesZones.pages[page] = zones
             selectedZones = scoreParts.allPagesZones.pages
         }
-
-        if (!part) {
-
-            part = prompt("nom de la partie");
+        if (!scoreParts.currentMovement) {
+            scoreParts.currentMovement = $("#movementSelect").val()
+            if (!scoreParts.currentMovement) {
+                return alert("selectionnez un mouvement ou declarez le")
+            }
         }
+
         if (!part || part == "") {
-            return;
+            return alert(" selectionnez une voix")
         }
         scoreParts.setMessage("  La partie est en cours de génération , merci de patienter ...", " blue");
         $('body').css("cursor", "progress");
         var pdfName = $('#scoresSelect').val();
-        if(!scoreParts.currentMovement){
-            return alert("selectionnez un mouvement ou declarez le")
-        }
+
 
         var margin = parseInt($("#zoneMargin").val());
+
+        var movementName = self.getPdfMovementName()
         var zonesStr = JSON.stringify(selectedZones);
         var payload = {
             generatePart: 1,
             part: part,
             margin: margin,
-            pdfName: pdfName,
+            sourcePdfName: pdfName,
             zonesStr: zonesStr,
             imgScaleCoef: scoreParts.coef,
-            movement:scoreParts.currentMovement
+            targetPdfName: movementName
         }
 
         $("#waitImg").css("visibility", "visible");
@@ -144,11 +145,51 @@ var Proxy = (function () {
 
 
     }
+    self.getPdfMovementName = function () {
+        var str = scoreParts.allPagesZones.title + "_" + scoreParts.currentMovement
+        return str.replace(/[ \.]/g, "-")
+    }
+
+
+    self.createZip = function (callback) {
+        var movementDirName = self.getPdfMovementName()
+        var payload = {
+            createZip:1,
+            movementDirName: movementDirName,
+
+        }
+
+        $("#waitImg").css("visibility", "visible");
+        $.ajax({
+            type: "POST",
+            url: "./score",
+            data: payload,
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                $("#waitImg").css("visibility", "hidden");
+
+                if (callback) {
+                    return callback(null, data.zipPath)
+                }
+                var link = "<a target='_blanck' href='" + document.location.href + data.zipPath + "'>télécharger</a>"
+                $("#voices_zipLinkDiv").html(link)
+
+            }, error: function (err) {
+                $("#waitImg").css("visibility", "hidden");
+                scoreParts.setMessage(err, "red")
+                if (callback) {
+                    return callback(err)
+                }
+            }
+        })
+
+    }
 
     self.autoDetectPageZones = function (callback) {
 
-        if(!scoreParts.currentMovement)
-            return alert( "selectionnez ou déclarer un mouvement")
+        if (!scoreParts.currentMovement) {
+            return alert("selectionnez ou déclarer un mouvement")
+        }
 
 
         var pdfName = $('#scoresSelect').val();
@@ -182,24 +223,20 @@ var Proxy = (function () {
 
 
     }
-    self.saveZones = function () {
+    self.saveZones = function (callback) {
 
-        var page = scoreParts.currentPage
-        var zones = Paper.getPageZones()
-        scoreParts.currentZones = zones
-        scoreParts.allPagesZones.pages[page] = zones
+if(scoreParts.currentPagehasBeenClicked)
+    ;// to be done
 
-
-        scoreParts.copyMeasuresOnAllVoices()
         var pdfName = $('#scoresSelect').val();
 
         var margin = parseInt($("#zoneMargin").val());
         var zonesStr = JSON.stringify(scoreParts.allPagesZones);
-        var movementStr=""
+        var movementStr = ""
 
         var payload = {
             saveZones: 1,
-            fileName: pdfName+"_zones.json",
+            fileName: pdfName + "_zones.json",
             zonesStr: zonesStr,
 
         }
@@ -212,8 +249,12 @@ var Proxy = (function () {
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
+                if(callback)
+                    callback()
             }, error: function (err) {
                 $("#waitImg").css("visibility", "hidden");
+                if(callback)
+                    callback(err)
                 scoreParts.setMessage(err, "red")
             }
         })
@@ -223,7 +264,7 @@ var Proxy = (function () {
         var pdfName = $('#scoresSelect').val();
         var payload = {
             loadZones: 1,
-            fileName: pdfName+"_zones.json",
+            fileName: pdfName + "_zones.json",
         }
 
         $("#waitImg").css("visibility", "visible");
@@ -234,14 +275,16 @@ var Proxy = (function () {
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
-                var data=JSON.parse(data.result)
-               if(callback)
-                  return callback(null,data)
-                scoreParts.allPagesZones=data
+                var data = JSON.parse(data.result)
+                if (callback) {
+                    return callback(null, data)
+                }
+                scoreParts.allPagesZones = data
             }, error: function (err) {
                 $("#waitImg").css("visibility", "hidden");
-                if(callback)
+                if (callback) {
                     return callback(err)
+                }
                 scoreParts.setMessage(err, "red")
             }
         })

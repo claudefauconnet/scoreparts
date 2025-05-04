@@ -2,13 +2,15 @@
 
     Titre pièce<input id="voices_scoreTitle" style="    width: 300px;">
 
-        <div id="voicesTreeContainer" style="width:400px;height:600px;overflow: auto">
+        <div id="voicesTreeContainer" style="width:400px;height:500px;overflow: auto">
 
             <div id="voicesTreeDiv"></div>
         </div>
         <div>
-            <button onclick="Voices.validateDialog()">OK</button>
+            <button onclick="Voices.validateDialog()">Generer voix</button>
+            <br>
             <button onclick="Voices.getZip()">telecharger Zip</button>
-            <button onclick="Voices.saveMovement()">enregister Mouvement</button>
+            <span id="voices_zipLinkDiv"></span>
+        <!--    <button onclick="Voices.saveMovement()">enregister Mouvement</button>-->
         </div>
     </div>

@@ -20,6 +20,7 @@ var Paper = (function () {
         };
 
         self.drawImage = function (imageUrl) {
+            scoreParts.currentPagehasBeenClicked=false
             $("#myCanvas").width(imageWidth)
             $("#myCanvas").height(imageHeight)
 
@@ -51,6 +52,7 @@ var Paper = (function () {
 
             var tool = new paper.Tool()
             tool.onMouseDown = function (event) {
+                scoreParts.currentPagehasBeenClicked=true
                 if (self.currentZoneAction == "removeZone") {// call after delete zone
                     self.currentZoneAction = null;
                     return;
@@ -299,20 +301,24 @@ var Paper = (function () {
             if (zone.movement) {
                 path.data.movement = zone.movement
             }
+
+            var group = new paper.Group([path])
             if (zone.voice) {
                 path.data.voice = zone.voice
+
+                var text = new paper.PointText(new paper.Point(40, Math.round(zone.y + (zone.height / 2))));
+
+
+                text.fillColor = 'blue';
+                text.content = zone.voice;
+                var rect = new paper.Path.Rectangle(text.bounds);
+                rect.fillColor = 'white';
+                rect.strokeColor = 'white';
+                text.insertAbove(rect);
+                group.addChildren([rect,text])
             }
-            var text = new paper.PointText(new paper.Point(40, Math.round(zone.y + (zone.height/2))));
 
 
-            text.fillColor = 'blue';
-            text.content = zone.voice;
-            var rect = new paper.Path.Rectangle(text.bounds);
-            rect.fillColor = 'white';
-            rect.strokeColor = 'white';
-            text.insertAbove(rect);
-
-            var group = new paper.Group([path, rect, text, ,])
 
             group.onMouseDrag = self.dragPath
             group.onMouseDown = self.onItemMouseDown

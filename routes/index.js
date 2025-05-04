@@ -48,7 +48,7 @@ router.post('/score', function (req, response, next) {
 
     }
     if (req.body && req.body.generatePart) {
-        scoreSplitter.generatePart(req.body.pdfName, req.body.part, req.body.zonesStr, parseInt(req.body.margin), parseFloat(req.body.imgScaleCoef), function (error, result) {
+        scoreSplitter.generatePart(req.body.sourcePdfName, req.body.targetPdfName,  req.body.part,req.body.zonesStr, parseInt(req.body.margin), parseFloat(req.body.imgScaleCoef), function (error, result) {
             processResponse(response, error, result)
         })
 
@@ -61,6 +61,18 @@ router.post('/score', function (req, response, next) {
 
 
     }
+
+    if (req.body && req.body.createZip) {
+        scoreSplitter.createZip (req.body.movementDirName, function(err,result){
+            try {
+                processResponse(response, null, result)
+            } catch (error) {
+                processResponse(response, error, null)
+            }
+        })
+    }
+
+
     if (req.body && req.body.saveZones) {
         var dirPath = path.resolve(__dirname, '../data/zones/');
         var filePath = dirPath + req.body.fileName
@@ -84,6 +96,8 @@ router.post('/score', function (req, response, next) {
 
 
     }
+
+
 
 
 });

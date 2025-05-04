@@ -2,7 +2,11 @@
     <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
 
     <table>
+<tr>
+    <td>
 
+    </td>
+</tr>
 
         <tr>
             <td>
@@ -16,7 +20,9 @@
 
                 &nbsp;&nbsp;
                 <button onclick=scoreParts.restartAll()>tout recommencer</button>
-                <button onclick=scoreParts.changePage(scoreParts.currentPage)>effacer Page</button>
+                <button onclick=scoreParts.deletePageZones()>effacer Page</button>
+                <button onclick=scoreParts.clearMeasures()>effacer Measures</button>
+
                 <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
                         id="duplicateZonesButton">Copier Zones
                 </button>
