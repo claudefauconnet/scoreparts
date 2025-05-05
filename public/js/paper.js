@@ -214,46 +214,40 @@ var Paper = (function () {
 
         }
 
-        self.drawAutoDetectedZones = function (data, zoneHeight) {
+        self.drawAutoDetectedZones = function (data, zoneHeights,zoneVoices) {
+            scoreParts.currentPagehasBeenClicked=true
             var zoneHeight = parseInt($("#zoneHeight").val())
             var width = $("#myCanvas").width()
             var interline = data.interline * scoreParts.coef
             var x = (data.firstVerticalLine * scoreParts.coef) - 5
             data.topLines.forEach(function (zoneY, index) {
+                var height=8*interline
+                if(zoneHeights && zoneHeights[index]){
+                    height =zoneHeights[index]
+                }
+                var voice=null
+                if(zoneVoices  && zoneVoices[index]) {
+                    voice=zoneVoices[index] || null
+                }
                 var zone = {
                     x: x,
                     y: (zoneY * scoreParts.coef) - (2 * interline),
                     width: width - 10,
-                    height: (8 * interline),
-                   // voice: "" + index,
+                    height: height,
+                   voice: voice,
                     movement:scoreParts.currentMovement
                 }
                 self.drawZone(zone)
             })
-            //   self.drawMeasures(data)
+
             $("#generatePartButton").css("visibility", "visible");
         }
 
 
-        self.drawMeasures = function (data) {
-            var barNumber = 0
-            data.topLines.forEach(function (zoneY, index) {
-                var bars = data.bars[index]
-                bars.forEach(function (barX) {
-                    barNumber++;
-                    var x = Math.round(barX * scoreParts.coef)
-                    var y = Math.round(zoneY * scoreParts.coef) - 10
-                    var text = new paper.PointText(new paper.Point(x, y));
-                    text.fillColor = 'blue';
-                    text.content = "" + barNumber;
 
-                })
-            })
-
-        }
 
         self.drawMeasure = function (measureGroup, x, y, number) {
-
+            scoreParts.currentPagehasBeenClicked=true
             var text = new paper.PointText(new paper.Point(x, y - 1));
             text.fillColor = 'green';
             text.content = number;
@@ -274,7 +268,7 @@ var Paper = (function () {
         }
 
 
-        self.drawZones = function (zones, zoneHeight) {
+        self.drawZones = function (zones) {
             zones.forEach(function (zone, index) {
                 self.drawZone(zone)
             })
@@ -324,7 +318,7 @@ var Paper = (function () {
             group.onMouseDown = self.onItemMouseDown
             if (zone.measure) {
                 path.data.measure=zone.measure
-                self.drawMeasure(group, zone.measure.x, zone.measure.y, zone.measure.number)
+                self.drawMeasure(group, zone.measure.x, zone.y-2, zone.measure.number)
             }
 
         }

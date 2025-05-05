@@ -24,7 +24,7 @@ var scoreSplitter = {
     pageHeight: 842,
     imageScaleCoef: 1.10,//agrandit chaque image
     imageBackOffset: -150,//retrait de l'image vers la gauche
-    leftMargin: 60,
+    leftMargin: 70,
     anamorphoseCoef: 1.5,
     firstScaleY: 70,
     interScale: 10,// espace entre les portées
@@ -64,7 +64,7 @@ var scoreSplitter = {
             outputPrefix = options.targetDir;
         }
 
-        var pages = "[0-300]"
+        var pages = "[0-500]"
         var GraphicsMagickExe = "gm";
         if (path.sep == "\\") {//windows
             GraphicsMagickExe = "\"C:\\Program Files\\GraphicsMagick-1.3.36-Q8\\gm.exe\"";
@@ -196,7 +196,7 @@ var scoreSplitter = {
                 zone.xOnPage = (scoreSplitter.leftMargin) / scale
 
                 if (zone.measure) {
-                    console.log(zone.measure.number + " " + offsetY)
+                 //   console.log(zone.measure.number + " " + offsetY)
                     zone.measure.y = offsetY
                 }
 
@@ -325,7 +325,9 @@ var uniqueMeasures={}
             doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.imgScaleCoef})
             if (i == 0) {
                 doc.fontSize(36);
-                doc.text(targetPdfName + " " + part, (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+                doc.text(targetPdfName.replace(/[_-]/g," ") , (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+                doc.fontSize(24);
+                doc.text( part.replace(/[_-]/g," "), (0.5 * doc.page.width) - 400, 80, {width: 800, align: 'center'});
             } else {
                 doc.fontSize(12);
                 doc.text(targetPdfName + " " + part, 30, (scoreSplitter.pageHeight - 50) / pagesImagesArray.scale, {
@@ -337,7 +339,7 @@ var uniqueMeasures={}
                 pagesImagesArray[i].measures.forEach(function (measure) {
                     doc.fontSize(18);
                     //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
-                    doc.text(measure.number, 15, measure.y-5 + scoreSplitter.firstScaleY, {
+                    doc.text(measure.number, 30, measure.y-5 + scoreSplitter.firstScaleY, {
                         width: 200,
                         align: 'center'
                     });

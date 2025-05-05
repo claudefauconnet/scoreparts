@@ -14,6 +14,16 @@ var scoreParts = (function () {
         }
         self.pdfName = pdfName
 
+        if(scoreParts.currentPagehasBeenClicked) {
+
+            ;// to be done
+            self.writeCurrentPageZones()
+
+            Proxy.saveZones()
+        }
+
+
+
 
         Proxy.loadZones(function (err, data) {
             if (err || clearAll) {
@@ -54,21 +64,25 @@ var scoreParts = (function () {
     }
 
 
-    self.writeCurrentPageZones=function () {
+    self.writeCurrentPageZones = function () {
         var zones = Paper.getPageZones()
-        if(zones.length==0)
+        if (zones.length == 0) {
             return
+        }
         self.currentZones = zones
         self.allPagesZones.pages[self.currentPage] = zones
 
 
     }
 
-    self.changePage = function (newPage,dontSaveCurrentPage) {
+    self.changePage = function (newPage, forceSave) {
+        if(scoreParts.currentPagehasBeenClicked) {
 
-        self.writeCurrentPageZones()
+            ;// to be done
+            self.writeCurrentPageZones()
 
-        Proxy.saveZones()
+            Proxy.saveZones()
+        }
 
 
         self.currentPage = newPage;
@@ -79,6 +93,7 @@ var scoreParts = (function () {
         if (zones && zones.length > 0) {
             self.currentZones = zones
             Paper.drawZones(zones)
+
         }
 
         $("#page").html(" " + (self.currentPage));
@@ -88,7 +103,7 @@ var scoreParts = (function () {
 
 
     self.nextPage = function () {
-       
+
         self.changePage(self.currentPage + 1)
 
         $("#duplicateZonesButton").css("visibility", "visible");
@@ -120,35 +135,34 @@ var scoreParts = (function () {
         }
     }
 
-    self.deletePageZones = function (page ) {
-      //  var page = $("#currentPage").val()
+    self.deletePageZones = function (page) {
+        //  var page = $("#currentPage").val()
 
-        delete self.allPagesZones.pages[page|| self.currentPage]
+        delete self.allPagesZones.pages[page || self.currentPage]
         Paper.deleteZones()
     }
 
 
 
 
-    self.registerZoneVoices = function () {
-        self.currentZones = Paper.getPageZones()
-
-    }
-
     self.repeatZonesFromPreviousPage = function (button) {// from previous page
 
 
         Proxy.autoDetectPageZones(function (err, data) {
             var newZones = []
-
+            var zoneHeights = []
+            var zoneVoices = []
             self.currentZones.forEach(function (zone, index) {
-
-                if (index < data.topLines.length) {
-                    zone.y = (data.topLines[index] * scoreParts.coef) - (2 * data.interline * scoreParts.coef),
-                        newZones.push(zone)
+                if(data.topLines[index]) {
+                    zoneHeights.push(zone.height)
+                    zoneVoices.push(zone.voice || null)
+                    /*  if (index < data.topLines.length) {
+                          zone.y = (data.topLines[index] * scoreParts.coef) - (2 * data.interline * scoreParts.coef),
+                              newZones.push(zone)
+                      }*/
                 }
             })
-            Paper.drawZones(newZones)
+            Paper.drawAutoDetectedZones(data, zoneHeights,zoneVoices)
 
 
         })
@@ -212,50 +226,50 @@ var scoreParts = (function () {
     self.copyMeasuresOnAllVoices = function () {
         var zonesWithMeasures = []
         for (var page in scoreParts.allPagesZones.pages) {
-            var zones=scoreParts.allPagesZones.pages[page]
-            var currentMeasure=null;
+            var zones = scoreParts.allPagesZones.pages[page]
+            var currentMeasure = null;
             zones.forEach(function (zone) {
                 if (zone.measure) {
                     currentMeasure = zone.measure
-                }else if(currentMeasure){
-                    currentMeasure.y=zone.y-1
-                    zone.measure=currentMeasure
+                } else if (currentMeasure) {
+                    currentMeasure.y = zone.y - 1
+                    zone.measure = currentMeasure
 
                 }
 
             })
         }
 
-     /*   zonesWithMeasures.forEach(function (zone) {
-            var targetZones = scoreParts.allPagesZones.pages[zone.page]
-            for(var i=zone.index;)
-            targetZones.forEach(function (targetZone) {
-                if (!targetZone.measure) {
-                    targetZone.measure = zone.measure
-                }
+        /*   zonesWithMeasures.forEach(function (zone) {
+               var targetZones = scoreParts.allPagesZones.pages[zone.page]
+               for(var i=zone.index;)
+               targetZones.forEach(function (targetZone) {
+                   if (!targetZone.measure) {
+                       targetZone.measure = zone.measure
+                   }
 
-            })
+               })
 
-        })
-        var x = scoreParts.allPagesZones*/
+           })
+           var x = scoreParts.allPagesZones*/
 
 
     }
 
-    self.clearMeasures=function(){
+    self.clearMeasures = function () {
         var zonesWithMeasures = []
         for (var page in scoreParts.allPagesZones.pages) {
             scoreParts.allPagesZones.pages[parseInt(page)].forEach(function (zone) {
-                if(zone.movement==scoreParts.currentMovement)
-                delete zone.measure
-
+                if (zone.movement == scoreParts.currentMovement) {
+                    delete zone.measure
+                }
 
 
             })
         }
-        Proxy.saveZones(function(){
-        /* self.deletePageZones(self.currentPage)
-            scoreParts.openSelectMovement()*/
+        Proxy.saveZones(function () {
+            /* self.deletePageZones(self.currentPage)
+                scoreParts.openSelectMovement()*/
         });
 
     }

@@ -225,8 +225,7 @@ var Proxy = (function () {
     }
     self.saveZones = function (callback) {
 
-if(scoreParts.currentPagehasBeenClicked)
-    ;// to be done
+
 
         var pdfName = $('#scoresSelect').val();
 

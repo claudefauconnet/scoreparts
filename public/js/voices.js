@@ -19,14 +19,16 @@ var Voices = (function () {
 
     self.getDistinctVoices = function () {
         var voices = []
-        self.firstPageOfMovement=null
+        self.firstPageOfMovement = null
         for (var page in scoreParts.allPagesZones.pages) {
-            scoreParts.allPagesZones.pages[page].forEach(function (zone,index) {
-                if ( scoreParts.currentMovement == zone.movement) {
-                    if(!self.firstPageOfMovement)
-                        self.firstPageOfMovement=parseInt(page)
-                    if(!zone.voice)
-                        zone.voice=index
+            scoreParts.allPagesZones.pages[page].forEach(function (zone, index) {
+                if (scoreParts.currentMovement == zone.movement) {
+                    if (!self.firstPageOfMovement) {
+                        self.firstPageOfMovement = parseInt(page)
+                    }
+                    if (!zone.voice) {
+                        zone.voice = index
+                    }
                     if (voices.indexOf(zone.voice) < 0) {
                         voices.push(zone.voice)
                     }
@@ -50,14 +52,15 @@ var Voices = (function () {
     }
 
     self.showVoicesDialog = function () {
-        if( scoreParts.allPagesZones.pages==0)
+        if (scoreParts.allPagesZones.pages == 0) {
             return alert("pas de decoupage effectué")
-        if( !scoreParts.currentMovement)
+        }
+        if (!scoreParts.currentMovement) {
             return alert("pas de mouvement selectionne")
+        }
 
         scoreParts.writeCurrentPageZones()
         scoreParts.copyMeasuresOnAllVoices()
-
 
 
         var jstreedata = [{
@@ -70,7 +73,7 @@ var Voices = (function () {
 
 
         self.numberOfVoices = parseInt(prompt("nombre total de voix ", voices.length))
-        scoreParts.changePage(self.firstPageOfMovement,false)
+        scoreParts.changePage(self.firstPageOfMovement, false)
 
         self.nunmberOfSystems = voices.length / self.numberOfVoices
         if (!Number.isInteger(self.nunmberOfSystems)) {
@@ -132,6 +135,7 @@ var Voices = (function () {
                 })
             }
         })
+        self.voices
 
 
         async.eachSeries(voices, function (voice, callbackEachVoice) {
@@ -214,31 +218,52 @@ var Voices = (function () {
                 obj.node.data.voiceLabel = voiceLabel
                 $('#voicesTreeDiv').jstree().check_node(obj.node)
 
-
-                for (var pageNum in scoreParts.allPagesZones.pages) {
-                    var zones = scoreParts.allPagesZones.pages[pageNum]
-                    for(var i=1;i<zones.length;i+=self.nunmberOfSystems) {// si plusieurs systems dans la meme page
-                        zones[obj.node.data.index*i].voice = voiceLabel
+             /*   if (!self.voices[scoreParts.currentMovement]) {
+                    self.voices[scoreParts.currentMovement] = {}
+                    if (!self.voices[scoreParts.currentMovement]) {
+                        self.voices[scoreParts.currentMovement] = {}
                     }
+                    self.voices[scoreParts.currentMovement][obj.node.data.index] = voiceLabel*/
+
+
+                    for (var pageNum in scoreParts.allPagesZones.pages) {
+                        var zones = scoreParts.allPagesZones.pages[pageNum]
+                        var zoneIndex = obj.node.data.index
+
+                        do {
+                            if (zones[zoneIndex] && zones[zoneIndex].movement == scoreParts.currentMovement) {
+                                zones[zoneIndex].voice = voiceLabel
+                            }
+                            zoneIndex += self.numberOfVoices
+                        }
+
+                        while (zoneIndex < zones.length)
+                    }
+
+
+                    var x = scoreParts.allPagesZones.pages
+
+                    Proxy.saveZones(function (err) {
+                        if (!err) {
+                            Paper.drawZones(scoreParts.currentZones)
+                        }
+                    })
+
+
                 }
 
-                var x = scoreParts.allPagesZones.pages
-
-                Proxy.saveZones()
-               scoreParts.changePage(scoreParts.currentPage,false)
-
             }
-
         }
+
+        self.getZip = function () {
+
+            Proxy.createZip()
+        }
+
+
+        return self
+
+
     }
-
-    self.getZip = function () {
-
-        Proxy.createZip()
-    }
-
-
-    return self
-
-
-})()
+)
+    ()
