@@ -32,6 +32,27 @@ var scoreParts = (function () {
                 self.allPagesZones = data
             }
 
+        /*    for(var page in  self.allPagesZones.pages){
+
+                if(parseInt(page)==9  || parseInt(page)==10 || parseInt(page)==11){
+                    self.allPagesZones.pages[page].forEach(function(zone,index){
+                        zone.movement=="Recitativo e Coro"
+
+                        self.allPagesZones.pages[page][index].movement="Recitativo e Coro"
+                    })
+                }
+                if(parseInt(page)==8 ){
+                    self.allPagesZones.pages[page].forEach(function(zone,index){
+                        if(index>9)
+                            self.allPagesZones.pages[page][index].movement="Recitativo e Coro"
+                    })
+                }
+
+
+            }
+            Proxy.saveZones()*/
+
+
             var movements = ["", "Nouveau"]
             for (var page in scoreParts.allPagesZones.pages) {
                 scoreParts.allPagesZones.pages[page].forEach(function (zone) {
@@ -46,9 +67,11 @@ var scoreParts = (function () {
 
 
             var pageImage = imagesDir + pdfName + "-0.png";
-            Paper.drawImage(pageImage)
+          //  Paper.drawImage(pageImage)
+
             self.voices = []
             self.currentPage = 0;
+            self.changePage(self.currentPage)
             $("#page").html(" " + (self.currentPage + 1));
             //  $('#controlPanelDiv').css('visibility', 'visible');
             var message = ""
@@ -145,7 +168,7 @@ var scoreParts = (function () {
 
 
 
-    self.repeatZonesFromPreviousPage = function (button) {// from previous page
+    self.repeatZonesFromPreviousPage = function (detect) {// from previous page
 
 
         Proxy.autoDetectPageZones(function (err, data) {
@@ -181,7 +204,7 @@ var scoreParts = (function () {
     }
 
     self.openSelectMovement = function () {
-        self.deletePageZones()
+
         var movement = $("#movementSelect").val()
         if (!movement) {
             return;
@@ -212,6 +235,7 @@ var scoreParts = (function () {
             })
         }
         scoreParts.writeCurrentPageZones()
+      //  self.deletePageZones()
         scoreParts.changePage(parseInt(movementPage,));
     }
 
@@ -223,35 +247,21 @@ var scoreParts = (function () {
 
     }
 
-    self.copyMeasuresOnAllVoices = function () {
+    self.copyMeasuresOnAllVoices = function (zones,numOfVoices) {
         var zonesWithMeasures = []
         for (var page in scoreParts.allPagesZones.pages) {
             var zones = scoreParts.allPagesZones.pages[page]
-            var currentMeasure = null;
-            zones.forEach(function (zone) {
-                if (zone.measure) {
-                    currentMeasure = zone.measure
-                } else if (currentMeasure) {
-                    currentMeasure.y = zone.y - 1
-                    zone.measure = currentMeasure
 
+            for (var i = 0; i < zones.length; i++) {
+                if (i == 0 || numOfVoices % i == 0) {
+                    currentMeasure = zones[i].measure
+                } else {
+                    zones[i].measure = currentMeasure
                 }
+            }
 
-            })
+
         }
-
-        /*   zonesWithMeasures.forEach(function (zone) {
-               var targetZones = scoreParts.allPagesZones.pages[zone.page]
-               for(var i=zone.index;)
-               targetZones.forEach(function (targetZone) {
-                   if (!targetZone.measure) {
-                       targetZone.measure = zone.measure
-                   }
-
-               })
-
-           })
-           var x = scoreParts.allPagesZones*/
 
 
     }

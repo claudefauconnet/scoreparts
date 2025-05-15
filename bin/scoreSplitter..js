@@ -22,7 +22,7 @@ var scoreSplitter = {
     targetPdfDir: "../public/data/pdfs/",
     pageWidth: 595,
     pageHeight: 842,
-    imageScaleCoef: 1.10,//agrandit chaque image
+    scaleCorrection: 1,//agrandit chaque image
     imageBackOffset: -150,//retrait de l'image vers la gauche
     leftMargin: 70,
     anamorphoseCoef: 1.5,
@@ -143,15 +143,14 @@ var scoreSplitter = {
 
             async.eachSeries(pageZones, function (zone, callbackEachZone) {
                     JimpProxy.crop(imageFile,
-                        Math.round(zone.x / scale),
+                        Math.round(zone.x / (scale))-10,
                         Math.round(zone.y / scale),
-                        Math.round(zone.width / scale),
+                        Math.round((zone.width) / (scale / 1.15)),
                         Math.round(zone.height / scale),
                         function (err, zoneImg) {
                             // JimpProxy.getImageColors(zoneImg)
                             var w = zoneImg.bitmap.width
                             var h = zoneImg.bitmap.height
-
 
                             //anamorphose image
 
@@ -183,25 +182,36 @@ var scoreSplitter = {
         var pageFull = false;
         var pages = [];
 
-        var pageNums = Object.keys(zonesWithImages);
-        pageNums.sort()
+        var nVoices = 0
+        var pageNums =[] ;
+        Object.keys(zonesWithImages).forEach(function(pageStr){
+            pageNums.push(parseInt(pageStr))
+        })
+       // pageNums.sort()
 
         pageNums.forEach(function (pageNum) {
 
             zonesWithImages[pageNum].forEach(function (zone, index) {
-
+                if (zone.merged) {
+                    nVoices += 1
+                    offsetY += 2 * vertStep
+                } else {
+                    nVoices = 1
+                }
 
                 currentPage.push(zone);
                 zone.yOnPage = offsetY
-                zone.xOnPage = (scoreSplitter.leftMargin) / scale
+                zone.xOnPage = (scoreSplitter.leftMargin) / (scale)
+
 
                 if (zone.measure) {
-                 //   console.log(zone.measure.number + " " + offsetY)
+                    //   console.log(zone.measure.number + " " + offsetY)
                     zone.measure.y = offsetY
                 }
 
 
                 offsetY += (zone.bitmap.height) + (vertStep);
+
                 if ((offsetY + vertStep + zone.bitmap.height) > maxPageYoffset) {
                     pages.push(currentPage);
                     currentPage = [];
@@ -229,17 +239,17 @@ var scoreSplitter = {
 
         async.eachSeries(pages, function (page, callbackPages) {
 
-            var w = Math.round((scoreSplitter.pageWidth - margin) / scale);
+            var w = Math.round((scoreSplitter.pageWidth - margin) / (scale / 1.15));
             var h = Math.round((scoreSplitter.pageHeight - margin) / scale);
 
             var targetPage = {imageBuffer: null, measures: []}
             JimpProxy.createImage(w, h, function (err, blanckImg) {
-var uniqueMeasures={}
+                var uniqueMeasures = {}
                 async.eachSeries(page, function (pageZone, callbackZones) {
 
 
-                        if (pageZone.measure &&!uniqueMeasures[pageZone.measure.number]) {
-                            uniqueMeasures[pageZone.measure.number]=1
+                        if (pageZone.measure && !uniqueMeasures[pageZone.measure.number]) {
+                            uniqueMeasures[pageZone.measure.number] = 1
                             targetPage.measures.push(pageZone.measure)
                         }
 
@@ -304,7 +314,7 @@ var uniqueMeasures={}
             }
         }
 
-        var partPdfFile = movementDir + path.sep + part+"" + ".pdf";
+        var partPdfFile = movementDir + path.sep + part + "" + ".pdf";
         if (fs.existsSync(partPdfFile)) {
             try {
                 fs.unlinkSync(partPdfFile);
@@ -322,12 +332,15 @@ var uniqueMeasures={}
         for (var i = 0; i < pagesImagesArray.length; i++) {
             var imageBuffer = pagesImagesArray[i].imageBuffer
             //   doc.image(pagesImagesArray[i], 0, 50, {scale: (1 / pagesImagesArray.scale)})
-            doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.imgScaleCoef})
+            doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.scaleCorrection})
             if (i == 0) {
                 doc.fontSize(36);
-                doc.text(targetPdfName.replace(/[_-]/g," ") , (0.5 * doc.page.width) - 400, 30, {width: 800, align: 'center'});
+                doc.text(targetPdfName.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 30, {
+                    width: 800,
+                    align: 'center'
+                });
                 doc.fontSize(24);
-                doc.text( part.replace(/[_-]/g," "), (0.5 * doc.page.width) - 400, 80, {width: 800, align: 'center'});
+                doc.text(part.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 80, {width: 800, align: 'center'});
             } else {
                 doc.fontSize(12);
                 doc.text(targetPdfName + " " + part, 30, (scoreSplitter.pageHeight - 50) / pagesImagesArray.scale, {
@@ -339,7 +352,7 @@ var uniqueMeasures={}
                 pagesImagesArray[i].measures.forEach(function (measure) {
                     doc.fontSize(18);
                     //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
-                    doc.text(measure.number, 30, measure.y-5 + scoreSplitter.firstScaleY, {
+                    doc.text(measure.number, 30, measure.y - 5 + scoreSplitter.firstScaleY, {
                         width: 200,
                         align: 'center'
                     });

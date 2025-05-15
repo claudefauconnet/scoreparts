@@ -45,7 +45,9 @@ var Paper = (function () {
                 // Paper.raster.position=new paper.Point(20, 20);
                 Paper.raster.position = paper.view.center;
                 var canvasHeight = $("#myCanvas").height()
+                var canvasWidth = $("#myCanvas").width()
                 var coef = canvasHeight / size.height
+               // var coef = canvasWidth / size.width
                 scoreParts.coef = coef
                 Paper.raster.scale(coef)
             };
@@ -269,6 +271,8 @@ var Paper = (function () {
 
 
         self.drawZones = function (zones) {
+
+
             zones.forEach(function (zone, index) {
                 self.drawZone(zone)
             })
