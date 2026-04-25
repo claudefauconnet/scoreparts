@@ -2,6 +2,8 @@ var scoreParts = (function () {
     var self = {};
     self.allPagesZones = {pages: {}, title: ""}
     self.currentZones = []
+
+    self.modified=false
     var imagesDir = "./data/images/";
 
     self.openFirstPdfPage = function (clearAll) {
@@ -32,25 +34,7 @@ var scoreParts = (function () {
                 self.allPagesZones = data
             }
 
-        /*    for(var page in  self.allPagesZones.pages){
 
-                if(parseInt(page)==9  || parseInt(page)==10 || parseInt(page)==11){
-                    self.allPagesZones.pages[page].forEach(function(zone,index){
-                        zone.movement=="Recitativo e Coro"
-
-                        self.allPagesZones.pages[page][index].movement="Recitativo e Coro"
-                    })
-                }
-                if(parseInt(page)==8 ){
-                    self.allPagesZones.pages[page].forEach(function(zone,index){
-                        if(index>9)
-                            self.allPagesZones.pages[page][index].movement="Recitativo e Coro"
-                    })
-                }
-
-
-            }
-            Proxy.saveZones()*/
 
 
             var movements = ["", "Nouveau"]
@@ -82,6 +66,8 @@ var scoreParts = (function () {
             message += "<li>Une fois le découpage terminé sur toutes les pages, cliquer sur le bouton \"générer voix (pdf)\"</li>";
             message += "<ul> ";
             self.setMessage(message, "blue")
+            self.margin = parseInt($("#zoneMargin").val()) ||10;
+
 
         })
     }
@@ -160,7 +146,7 @@ var scoreParts = (function () {
 
     self.deletePageZones = function (page) {
         //  var page = $("#currentPage").val()
-
+        scoreParts.modified=true
         delete self.allPagesZones.pages[page || self.currentPage]
         Paper.deleteZones()
     }
@@ -179,10 +165,7 @@ var scoreParts = (function () {
                 if(data.topLines[index]) {
                     zoneHeights.push(zone.height)
                     zoneVoices.push(zone.voice || null)
-                    /*  if (index < data.topLines.length) {
-                          zone.y = (data.topLines[index] * scoreParts.coef) - (2 * data.interline * scoreParts.coef),
-                              newZones.push(zone)
-                      }*/
+
                 }
             })
             Paper.drawAutoDetectedZones(data, zoneHeights,zoneVoices)
@@ -251,7 +234,7 @@ var scoreParts = (function () {
         var zonesWithMeasures = []
         for (var page in scoreParts.allPagesZones.pages) {
             var zones = scoreParts.allPagesZones.pages[page]
-
+            scoreParts.modified=true
             for (var i = 0; i < zones.length; i++) {
                 if (i == 0 || numOfVoices % i == 0) {
                     currentMeasure = zones[i].measure
@@ -268,6 +251,7 @@ var scoreParts = (function () {
 
     self.clearMeasures = function () {
         var zonesWithMeasures = []
+        scoreParts.modified=true
         for (var page in scoreParts.allPagesZones.pages) {
             scoreParts.allPagesZones.pages[parseInt(page)].forEach(function (zone) {
                 if (zone.movement == scoreParts.currentMovement) {

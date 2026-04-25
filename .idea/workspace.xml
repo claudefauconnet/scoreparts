@@ -7,11 +7,11 @@
     <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="new UI">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/scoreSplitter..js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/scoreSplitter..js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/cutParts.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/cutParts.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/generateParts.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/generateParts.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/paper.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/proxy.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/proxy.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/voices.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/voices.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/routes/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,7 +119,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;2025-05-13&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/projects/scoreparts/data/zones&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/projects/scoreparts/data/pdf&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -132,11 +132,11 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\projects\scoreparts\data\pdf" />
       <recent name="D:\projects\scoreparts\data\zones" />
       <recent name="D:\projects\scoreparts\bin" />
       <recent name="D:\projects\scoreparts\public" />
       <recent name="D:\webstorm\scoreparts\public\js" />
-      <recent name="D:\webstorm\scoreparts\data\pdf" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\GitHub\scoreparts\public\js\old" />
@@ -269,7 +269,22 @@
       <workItem from="1746805257308" duration="594000" />
       <workItem from="1746894999288" duration="308000" />
       <workItem from="1747114039563" duration="40118000" />
-      <workItem from="1747287966950" duration="3451000" />
+      <workItem from="1747287966950" duration="4377000" />
+      <workItem from="1747553257305" duration="1769000" />
+      <workItem from="1749997707170" duration="3068000" />
+      <workItem from="1750693280233" duration="3597000" />
+      <workItem from="1750844339829" duration="594000" />
+      <workItem from="1751038668718" duration="1163000" />
+      <workItem from="1751273273108" duration="62000" />
+      <workItem from="1751791819361" duration="25126000" />
+      <workItem from="1752214845973" duration="6565000" />
+      <workItem from="1752511383323" duration="625000" />
+      <workItem from="1759400428769" duration="1607000" />
+      <workItem from="1759409396912" duration="6000" />
+      <workItem from="1776937465297" duration="3537000" />
+      <workItem from="1777038962451" duration="1107000" />
+      <workItem from="1777040863298" duration="14000" />
+      <workItem from="1777105089843" duration="7178000" />
     </task>
     <task id="LOCAL-00001" summary="add conductor.js">
       <created>1694363133077</created>
@@ -389,7 +404,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746429491312</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1747327271652</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1747327271652</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -444,41 +467,55 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/paper.js</url>
-          <line>245</line>
+          <line>246</line>
           <option name="timeStamp" value="677" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/scoreParts.js</url>
-          <line>177</line>
+          <line>163</line>
           <option name="timeStamp" value="708" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/paper.js</url>
-          <line>252</line>
+          <line>253</line>
           <option name="timeStamp" value="709" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
-          <line>113</line>
-          <option name="timeStamp" value="724" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/scoreParts.js</url>
-          <line>55</line>
-          <properties lambdaOrdinal="-1" />
+          <line>39</line>
           <option name="timeStamp" value="725" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>191</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="736" />
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>65</line>
+          <option name="timeStamp" value="728" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/bin/scoreSplitter..js</url>
-          <line>189</line>
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>78</line>
+          <option name="timeStamp" value="751" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>102</line>
+          <option name="timeStamp" value="756" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>101</line>
+          <option name="timeStamp" value="757" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>231</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="738" />
+          <option name="timeStamp" value="758" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>267</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="759" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -18,7 +18,7 @@ router.post('/pdfUpload', function (req, response) {
         if (error) {
             return processResponse(response, error);
         }
-        if (file.size > 6000000) {
+        if (file.size > 10000000) {
             return processResponse(response, null, {bigFile: file.size});
         }
         if (!file || !file.path) {
@@ -48,7 +48,7 @@ router.post('/score', function (req, response, next) {
 
     }
     if (req.body && req.body.generatePart) {
-        scoreSplitter.generatePart(req.body.sourcePdfName, req.body.targetPdfName,  req.body.part,req.body.zonesStr, parseInt(req.body.margin), parseFloat(req.body.imgScaleCoef), function (error, result) {
+        scoreSplitter.generatePart(req.body.sourcePdfName, req.body.targetPdfName,  req.body.part,req.body.zonesStr, parseInt(req.body.margin), parseFloat(req.body.imgScaleCoefV), parseFloat(req.body.imgScaleCoefH),function (error, result) {
             processResponse(response, error, result)
         })
 

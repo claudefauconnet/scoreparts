@@ -174,8 +174,6 @@ var Voices = (function () {
                         if (!scoreParts.currentMovement || scoreParts.currentMovement == zones[i].movement) {
                             var zone = JSON.parse(JSON.stringify(zones[i]))
 
-                            //  zone.measure=JSON.parse(JSON.stringify(zone[i].measure))
-                            zone.x = 70
                             voicePagesZones.pages[pageNum].push(zone)
 
                         }
@@ -231,6 +229,7 @@ var Voices = (function () {
                 voicePagesZones.title = title
                 scoreParts.allPagesZones.numberOfVoices = self.numberOfVoices
                 scoreParts.allPagesZones.title = title
+                scoreParts.modified=true;
                 Proxy.saveZones()
 
                 self.copyMeasuresOnAllVoices(scoreParts.allPagesZones, self.numberOfVoices)
@@ -281,6 +280,7 @@ var Voices = (function () {
                         }
                     })
                 }
+                scoreParts.modified=true;
                 Proxy.saveZones()
             }
         }
@@ -325,7 +325,7 @@ var Voices = (function () {
 
 
                     var x = scoreParts.allPagesZones.pages
-
+                    scoreParts.modified=true
                     Proxy.saveZones(function (err) {
                         if (!err) {
                             Paper.drawZones(scoreParts.currentZones)

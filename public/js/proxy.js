@@ -45,6 +45,7 @@ var Proxy = (function () {
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
                 if (data.bigFile) {
+                    return alert("fichier trop gros " + Math.round(data.bigFile / 1000000) + " mo, maximum :10Mo")
                     scoreParts.setMessage("big file " + data.bigFile);
                 }
                 var durationStr = "durée :" + Math.round(data.duration / 1000) + "sec."
@@ -97,17 +98,16 @@ var Proxy = (function () {
         var pdfName = $('#scoresSelect').val();
 
 
-        var margin = parseInt($("#zoneMargin").val());
-
         var movementName = self.getPdfMovementName()
         var zonesStr = JSON.stringify(selectedZones);
         var payload = {
             generatePart: 1,
             part: part,
-            margin: margin,
+            margin: scoreParts.margin,
             sourcePdfName: pdfName,
             zonesStr: zonesStr,
-            imgScaleCoef: scoreParts.coef,
+            imgScaleCoefV: scoreParts.coefV,
+            imgScaleCoefH: scoreParts.coefH,
             targetPdfName: movementName
         }
 
@@ -154,7 +154,7 @@ var Proxy = (function () {
     self.createZip = function (callback) {
         var movementDirName = self.getPdfMovementName()
         var payload = {
-            createZip:1,
+            createZip: 1,
             movementDirName: movementDirName,
 
         }
@@ -225,7 +225,9 @@ var Proxy = (function () {
     }
     self.saveZones = function (callback) {
 
-
+        if (!scoreParts.modified) {
+            return;
+        }
 
         var pdfName = $('#scoresSelect').val();
 
@@ -247,13 +249,16 @@ var Proxy = (function () {
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
+                scoreParts.modified=false
                 $("#waitImg").css("visibility", "hidden");
-                if(callback)
+                if (callback) {
                     callback()
+                }
             }, error: function (err) {
                 $("#waitImg").css("visibility", "hidden");
-                if(callback)
+                if (callback) {
                     callback(err)
+                }
                 scoreParts.setMessage(err, "red")
             }
         })
@@ -275,9 +280,25 @@ var Proxy = (function () {
             success: function (data, textStatus, jqXHR) {
                 $("#waitImg").css("visibility", "hidden");
                 var data = JSON.parse(data.result)
+                /*  for (var page in data.pages) {
+                      var pageNum=parseInt(page)
+                      if(pageNum <10)
+                      data.pages[""+pageNum]=data.pages[""+pageNum+1]
+                  }*/
+
+                /*   for (var page in data.pages){
+                       data.pages[page].forEach(function(zone){
+                           var leftMargin=Math.max(zone.x,scoreParts.margin)
+                           zone.x=leftMargin;
+                           zone.w=Paper.imageWidth-(2*scoreParts.margin);
+                       })
+                   }*/
+
                 if (callback) {
                     return callback(null, data)
                 }
+
+
                 scoreParts.allPagesZones = data
             }, error: function (err) {
                 $("#waitImg").css("visibility", "hidden");

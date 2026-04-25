@@ -24,7 +24,7 @@ var Paper = (function () {
             $("#myCanvas").width(imageWidth)
             $("#myCanvas").height(imageHeight)
 
-            imageWidth = $("#myCanvas").width()
+            self.imageWidth = $("#myCanvas").width()
             imageHeight = $("#myCanvas").height()
             Paper.imgLoaded = false;
             $("#waitImg").css("visibility", "visible");
@@ -46,10 +46,11 @@ var Paper = (function () {
                 Paper.raster.position = paper.view.center;
                 var canvasHeight = $("#myCanvas").height()
                 var canvasWidth = $("#myCanvas").width()
-                var coef = canvasHeight / size.height
-               // var coef = canvasWidth / size.width
-                scoreParts.coef = coef
-                Paper.raster.scale(coef)
+                var coefV = canvasHeight / size.height
+                var coefH = canvasWidth / size.width
+                scoreParts.coefV = coefV
+                scoreParts.coefH= coefH
+                Paper.raster.scale(coefV)
             };
 
             var tool = new paper.Tool()
@@ -72,7 +73,7 @@ var Paper = (function () {
                   //  var voiceIndex=scoreParts.allPagesZones.pages[scoreParts.currentPage].length
 
                     var zone = {
-                        x: 10,
+                        x: self.margin ||10,
                         y: event.point.y,
                         width: w,
                         height: zoneHeight,
@@ -220,8 +221,8 @@ var Paper = (function () {
             scoreParts.currentPagehasBeenClicked=true
             var zoneHeight = parseInt($("#zoneHeight").val())
             var width = $("#myCanvas").width()
-            var interline = data.interline * scoreParts.coef
-            var x = (data.firstVerticalLine * scoreParts.coef) - 5
+            var interline = data.interline * scoreParts.coefV
+            var x = (data.firstVerticalLine * scoreParts.coefV) - 5
             data.topLines.forEach(function (zoneY, index) {
                 var height=8*interline
                 if(zoneHeights && zoneHeights[index]){
@@ -232,9 +233,9 @@ var Paper = (function () {
                     voice=zoneVoices[index] || null
                 }
                 var zone = {
-                    x: x,
-                    y: (zoneY * scoreParts.coef) - (2 * interline),
-                    width: width - 10,
+                    x: Math.max(x,scoreParts.margin),
+                    y: (zoneY * scoreParts.coefV) - (2 * interline),
+                    width: width - (2*scoreParts.margin),
                     height: height,
                    voice: voice,
                     movement:scoreParts.currentMovement
@@ -255,7 +256,7 @@ var Paper = (function () {
             text.content = number;
             text.fontSize=14
             text.fontSize=14
-
+            scoreParts.modified=true;
         var rect = new paper.Path.Rectangle(text.bounds);
             rect.fillColor = '#ddd';
           //  rect.strokeColor = 'black';
@@ -299,7 +300,7 @@ var Paper = (function () {
             if (zone.movement) {
                 path.data.movement = zone.movement
             }
-
+            scoreParts.modified=true;
             var group = new paper.Group([path])
             if (zone.voice) {
                 path.data.voice = zone.voice
@@ -331,12 +332,18 @@ var Paper = (function () {
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             items.forEach(function (item, index) {
-                if (index>0) {//tout sauf image
+               /* if (index>0) {//tout sauf image
                     if (!zoneIndex || zoneIndex == index) {
                         var x = item.remove()
                     }
-                }
+                }*/
+                    if(item._data && item._data.type=="zone"){
+
+                        var x = item.remove()
+                    }
+
             })
+            scoreParts.modified=true
             paper.project.view.update()
 
         }

@@ -23,11 +23,17 @@ var scoreSplitter = {
     pageWidth: 595,
     pageHeight: 842,
     scaleCorrection: 1,//agrandit chaque image
-    imageBackOffset: -150,//retrait de l'image vers la gauche
-    leftMargin: 70,
+   // imageBackOffset: -150,//retrait de l'image vers la gauche
+   // imageBackOffset:120,
+    imageBackOffset:20,
+
+   // leftMargin: 70,
+    leftMargin: 0,
     anamorphoseCoef: 1.5,
     firstScaleY: 70,
     interScale: 10,// espace entre les portées
+    
+    coefHV:.95,//1.15
 
     listScores: function (callback) {
         var pdfs = [];
@@ -93,7 +99,7 @@ var scoreSplitter = {
     ,
 
 
-    generatePart: function (sourcePdfName, targetPdfName, part, zonesStr, margin, imgScaleCoef, callback) {
+    generatePart: function (sourcePdfName, targetPdfName, part, zonesStr, margin, imgScaleCoefV,imgScaleCoefH, callback) {
 
         var obj = JSON.parse(zonesStr);
         var zones = obj.pages
@@ -107,7 +113,7 @@ var scoreSplitter = {
 
             var targetPagesImages = [];
             async.waterfall([
-                async.apply(scoreSplitter.cropImages, sourcePdfName, zones, margin, imgScaleCoef),
+                async.apply(scoreSplitter.cropImages, sourcePdfName, zones, margin,imgScaleCoefH, imgScaleCoefV),
                 scoreSplitter.setTargetPages,
                 scoreSplitter.blitImages,
 
@@ -127,7 +133,7 @@ var scoreSplitter = {
     ,
 
 
-    cropImages: function (pdfName, zones, margin, scale, callbackWaterfall) {
+    cropImages: function (pdfName, zones, margin, scaleH,scaleV, callbackWaterfall) {
         ///  var zonesWithImages = []
         var pageNums = Object.keys(zones)
 
@@ -142,22 +148,27 @@ var scoreSplitter = {
             var imageFile = imageDir + path.sep + sourceImg;
 
             async.eachSeries(pageZones, function (zone, callbackEachZone) {
+
+               if(zone.page>3)
+                   console.log(JSON.stringify(zone))
                     JimpProxy.crop(imageFile,
-                        Math.round(zone.x / (scale))-10,
-                        Math.round(zone.y / scale),
-                        Math.round((zone.width) / (scale / 1.15)),
-                        Math.round(zone.height / scale),
+                        Math.round(zone.x / scaleH),
+                        Math.round(zone.y / scaleV),
+                        Math.round((zone.width) /scaleH),
+                        Math.round(zone.height / scaleV),
                         function (err, zoneImg) {
                             // JimpProxy.getImageColors(zoneImg)
                             var w = zoneImg.bitmap.width
                             var h = zoneImg.bitmap.height
 
-                            //anamorphose image
-
-                            /*   var h2 =Math.round(  h * scoreSplitter.anamorphoseCoef)
-                               zoneImg =zoneImg.resize({ w: w, h: h2 })*/
 
                             zone.bitmap = zoneImg.bitmap
+                       /*  try {
+                             zoneImg.write("C:\\Users\\claud\\Downloads\\testXXX.png")
+                         }
+                         catch( e){
+                                var x=e
+                         }*/
                             return callbackEachZone(err)
                         })
                 }
@@ -166,19 +177,19 @@ var scoreSplitter = {
                 })
 
         }, function (err) {
-            return callbackWaterfall(null, zones, scale)
+            return callbackWaterfall(null, zones, scaleH,scaleV)
         })
 
     },
 
 
-    setTargetPages: function (zonesWithImages, scale, callbackWaterfall) {
-        var initialYOffset = 20 / scale
-        var offsetX = 20 / scale
+    setTargetPages: function (zonesWithImages, scaleH,scaleV, callbackWaterfall) {
+        var initialYOffset = 20 / scaleV
+        var offsetX = 20 / scaleV
         var offsetY = initialYOffset;
-        var vertStep = scoreSplitter.interScale / scale;
+        var vertStep = scoreSplitter.interScale / scaleV;
         var currentPage = [];
-        var maxPageYoffset = 800 / scale;
+        var maxPageYoffset = 800 / scaleV;
         var pageFull = false;
         var pages = [];
 
@@ -201,8 +212,8 @@ var scoreSplitter = {
 
                 currentPage.push(zone);
                 zone.yOnPage = offsetY
-                zone.xOnPage = (scoreSplitter.leftMargin) / (scale)
-
+               // zone.xOnPage = (scoreSplitter.leftMargin) / (scaleH)
+                zone.xOnPage =scoreSplitter.leftMargin
 
                 if (zone.measure) {
                     //   console.log(zone.measure.number + " " + offsetY)
@@ -224,23 +235,24 @@ var scoreSplitter = {
         if (currentPage.length > 0) {
             pages.push(currentPage);
         }
-        callbackWaterfall(null, pages, scale)
+        callbackWaterfall(null, pages, scaleH,scaleV)
 
     }
 
     ,
 
 
-    blitImages: function (pages, scale, callbackWaterfall) {
+    blitImages: function (pages, scaleH,scaleV, callbackWaterfall) {
         var targetPages = [];
-        targetPages.scale = scale;
+        targetPages.scaleH = scaleH;
+        targetPages.scaleV = scaleV;
         var margin = 0
 
 
         async.eachSeries(pages, function (page, callbackPages) {
 
-            var w = Math.round((scoreSplitter.pageWidth - margin) / (scale / 1.15));
-            var h = Math.round((scoreSplitter.pageHeight - margin) / scale);
+            var w = Math.round((scoreSplitter.pageWidth - margin) / scaleH);
+            var h = Math.round((scoreSplitter.pageHeight - margin) / scaleV);
 
             var targetPage = {imageBuffer: null, measures: []}
             JimpProxy.createImage(w, h, function (err, blanckImg) {
@@ -324,7 +336,7 @@ var scoreSplitter = {
         }
 
         var partPdfUrl = "data/pdfs/" + targetPdfName + "/" + part + ".pdf";
-        var doc = new PDFDocument({size: [scoreSplitter.pageWidth / pagesImagesArray.scale, scoreSplitter.pageHeight / pagesImagesArray.scale]});
+        var doc = new PDFDocument({size: [scoreSplitter.pageWidth / pagesImagesArray.scaleH, scoreSplitter.pageHeight / pagesImagesArray.scaleV]});
         var pageNumber = 1;
 
 
@@ -333,18 +345,20 @@ var scoreSplitter = {
             var imageBuffer = pagesImagesArray[i].imageBuffer
             //   doc.image(pagesImagesArray[i], 0, 50, {scale: (1 / pagesImagesArray.scale)})
             doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {scale: scoreSplitter.scaleCorrection})
+           var left=30// (0.5 * doc.page.width) - 400
             if (i == 0) {
                 doc.fontSize(36);
-                doc.text(targetPdfName.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 30, {
-                    width: 800,
+              //  doc.text(targetPdfName.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 30, {
+                doc.text(targetPdfName.replace(/[_-]/g, " "), left, 30, {
+                    width: doc.page.width-30,
                     align: 'center'
                 });
                 doc.fontSize(24);
-                doc.text(part.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 80, {width: 800, align: 'center'});
+                doc.text(part.replace(/[_-]/g, " "),left, 80, {width: 800, align: 'center'});
             } else {
                 doc.fontSize(12);
-                doc.text(targetPdfName + " " + part, 30, (scoreSplitter.pageHeight - 50) / pagesImagesArray.scale, {
-                    width: 800,
+                doc.text(targetPdfName + " " + part, 30, (scoreSplitter.pageHeight - 50) / pagesImagesArray.scaleV, {
+                    width:doc.page.width-30,
                     align: 'center'
                 });
             }
@@ -361,7 +375,7 @@ var scoreSplitter = {
             }
             doc.fontSize(18)
             var str = "" + (pageNumber++)
-            doc.text(str, (scoreSplitter.pageWidth - 15) / pagesImagesArray.scale, 30, {align: 'left'});
+            doc.text(str, (scoreSplitter.pageWidth - 15) / pagesImagesArray.scaleH, 30, {align: 'left'});
 
             doc.addPage();
 
@@ -412,7 +426,7 @@ var obj = {
 
 if (false) {
     scoreSplitter
-        .generatePart(obj.pdfName, obj.part, obj.zonesStr, obj.margin, obj.imgScaleCoef, function (err, result) {
+        .generatePart(obj.pdfName, obj.part, obj.zonesStr, obj.margin, obj.imgScaleCoefV, obj.imgScaleCoefH,function (err, result) {
             var x = err;
         })
 }
