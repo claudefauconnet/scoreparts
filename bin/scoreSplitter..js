@@ -118,6 +118,12 @@ var scoreSplitter = {
                 scoreSplitter.blitImages,
 
             ], function (err, pagesImagesArray) {
+                if(err){
+                    console.log(err)
+                    return callback(err)
+                }
+
+
 
                 scoreSplitter.writePagesToPdf(targetPdfName, part, pagesImagesArray, function (err, result) {
                     if (err) {
@@ -148,36 +154,44 @@ var scoreSplitter = {
             var imageFile = imageDir + path.sep + sourceImg;
 
             async.eachSeries(pageZones, function (zone, callbackEachZone) {
+if(zone.x <0 || zone.y <0){
+    return callbackWaterfall(err+"*********\n"+JSON.stringify(zone))
+}
 
-               if(zone.page>3)
-                   console.log(JSON.stringify(zone))
+                try {
                     JimpProxy.crop(imageFile,
                         Math.round(zone.x / scaleH),
                         Math.round(zone.y / scaleV),
-                        Math.round((zone.width) /scaleH),
+                        Math.round((zone.width) / scaleH),
                         Math.round(zone.height / scaleV),
                         function (err, zoneImg) {
+if(err){
+    return callbackWaterfall(err+"*********\n"+JSON.stringify(zone))
+}
                             // JimpProxy.getImageColors(zoneImg)
                             var w = zoneImg.bitmap.width
                             var h = zoneImg.bitmap.height
 
 
                             zone.bitmap = zoneImg.bitmap
-                       /*  try {
-                             zoneImg.write("C:\\Users\\claud\\Downloads\\testXXX.png")
-                         }
-                         catch( e){
-                                var x=e
-                         }*/
+                            /*  try {
+                                  zoneImg.write("C:\\Users\\claud\\Downloads\\testXXX.png")
+                              }
+                              catch( e){
+                                     var x=e
+                              }*/
                             return callbackEachZone(err)
                         })
+                }catch(e){
+                   return callbackEachPage(e+"*********\n"+JSON.stringify(zone))
+                }
                 }
                 , function (err) {
                     return callbackEachPage(err)
                 })
 
         }, function (err) {
-            return callbackWaterfall(null, zones, scaleH,scaleV)
+            return callbackWaterfall(err, zones, scaleH,scaleV)
         })
 
     },

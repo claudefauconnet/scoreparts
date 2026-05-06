@@ -41,9 +41,10 @@ var Voices = (function () {
         }
 
         self.detectWrongPages = function (numberOfVoices) {
-            for (var page in scoreParts.allPagesZones.pages) {
+            for (var pageNum in scoreParts.allPagesZones.pages) {
+                var page=scoreParts.allPagesZones.pages[pageNum]
                 //   console.log(page+" "+scoreParts.allPagesZones.pages[page].length)
-                if (scoreParts.allPagesZones.pages.length > 0 && scoreParts.allPagesZones.pages.length % numberOfVoices != 0) {
+                if (page.length > 0 && page.length % numberOfVoices != 0) {
                     alert(" wrong  number of scales in page " + page)
                 }
 

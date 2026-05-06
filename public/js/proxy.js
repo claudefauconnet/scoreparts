@@ -135,6 +135,7 @@ var Proxy = (function () {
 
             },
             error: function (err) {
+                alert(err.responseText)
                 $("#waitImg").css("visibility", "hidden");
                 scoreParts.setMessage(err, "red")
                 if (callback) {
@@ -293,6 +294,7 @@ var Proxy = (function () {
                            zone.w=Paper.imageWidth-(2*scoreParts.margin);
                        })
                    }*/
+
 
                 if (callback) {
                     return callback(null, data)

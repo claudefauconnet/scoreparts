@@ -36,11 +36,17 @@ async function _crop(imageFile,x,y,w,h){
     var image = await Jimp.read(imageFile);
 
    // image =new Jimp({width:w, height:h, color:0x000000FF})
-  var croped= image.crop({
-        x:x
-    ,y:y
-        ,w:w,
-        h:h});
+    try {
+        var croped = image.crop({
+            x: x
+            , y: y
+            , w: w,
+            h: h
+        });
+    }catch(e){
+       return e
+    }
+
     return croped
 
 }
@@ -57,6 +63,8 @@ export  function getImage(imageFile,callback){
  export function crop(imageFile,x,y,w,h,callback){
     var promise=_crop(imageFile,x,y,w,h)
     promise.then((image) => {
+        if( image.message)
+            return callback(image.message)
         return callback(null, image)
     })
 }

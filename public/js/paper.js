@@ -20,7 +20,7 @@ var Paper = (function () {
         };
 
         self.drawImage = function (imageUrl) {
-            scoreParts.currentPagehasBeenClicked=false
+            scoreParts.currentPagehasBeenClicked = false
             $("#myCanvas").width(imageWidth)
             $("#myCanvas").height(imageHeight)
 
@@ -36,7 +36,7 @@ var Paper = (function () {
             // Create an empty project and a view for the canvas:
             paper.setup(canvas);
             self.raster = new paper.Raster(imageUrl);
-            self.raster.data.type=="image"
+            self.raster.data.type == "image"
 
 
             self.raster.onLoad = function () {
@@ -49,20 +49,24 @@ var Paper = (function () {
                 var coefV = canvasHeight / size.height
                 var coefH = canvasWidth / size.width
                 scoreParts.coefV = coefV
-                scoreParts.coefH= coefH
+                scoreParts.coefH = coefH
                 Paper.raster.scale(coefV)
             };
 
             var tool = new paper.Tool()
             tool.onMouseDown = function (event) {
-                scoreParts.currentPagehasBeenClicked=true
+                scoreParts.currentPagehasBeenClicked = true
+
+
+
+
                 if (self.currentZoneAction == "removeZone") {// call after delete zone
                     self.currentZoneAction = null;
                     return;
                 }
 
-                if(!scoreParts.currentMovement){
-                    return alert ("selectionnez ou déclarez un mouvement")
+                if (!scoreParts.currentMovement) {
+                    return alert("selectionnez ou déclarez un mouvement")
                 }
 
                 var hitResult = paper.project.hitTest(event.point, paper.hitOptions);
@@ -70,10 +74,10 @@ var Paper = (function () {
                     var w = $("#myCanvas").width()
                     var zoneHeight = parseInt($("#zoneHeight").val())
 
-                  //  var voiceIndex=scoreParts.allPagesZones.pages[scoreParts.currentPage].length
+                    //  var voiceIndex=scoreParts.allPagesZones.pages[scoreParts.currentPage].length
 
                     var zone = {
-                        x: self.margin ||10,
+                        x: self.margin || 10,
                         y: event.point.y,
                         width: w,
                         height: zoneHeight,
@@ -105,6 +109,19 @@ var Paper = (function () {
                 var item = event.target
 
 
+
+
+
+                if (event.event.button == 2) {//show zone infos
+
+                    var zone = item.getItems()[0]
+                    $("#message").html(JSON.stringify(zone.data))
+                    event.preventDefault()
+                    event.stopPropagation()
+                    return;
+                }
+
+
                 if (event.modifiers.alt && event.modifiers.control) {
                     self.currentZoneAction = "removeZone"
                     item.removeChildren()
@@ -118,7 +135,7 @@ var Paper = (function () {
                     var number = prompt("measure number")
                     if (number) {
                         var zone = item.getItems()[0]// zone à l'interieur du groupe
-                        zone.data.measure = {x:  event.point.x, y: item.bounds.y , number: number}
+                        zone.data.measure = {x: event.point.x, y: item.bounds.y, number: number}
                         self.drawMeasure(item, event.point.x, item.bounds.y, number)
                         self.currentZoneAction = null;
                         event.preventDefault()
@@ -148,6 +165,9 @@ var Paper = (function () {
             }
             self.dragPath = function (event) {//clear zone
 
+
+                if(!scoreParts.currentMovement)
+                    return;
                 var item = event.target
                 if (self.currentZoneAction == "resizeZone") {//resize
                     function resizeDimensions(elem, width, height) {
@@ -162,7 +182,7 @@ var Paper = (function () {
                     resizeDimensions(item, self.currentPath.bounds.width, newHeight)
 
 
-                } else if (self.currentZoneAction == "moveZone") {//move
+                } else if (self.currentZoneAction == "moveZone"  ) {//move
                     item.position.y += event.delta.y;
 
                     /*  item.children.forEach(function (child) {
@@ -199,89 +219,86 @@ var Paper = (function () {
                 }
             })
 
-            zones.sort(function(a,b){
-                if(a.y>b.y)
+            zones.sort(function (a, b) {
+                if (a.y > b.y) {
                     return 1;
-                if(a.y<b.y)
+                }
+                if (a.y < b.y) {
                     return -1;
+                }
                 return 0;
 
             })
-            zones.forEach(function (zone,index) {
-            if(!zone.voice){
-                zone.voice=""+(index+1)
-            }
+            zones.forEach(function (zone, index) {
+                if (!zone.voice) {
+                    zone.voice = "" + (index + 1)
+                }
             })
 
             return zones
 
         }
 
-        self.drawAutoDetectedZones = function (data, zoneHeights,zoneVoices) {
-            scoreParts.currentPagehasBeenClicked=true
+        self.drawAutoDetectedZones = function (data, zoneHeights, zoneVoices) {
+            scoreParts.currentPagehasBeenClicked = true
             var zoneHeight = parseInt($("#zoneHeight").val())
             var width = $("#myCanvas").width()
             var interline = data.interline * scoreParts.coefV
             var x = (data.firstVerticalLine * scoreParts.coefV) - 5
             data.topLines.forEach(function (zoneY, index) {
-                var height=8*interline
-                if(zoneHeights && zoneHeights[index]){
-                    height =zoneHeights[index]
+                var height = 8 * interline
+                if (zoneHeights && zoneHeights[index]) {
+                    height = zoneHeights[index]
                 }
-                var voice=null
-                if(zoneVoices  && zoneVoices[index]) {
-                    voice=zoneVoices[index] || null
+                var voice = null
+                if (zoneVoices && zoneVoices[index]) {
+                    voice = zoneVoices[index] || null
                 }
                 var zone = {
-                    x: Math.max(x,scoreParts.margin),
+                    x: Math.max(x, scoreParts.margin),
                     y: (zoneY * scoreParts.coefV) - (2 * interline),
-                    width: width - (2*scoreParts.margin),
+                    width: width - (2 * scoreParts.margin),
                     height: height,
-                   voice: voice,
-                    movement:scoreParts.currentMovement
+                    voice: voice,
+                    movement: scoreParts.currentMovement
                 }
                 self.drawZone(zone)
             })
 
             $("#generatePartButton").css("visibility", "visible");
         }
-
-
 
 
         self.drawMeasure = function (measureGroup, x, y, number) {
-            scoreParts.currentPagehasBeenClicked=true
+            scoreParts.currentPagehasBeenClicked = true
             var text = new paper.PointText(new paper.Point(x, y - 1));
             text.fillColor = 'green';
             text.content = number;
-            text.fontSize=14
-            text.fontSize=14
-            scoreParts.modified=true;
-        var rect = new paper.Path.Rectangle(text.bounds);
+            text.fontSize = 14
+            text.fontSize = 14
+            scoreParts.modified = true;
+            var rect = new paper.Path.Rectangle(text.bounds);
             rect.fillColor = '#ddd';
-          //  rect.strokeColor = 'black';
+            //  rect.strokeColor = 'black';
             text.insertAbove(rect);
-            var group = new paper.Group([ rect,text])
+            var group = new paper.Group([rect, text])
             measureGroup.addChild(group)
-
-
-
 
 
         }
 
 
-        self.drawZones = function (zones) {
+        self.drawZones = function (zones, removeMeasures) {
 
 
             zones.forEach(function (zone, index) {
-                self.drawZone(zone)
+                self.drawZone(zone, removeMeasures)
             })
             $("#generatePartButton").css("visibility", "visible");
         }
 
 
-        self.drawZone = function (zone) {
+        self.drawZone = function (zone, removeMeasures) {
             var width = $("#myCanvas").width() - 10
             var rectangle = new paper.Rectangle(
                 new paper.Point(Math.round(zone.x), Math.round(zone.y)),
@@ -300,7 +317,7 @@ var Paper = (function () {
             if (zone.movement) {
                 path.data.movement = zone.movement
             }
-            scoreParts.modified=true;
+            scoreParts.modified = true;
             var group = new paper.Group([path])
             if (zone.voice) {
                 path.data.voice = zone.voice
@@ -314,16 +331,15 @@ var Paper = (function () {
                 rect.fillColor = 'white';
                 rect.strokeColor = 'white';
                 text.insertAbove(rect);
-                group.addChildren([rect,text])
+                group.addChildren([rect, text])
             }
-
 
 
             group.onMouseDrag = self.dragPath
             group.onMouseDown = self.onItemMouseDown
-            if (zone.measure) {
-                path.data.measure=zone.measure
-                self.drawMeasure(group, zone.measure.x, zone.y-2, zone.measure.number)
+            if (zone.measure && !removeMeasures) {
+                path.data.measure = zone.measure
+                self.drawMeasure(group, zone.measure.x, zone.y - 2, zone.measure.number)
             }
 
         }
@@ -332,18 +348,18 @@ var Paper = (function () {
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             items.forEach(function (item, index) {
-               /* if (index>0) {//tout sauf image
-                    if (!zoneIndex || zoneIndex == index) {
-                        var x = item.remove()
-                    }
-                }*/
-                    if(item._data && item._data.type=="zone"){
+                /* if (index>0) {//tout sauf image
+                     if (!zoneIndex || zoneIndex == index) {
+                         var x = item.remove()
+                     }
+                 }*/
+                if (item._data && item._data.type == "zone") {
 
-                        var x = item.remove()
-                    }
+                    var x = item.remove()
+                }
 
             })
-            scoreParts.modified=true
+            scoreParts.modified = true
             paper.project.view.update()
 
         }
