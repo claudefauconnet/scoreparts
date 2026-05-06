@@ -41,6 +41,7 @@ var Voices = (function () {
         }
 
         self.detectWrongPages = function (numberOfVoices) {
+            return;
             for (var pageNum in scoreParts.allPagesZones.pages) {
                 var page=scoreParts.allPagesZones.pages[pageNum]
                 //   console.log(page+" "+scoreParts.allPagesZones.pages[page].length)

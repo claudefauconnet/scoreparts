@@ -56,7 +56,8 @@ var Paper = (function () {
             var tool = new paper.Tool()
             tool.onMouseDown = function (event) {
                 scoreParts.currentPagehasBeenClicked = true
-
+                event.event.preventDefault()
+                event.event.stopPropagation()
 
 
 
@@ -114,7 +115,10 @@ var Paper = (function () {
 
                 if (event.event.button == 2) {//show zone infos
 
+
                     var zone = item.getItems()[0]
+                    var point={x:event.event.pageX,y:event.event.pageY}
+                    popupMenu.showGraphPopupMenu(zone,point,null)
                     $("#message").html(JSON.stringify(zone.data))
                     event.preventDefault()
                     event.stopPropagation()

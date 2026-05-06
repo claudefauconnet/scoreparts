@@ -22,6 +22,8 @@
     <script src="./js/common.js" charset="UTF-8"></script>
     <script src="./js/async.js" charset="UTF-8"></script>
     <script src="./js/zonesChecker.js" charset="UTF-8"></script>
+    <script src="./js/popupMenu.js" charset="UTF-8"></script>
+    <script src="./js/popupMenuWidget.js" charset="UTF-8"></script>
     <script type="module" src="./js/jstreeWidget.js"></script>
 
     <script src="./js/jsTree/jstree.js"></script>
@@ -105,6 +107,17 @@
         .buttonImportant {
 
             background-color: #fcefa1;
+        }
+        #popupMenuWidgetDiv {
+            position: absolute;
+            display: flex;
+            border: #003eff;
+            margin: 5px;
+            padding: 5px;
+            font-size: 12px;
+            background-color: #c5c5c5;
+            font-weight: normal;
+            border-radius: 5px;
         }
 
 
@@ -248,5 +261,5 @@
     <div id="mainDialogDiv"></div>
 
 </div>
-
+<div id="popupMenuWidgetDiv"></div>
 </body>

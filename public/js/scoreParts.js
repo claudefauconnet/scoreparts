@@ -7,7 +7,7 @@ var scoreParts = (function () {
     var imagesDir = "./data/images/";
 
     self.openFirstPdfPage = function (clearAll) {
-
+        document.addEventListener("contextmenu", e => e.preventDefault());
         var pdfName = $('#scoresSelect').val();
 
         $("#scoresSelect").val(pdfName);
