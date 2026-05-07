@@ -7,166 +7,259 @@
     <meta charset="utf-8">
     <title>ScoreParts</title>
 
-    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="css/index.css"/>
-    <link rel="stylesheet" media="print" type="text/css" title="Design" href="css/index.css"/>
+    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="./css/index.css"/>
+    <link rel="stylesheet" media="print" type="text/css" title="Design" href="./css/index.css"/>
 
-    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.css"/>
-    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.min.css"/>
-    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="js/jquery/jquery-ui.structure.min.css"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css"/>
 
-    <!--link rel="stylesheet" media="screen" href="js/others/jquery.handsontable.full.min.css"-->
+    <script src="./js/jquery/jquery.js"></script>
+    <script src="./js/jquery/jquery-ui.min.js"></script>
+    <script src="./js/jquery/jquery.printElement.js"></script>
+    <script src="./js/scoreParts.js" charset="UTF-8"></script>
+    <script src="./js/proxy.js" charset="UTF-8"></script>
+    <script src="./js/voices.js" charset="UTF-8"></script>
+    <script src="./js/common.js" charset="UTF-8"></script>
+    <script src="./js/async.js" charset="UTF-8"></script>
+    <script src="./js/zonesChecker.js" charset="UTF-8"></script>
+    <script src="./js/popupMenu.js" charset="UTF-8"></script>
+    <script src="./js/popupMenuWidget.js" charset="UTF-8"></script>
+    <script type="module" src="./js/jstreeWidget.js"></script>
 
-    <script src="js/jquery/jquery.js"></script>
-    <script src="js/jquery/jquery-ui.min.js"></script>
-    <script src="js/jquery/jquery.printElement.js"></script>
+    <script src="./js/jsTree/jstree.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
+    <script src="./js/paper.js" charset="UTF-8"></script>
 
 
-    <script src="js/d3/d3.js"></script>
-    <script src="js/scoreD3.js" charset="UTF-8"></script>
-    <script src="js/scoreParts.js" charset="UTF-8"></script>
+    <style>
+        body {
+            font-family: Verdana, Arial, sans-serif;
+        }
+
+        tr {
+            margin: 2px;
+            padding: 2px;
+            text-align: center;
+
+        }
+
+        button {
+            margin: 10px;
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        #imageSplitterDiv {
+            top: 50px;
+            left: 400px;
+            position: absolute;
+            width: 592px;
+        }
+
+        #controlPanelDiv {
+            top: 50px;
+            left: 10px;
+            position: absolute;
+        }
 
 
-    <!--script src="js/devisuProxy.js" charset="UTF-8"></script-->
-    <script src="js/imageSplitter.js" charset="UTF-8"></script>
+        .dragRect {
+            border-width: 1px;
+            border-color: black;
+            border-style: dashed;
+            background-color: transparent;
+        }
+
+        #importDiv {
+            visibility: hidden;
+            background-color: #F9B154;
+            margin: 5px;
+        }
+
+        #scrappingCommandsDiv {
+            visibility: hidden;
+        }
+
+        #page {
+            font-size: 14px;
+            font-weight: bold;
+            color: orange;
+        }
+
+        .textSmall {
+            font-size: 14px;
+            font-weight: normal;
+            color: black;
+
+        }
+
+        #message {
+            font-size: 14px;
+            font-style: italic;
+            color: black;
+            width: 350px;
+            height: 200px;
+            overflow: auto;
+
+        }
+
+        .buttonImportant {
+
+            background-color: #fcefa1;
+        }
+        #popupMenuWidgetDiv {
+            position: absolute;
+            display: flex;
+            border: #003eff;
+            margin: 5px;
+            padding: 5px;
+            font-size: 12px;
+            background-color: #c5c5c5;
+            font-weight: normal;
+            border-radius: 5px;
+        }
+
+
+    </style>
 
     <script>
-
+        var currentPage = 0;
+        var currentZoneInPage = 0;
         $(function () {
-            scoreParts.listScores()
+            Proxy.listScores();
+
+
+            $('#tabCutDiv').load("./cutParts.html", function (err) {
+
+            })
+            $('#tabGeneratePartsDiv').load("./generateParts.html", function (err) {
+
+            })
+
+
+            $("#tabsDiv").tabs({
+                activate: function (event, ui) {
+
+                    if (ui.newPanel.selector == "#tabGeneratePartsDiv") {
+                        Voices.showVoicesDialog()
+                    }
+                }
+            })
+
+            $("#mainDialogDiv").dialog({
+                autoOpen: false,
+                height: "auto",
+                width: "auto",
+                modal: false,
+                position: {my: "center", at: "center", of: window},
+                open: function (event, ui) {
+                    //  $("#mainDialogDiv").css("width","80%")
+                },
+            });
+
 
         });
+
+
     </script>
 
 
 </head>
-<style>
-    body {
-        font-family: sans-serif;
-    }
 
-    #imageSplitterDiv {
-        top: 130px;
-        position: absolute;
-    }
-
-    #resultDiv {
-        top: 130px;
-        position: absolute;
-        width: 600px;
-        height: 900px;
-        visibility: hidden;
-        border-width: 3px;
-        border-color: gray;
-        border-style: groove;
-        background-color: gray;
-    }
-
-    .dragRect {
-        border-width: 1px;
-        border-color: black;
-        border-style: dashed;
-        background-color: transparent;
-    }
-
-    #importDiv {
-        visibility: hidden;
-        background-color: lime;
-        margin: 5px;
-    }
-
-    #scrappingCommandsDiv {
-        visibility: hidden;
-    }
-
-    #page {
-        font-size: 14;
-        font-weight: bold;
-        color: orange;
-    }
-
-    .textSmall {
-        font-size: 14;
-        font-weight: normal;
-        color: black;
-
-    }
-
-    #message {
-        font-size: 10px;
-        font-style: italic;
-        color: black;
-
-    }
-
-    .buttonImportant {
-        margin: 5px;
-        background-color: red;
-    }
-</style>
 <body>
 
 
-<div id="imageSplitterDiv"></div>
-<script>
-    ;//  drawImage();
-</script>
 <table>
     <tr>
         <td>
-            Ouvrir partition : <select id="scoresSelect" onchange="scoreParts.openFile()">
-            <option>&nbsp;</option>
-        </select>
-        </td>
-
-        <td>
-            <button id=importButton" onclick="$('#importDiv').css('visibility','visible');">Importer...</button>
+            <input type="image" onclick='scoreParts.getInfos()' width="20px" src="images/infos.png">
         </td>
         <td>
-            <div id="importDiv">
 
-            <!--    <form action="imageUpload" method="post" enctype="multipart/form-data" onsubmit="onFormSubmit()">
-                    <input type="hidden" name="fileName" id="fileName">
-                    <input type="file" id="toUploadFile" name="rawData" accept="pdf"> <input type="submit"
-                                                                                             name="télécharger">
+            Ouvrir partition : <select id="scoresSelect" onchange="scoreParts.openFirstPdfPage('')"> </select>
 
-                </form>-->
-                <form enctype="multipart/form-data" action="/upload" method="post"
-                      target="votar">
-                    <input type="file" name="cypher" class='exportNeo' onblur= 'onFileButton()';>
-                    <input type="submit" value="upload" name="submit" class='exportNeo'/>
-                </form>
+        </td>
 
-            </div>
+
+        <td>
+            Mouvement: <select id="movementSelect" onchange="scoreParts.openSelectMovement()"> </select>
+        </td>
+        <td>
+
         </td>
     </tr>
     <tr>
         <td>
             &nbsp;
         </td>
-    </tr>
-    <tr id="scrappingCommandsDiv">
-        <td>Decouper &nbsp;&nbsp; page<span id="page"></span>
-
-        </td>
-        <td>
-            <button onclick="scoreParts.previousPage()">page précédente</button>
-            <button onclick="scoreParts.nextPage()">page suivante</button>
-            <button onclick="scoreParts.repeatZones()">Repeter les zones</button>
-        </td>
-        <td>
-            <button class="buttonImportant" onclick="scoreParts.generateInstrumentScore()">Générer pdf partie</button>
-            &nbsp;&nbsp;
-            <button onclick=scoreParts.clearZones()>recommencer</button>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            &nbsp;
-        </td>
-    </tr>
-    <tr>
-        <td colspan="3"><span id="message"></span></td>
     </tr>
 </table>
+
+<div id="importDiv" style="visibility:hidden">
+
+</div>
+<div style="display: flex;flex-direction: row">
+
+
+    <div id='tabsDiv'>
+
+        <ul>
+            <li><a href="#tagUsageDiv"> Usage </a></li>
+            <li><a href="#tabCutDiv"> Decouper voix </a></li>
+            <li><a href="#tabGeneratePartsDiv"> Generer voix </a></li>
+            <li><a href="#tabimportDiv"> Importer PDF </a></li>
+
+        </ul>
+
+
+        <div style="width:400px;height:600px;" id='tabimportDiv'>
+            <form enctype="multipart/form-data" id="uploadForm">
+
+                <input type="file" name="pdfFile" id="pdfFileInput" onchange="Proxy.uploadFormData()">
+                <br>
+                <br>
+                Qualite <select name="imageQuality">
+                <option value="low">faible</option>
+                <option value="medium" selected>moyenne</option>
+                <option value="high">haute</option>
+            </select>
+
+
+            </form>
+
+        </div>
+
+        <div style="width:400px;height:600px;" id='tabCutDiv'></div>
+
+        <div style="width:400px;height:600px;" id='tabGeneratePartsDiv'></div>
+
+        <div style="width:400px;height:600px;" id='tagUsageDiv'></div>
+
+
+    </div>
+
+
+    <div id="imageSplitterDivXX">
+
+        <div>
+            page<span id="page"></span>
+            <button onclick="scoreParts.previousPage()">page précédente</button>
+            <button onclick="scoreParts.nextPage()">page suivante</button>
+            <button onclick="scoreParts.goToPage()">aller à page</button>
+            <button class="buttonImportant" onclick="Proxy.autoDetectPageZones()" style="visibility: visible"
+                    id="duplicateZonesButton2">autoDetect Zones
+            </button>
+
+        </div>
+        <canvas id="myCanvas" style="position:relative;top:0;left:0">
+
+
+        </canvas>
+
+    </div>
+    <div id="mainDialogDiv"></div>
+
+</div>
+<div id="popupMenuWidgetDiv"></div>
 </body>
-<div id="resultDiv"></div>

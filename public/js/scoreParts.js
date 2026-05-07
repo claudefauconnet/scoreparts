@@ -1,134 +1,272 @@
 var scoreParts = (function () {
     var self = {};
-    var imagesDir = "/data/images/";
+    self.allPagesZones = {pages: {}, title: ""}
+    self.currentZones = []
 
+    self.modified=false
+    var imagesDir = "./data/images/";
 
-    self.listScores = function () {
-        var payload = {
-            listScores: 1
-        }
-        $.ajax({
-            type: "POST",
-            url: "/score",
-            data: payload,
-            dataType: "json",
-            success: function (data, textStatus, jqXHR) {
-                for (var i = 0; i < data.length; i++) {
-                    item = data[i].replace(".pdf", "");
-                    $("#scoresSelect").append($('<option>', {
-                        text: item,
-                        value: item
-                    }));
-                }
-                ;
+    self.openFirstPdfPage = function (clearAll) {
+        document.addEventListener("contextmenu", e => e.preventDefault());
+        var pdfName = $('#scoresSelect').val();
 
-            }, error: function (err) {
-                console.lpg(err);
-            }
-        });
-
-    }
-    self.openFile = function () {
-        var name = $('#scoresSelect').val();
-        $("#fileName").val(name);
-        if (name == "")
+        $("#scoresSelect").val(pdfName);
+        if (pdfName == "") {
             return;
-        var name2 = imagesDir + name + "-1.png";
-        scoreD3.drawImage(name2);
-        currentPage = 1;
-        $("#page").html("" + currentPage);
-        $('#scrappingCommandsDiv').css('visibility', 'visible');
+        }
+        self.pdfName = pdfName
+
+        if(scoreParts.currentPagehasBeenClicked) {
+
+            ;// to be done
+            self.writeCurrentPageZones()
+
+            Proxy.saveZones()
+        }
+
+
+
+
+        Proxy.loadZones(function (err, data) {
+            if (err || clearAll) {
+                self.allPagesZones = {pages: {}, title: "", pdfName: self.pdfName, date: new Date(), author: "cf"}
+            } else {
+                self.allPagesZones = data
+            }
+
+
+
+
+            var movements = ["", "Nouveau"]
+            for (var page in scoreParts.allPagesZones.pages) {
+                scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                    if (zone.movement && movements.indexOf(zone.movement) < 0) {
+                        movements.push(zone.movement)
+                    }
+
+                })
+            }
+
+            Common.fillSelectOptions("movementSelect", movements, false)
+
+
+            var pageImage = imagesDir + pdfName + "-0.png";
+          //  Paper.drawImage(pageImage)
+
+            self.voices = []
+            self.currentPage = 0;
+            self.changePage(self.currentPage)
+            $("#page").html(" " + (self.currentPage + 1));
+            //  $('#controlPanelDiv').css('visibility', 'visible');
+            var message = ""
+            message += "<ul> <li>pour créer une zone de découpage : clic sur le milieu d'une portée</li>";
+            message += "<li>pour effacer une zone : clic+Alt sur la zone</li>";
+            message += "<li>pour déplacer une zone : glisser sur la zone avec la souris</li>";
+            message += "<li>pour déplacer toutes les zones d'une page  : clic+Ctl sur une zone</li>";
+            message += "<li>Une fois le découpage terminé sur toutes les pages, cliquer sur le bouton \"générer voix (pdf)\"</li>";
+            message += "<ul> ";
+            self.setMessage(message, "blue")
+            self.margin = parseInt($("#zoneMargin").val()) ||10;
+
+
+        })
+    }
+
+
+    self.writeCurrentPageZones = function () {
+        var zones = Paper.getPageZones()
+        if (zones.length == 0) {
+            return
+        }
+        self.currentZones = zones
+        self.allPagesZones.pages[self.currentPage] = zones
+
 
     }
 
-    self.updateImage = function (link) {
-        d3.select("svg").selectAll(".clipZone").remove();
-        d3.selectAll(".img").attr("xlink:href", function (d) {
-            return link;
-        });
+    self.changePage = function (newPage, forceSave) {
+        if(scoreParts.currentPagehasBeenClicked) {
+
+            ;// to be done
+            self.writeCurrentPageZones()
+
+            Proxy.saveZones()
+        }
+
+
+        self.currentPage = newPage;
+        var name = $('#scoresSelect').val() + "-" + (self.currentPage);
+
+        Paper.drawImage(imagesDir + name + ".png");
+        var zones = self.allPagesZones.pages[self.currentPage]
+        if (zones && zones.length > 0) {
+            self.currentZones = zones
+            Paper.drawZones(zones)
+
+        }
+
+        $("#page").html(" " + (self.currentPage));
+
+
     }
 
 
     self.nextPage = function () {
-        currentPage += 1;
-        currentZoneInPage = 0;
-        var name = $('#fileName').val() + "-" + (currentPage);
-        // drawImage(name);
-        self.updateImage(imagesDir + name + ".png");
-        $("#page").html("" + currentPage);
+
+        self.changePage(self.currentPage + 1)
+
+        $("#duplicateZonesButton").css("visibility", "visible");
+
 
     }
     self.previousPage = function () {
-        if (currentPage == 0)
+        if (self.currentPage == 0) {
             return;
-        currentPage -= 1;
+        }
 
-        currentZoneInPage = 0;
-        var name = $('#fileName').val() + "-" + (currentPage);
-        self.updateImage(imagesDir + name + ".png");
-        $("#page").html("" + currentPage);
+        self.changePage(self.currentPage - 1)
+        $("#duplicateZonesButton").css("visibility", "visible");
 
     }
 
-    self.generateInstrumentScore = function () {
-
-
-        var part = prompt("nom de la partie");
-        if (!part || part == "")
-            return;
-        self.setMessage("  La partie est en cours de génération , Attendez...", " blue");
-        $('body').css("cursor", "progress");
-        var pdfName = $('#fileName').val();
-
-        var zonesStr=JSON.stringify(scoreD3.pagesZoneData);
-        var payload = {
-            generatePart: 1,
-            part: part,
-            pdfName: pdfName,
-            zonesStr: zonesStr
+    self.goToPage = function () {
+        var page = prompt("Aller à page numero")
+        if (page) {
+            var page = parseInt(page)
+            self.changePage(page)
         }
-        $.ajax({
-            type: "POST",
-            url: "/score",
-            data: payload,
-            dataType: "json",
-            success: function (data, textStatus, jqXHR) {
-                $("#resultDiv").html("<button onclick='hideResultDiv()')>Fermer</button>Privisualisation de la première page ...<button onclick='downloadScore()')>telechargez le pfd</button><BR><BR><img src='" + data.result + "' width='" + 600 + "' />");
-                $("#resultDiv").css("visibility", "visible");
-                self.setMessage("  La partie est générée.", " green");
-                $('body').css('cursor', 'default');
-            }, error: function (jqXHR, textStatus) {
-                alert("Request failed: " + textStatus);
-                self.setMessage("  Erreur dans la génération de la partie.", " red");
-                $('body').css('cursor', 'default');
+    }
+
+    self.restartAll = function () {
+        self.deletePageZones()
+        if (confirm("recommencer tout ?")) {
+            self.openFirstPdfPage(true);
+        }
+    }
+
+    self.deletePageZones = function (page) {
+        //  var page = $("#currentPage").val()
+        scoreParts.modified=true
+        delete self.allPagesZones.pages[page || self.currentPage]
+        Paper.deleteZones()
+    }
 
 
+
+
+    self.repeatZonesFromPreviousPage = function (detect) {// from previous page
+
+
+        Proxy.autoDetectPageZones(function (err, data) {
+            var newZones = []
+            var zoneHeights = []
+            var zoneVoices = []
+            self.currentZones.forEach(function (zone, index) {
+                if(data.topLines[index]) {
+                    zoneHeights.push(zone.height)
+                    zoneVoices.push(zone.voice || null)
+
+                }
+            })
+            Paper.drawAutoDetectedZones(data, zoneHeights,zoneVoices)
+
+
+        })
+    }
+
+
+    self.setMessage = function (message, color) {
+        $("#message").css("visibility", "visible");
+        if (!color) {
+            color = "black";
+        }
+        $("#message").css("color", color);
+        $("#message").html(message);
+
+
+    }
+
+    self.openSelectMovement = function () {
+
+        var movement = $("#movementSelect").val()
+        if (!movement) {
+            return;
+        }
+        if (movement == "Nouveau") {
+            var movement = prompt("nom du mouvement")
+            if (!movement) {
+                return;
             }
+            $('#movementSelect').append($('<option>', {
+                value: movement,
+                text: movement
+            }));
+            $('#movementSelect').val(movement)
+        }
+
+
+        self.currentMovement = movement
+        var stop = false
+        var movementPage = 0
+        for (var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                if (!stop && zone.movement == self.currentMovement) {
+                    movementPage = zone.page;
+                    return stop = true
+                }
+
+            })
+        }
+        scoreParts.writeCurrentPageZones()
+      //  self.deletePageZones()
+        scoreParts.changePage(parseInt(movementPage,));
+    }
+
+
+    self.getInfos = function () {
+
+        self.setMessage("logiciel open source de découpage de partition sous licence MIT <br><a href='mailto://claude.fauconnet@neuf.fr'>Claude Fauconnet</a><br><a href='https://github.com/claudefauconnet/scoreparts'>Source</a>");
+
+
+    }
+
+    self.copyMeasuresOnAllVoices = function (zones,numOfVoices) {
+        var zonesWithMeasures = []
+        for (var page in scoreParts.allPagesZones.pages) {
+            var zones = scoreParts.allPagesZones.pages[page]
+            scoreParts.modified=true
+            for (var i = 0; i < zones.length; i++) {
+                if (i == 0 || numOfVoices % i == 0) {
+                    currentMeasure = zones[i].measure
+                } else {
+                    zones[i].measure = currentMeasure
+                }
+            }
+
+
+        }
+
+
+    }
+
+    self.clearMeasures = function () {
+        var zonesWithMeasures = []
+        scoreParts.modified=true
+        for (var page in scoreParts.allPagesZones.pages) {
+            scoreParts.allPagesZones.pages[parseInt(page)].forEach(function (zone) {
+                if (zone.movement == scoreParts.currentMovement) {
+                    delete zone.measure
+                }
+
+
+            })
+        }
+        Proxy.saveZones(function () {
+            /* self.deletePageZones(self.currentPage)
+                scoreParts.openSelectMovement()*/
         });
 
-
     }
-    self.downloadScore = function () {
-        var url = "data/" + downoladFileName;
-
-        window.open(url, downoladFileName, "height=1300");
-    }
-    self.setMessage = function (str) {
-        $("#message").html(str);
-    }
-    self.hideResultDiv = function () {
-        $("#resultDiv").css("visibility", "hidden");
-    }
-
-    self.clearZones = function () {
-        d3.select("svg").selectAll(".clipZone").remove();
-        scoreD3.pagesZoneData = {};
-        currentPage = 1;
-        var name = $('#fileName').val() + "-" + (currentPage);
-        currentZoneInPage = 0;
-        self.updateImage(imagesDir + name + ".png");
-    }
-
 
     return self;
 

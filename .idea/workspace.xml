@@ -1,323 +1,197 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/data/pdf/readme.txt" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/data/png/raw/readme.txt" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/bin/scoreSplitter..js" afterPath="$PROJECT_DIR$/bin/scoreSplitter..js" />
-      <change beforePath="$PROJECT_DIR$/data/rameau1.pdf" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
-      <change beforePath="$PROJECT_DIR$/public/index.html" afterPath="$PROJECT_DIR$/public/index.html" />
-      <change beforePath="$PROJECT_DIR$/routes/index.js" afterPath="$PROJECT_DIR$/routes/index.js" />
+    <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="corrections zones">
+      <change afterPath="$PROJECT_DIR$/public/js/popupMenu.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/js/popupMenuWidget.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/paper.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/voices.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/voices.js" afterDir="false" />
     </list>
-    <ignored path="$PROJECT_DIR$/.tmp/" />
-    <ignored path="$PROJECT_DIR$/temp/" />
-    <ignored path="$PROJECT_DIR$/tmp/" />
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
-    <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="app.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="76">
-              <caret line="19" column="27" lean-forward="true" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="scoreD3b.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/js/scoreD3b.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1411">
-              <caret line="83" column="12" lean-forward="false" selection-start-line="83" selection-start-column="12" selection-end-line="83" selection-end-column="12" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="scoreParts.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/js/scoreParts.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2125">
-              <caret line="125" column="24" lean-forward="false" selection-start-line="125" selection-start-column="24" selection-end-line="125" selection-end-column="24" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/routes/index.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="85">
-              <caret line="5" column="20" lean-forward="true" selection-start-line="5" selection-start-column="20" selection-end-line="5" selection-end-column="20" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="fileUpload.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bin/fileUpload.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="357">
-              <caret line="21" column="80" lean-forward="true" selection-start-line="21" selection-start-column="80" selection-end-line="21" selection-end-column="80" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/index.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="282">
-              <caret line="135" column="84" lean-forward="false" selection-start-line="135" selection-start-column="70" selection-end-line="135" selection-end-column="84" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="scoreSplitter..js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/bin/scoreSplitter..js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="370">
-              <caret line="323" column="0" lean-forward="true" selection-start-line="323" selection-start-column="0" selection-end-line="323" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="package.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/package.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="19" column="4" lean-forward="true" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="4" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="readme.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/pdf/readme.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="readme.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/png/raw/readme.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
-  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="package_json" />
-        <option value="JavaScript File" />
         <option value="JS module" />
+        <option value="package.json" />
+        <option value="HTML File" />
+        <option value="JavaScript File" />
       </list>
     </option>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>name</find>
-      <find>drag</find>
-      <find>nextPage()</find>
-      <find>updateImage</find>
+      <find>#page</find>
+      <find>wrong file</find>
+      <find>clea</find>
+      <find>300</find>
+      <find>resizedImagesDir</find>
+      <find>pageWidth</find>
+      <find>ratio</find>
+      <find>pageHeight</find>
+      <find>minute</find>
+      <find>scale</find>
+      <find>atte</find>
+      <find>sharp</find>
+      <find>node-pdfbox</find>
+      <find>gm</find>
+      <find>patie</find>
       <find>ajax</find>
-      <find>drawRect</find>
-      <find>openFile()</find>
+      <find>patien</find>
+      <find>list</find>
+      <find>scoreSplitter.zones</find>
+      <find>setMessage</find>
+      <find>patientez</find>
+      <find>openFirstPdfPage</find>
       <find>pagesZoneData</find>
-      <find>executeMoreShortestPathButton</find>
-      <find>click</find>
-      <find>clearZones</find>
-      <find>currentPage</find>
-      <find>pdfBoxToSize</find>
-      <find>PDFImage</find>
-      <find>split</find>
-      <find>mult</find>
+      <find>addZone</find>
+      <find>generatePartButton</find>
+      <find>buttonImportant</find>
+      <find>Jimp</find>
+      <find>exe</find>
+      <find>execSync</find>
+      <find>login</find>
     </findStrings>
     <replaceStrings>
       <replace>scoreD3.pagesZoneData</replace>
       <replace>self.pagesZoneData</replace>
       <replace>pdfToImages</replace>
+      <replace>drawZoneRect</replace>
+      <replace>scoresSelect</replace>
+      <replace>self.setMessage</replace>
+      <replace>(time2-time)</replace>
+      <replace>scale</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="2025-05-01" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="IdeDocumentHistory">
-    <option name="CHANGED_PATHS">
-      <list>
-        <option value="$PROJECT_DIR$/bin/package.json" />
-        <option value="$PROJECT_DIR$/bin/www" />
-        <option value="$PROJECT_DIR$/public/js/imageSplitter.js" />
-        <option value="$PROJECT_DIR$/bin/pdfToImages..js" />
-        <option value="$PROJECT_DIR$/public/js/scoreD3.js" />
-        <option value="$PROJECT_DIR$/public/js/scoreD3b.js" />
-        <option value="$PROJECT_DIR$/public/js/scoreParts.js" />
-        <option value="$PROJECT_DIR$/package.json" />
-        <option value="$PROJECT_DIR$/routes/index.js" />
-        <option value="$PROJECT_DIR$/bin/scoreSplitter..js" />
-        <option value="$PROJECT_DIR$/public/index.html" />
-      </list>
-    </option>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;claudefauconnet&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/claudefauconnet/scoreparts&quot;,
+    &quot;accountId&quot;: &quot;95bab1c7-0180-4c55-bbe6-72cc7837f5aa&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/data/zonesIMSLP497429-PMLP649379-zelenka_requiem_45_conducteur_zones.json" root0="SKIP_INSPECTION" />
   </component>
-  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
-  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER">
-    <package-json value="$PROJECT_DIR$/package.json" />
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
-  <component name="JsGulpfileManager">
-    <detection-done>true</detection-done>
-    <sorting>DEFINITION_ORDER</sorting>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="1SI1znYKhPY5XIctvsRwxgIVfYn" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
   </component>
-  <component name="NodeModulesDirectoryManager">
-    <handled-path value="$PROJECT_DIR$/node_modules" />
-  </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="73" />
-    <option name="y" value="146" />
-    <option name="width" value="1288" />
-    <option name="height" value="685" />
-  </component>
-  <component name="ProjectView">
-    <navigator currentView="ProjectPane" proportions="" version="1">
-      <flattenPackages />
-      <showMembers />
-      <showModules />
-      <showLibraryContents />
-      <hideEmptyPackages />
-      <abbreviatePackageNames />
-      <autoscrollToSource />
-      <autoscrollFromSource />
-      <sortByType />
-      <manualOrder />
-      <foldersAlwaysOnTop value="true" />
-    </navigator>
-    <panes>
-      <pane id="Scope" />
-      <pane id="Scratches" />
-      <pane id="ProjectPane">
-        <subPane>
-          <expand>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="bin" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="png" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="png" type="462c0819:PsiDirectoryNode" />
-              <item name="raw" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="java" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="public" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="public" type="462c0819:PsiDirectoryNode" />
-              <item name="js" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="scoreparts" type="b2602c69:ProjectViewProjectNode" />
-              <item name="scoreparts" type="462c0819:PsiDirectoryNode" />
-              <item name="routes" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-    </panes>
-  </component>
-  <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="project.scopes" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="nodejs_interpreter_path" value="node" />
-    <property name="javascript.nodejs.core.library.configured.version" value="6.9.2" />
-    <property name="HbShouldOpenHtmlAsHb" value="" />
-    <property name="restartRequiresConfirmation" value="false" />
-    <property name="SearchEverywhereHistoryKey" value="k&#9;FILE&#9;file://D:/GitHub/scoreparts/public/js/jquery/images/ui-bg_diagonals-thick_20_666666_40x40.png" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.BezierTool.html.executor": "Debug",
+    "Node.js.bin\\www.executor": "Debug",
+    "Node.js.jimpProxy.mjs.executor": "Debug",
+    "Node.js.scoreSplitter..js.executor": "Debug",
+    "Node.js.zonesDetector.js.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "true",
+    "git-widget-placeholder": "2025-05-13",
+    "last_opened_file_path": "D:/projects/scoreparts/public/js",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2024.1.5\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\projects\scoreparts\public\js" />
+      <recent name="D:\projects\scoreparts\data\pdf" />
+      <recent name="D:\projects\scoreparts\data\zones" />
+      <recent name="D:\projects\scoreparts\bin" />
+      <recent name="D:\projects\scoreparts\public" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\projects\scoreparts\public\js" />
+      <recent name="D:\GitHub\scoreparts\public\js\old" />
+      <recent name="D:\GitHub\scoreparts\public\data" />
       <recent name="D:\GitHub\scoreparts\data\png\raw" />
       <recent name="D:\GitHub\scoreparts\data\pdf" />
-      <recent name="D:\GitHub\scoreparts\java" />
-      <recent name="D:\GitHub\scoreparts\data" />
-      <recent name="D:\GitHub\scoreparts" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\GitHub\scoreparts\public\js" />
-      <recent name="D:\GitHub\scoreparts\public" />
-      <recent name="D:\GitHub\scoreparts\public\data\originals" />
-      <recent name="D:\GitHub\scoreparts\bin" />
-      <recent name="D:\GitHub\scoreparts\public\images" />
     </key>
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
-  </component>
-  <component name="RunManager" selected="Node.js.scoreSplitter..js">
-    <configuration name="scoreSplitter..js" type="NodeJSConfigurationType" factoryName="Node.js" path-to-js-file="scoreSplitter..js" working-dir="$PROJECT_DIR$/bin" />
-    <list size="2">
-      <item index="0" class="java.lang.String" itemvalue="Node.js.bin\www" />
-      <item index="1" class="java.lang.String" itemvalue="Node.js.scoreSplitter..js" />
+  <component name="RunManager" selected="Node.js.bin\www">
+    <configuration name="BezierTool.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://vps254642.ovh.net/public/paperjs/examples/Tools/BezierTool.html">
+      <method v="2" />
+    </configuration>
+    <configuration name="jimpProxy.mjs" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/jimpProxy.mjs" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
+    <configuration name="pdfToHtml.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/pdfToHtml.js" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
+    <configuration name="scoreSplitter..js" type="NodeJSConfigurationType" path-to-js-file="scoreSplitter..js" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
+    <configuration name="splitPDF..js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/splitPDF..js" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
+    <configuration name="zonesDetector.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/bin/zonesDetector.js" working-dir="$PROJECT_DIR$/bin">
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="JavaScript Debug.BezierTool.html" />
+      <item itemvalue="Node.js.scoreSplitter..js" />
+      <item itemvalue="Node.js.bin\www" />
+      <item itemvalue="Node.js.jimpProxy.mjs" />
+      <item itemvalue="Node.js.pdfToHtml.js" />
+      <item itemvalue="Node.js.splitPDF..js" />
+      <item itemvalue="Node.js.zonesDetector.js" />
     </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.zonesDetector.js" />
+        <item itemvalue="Node.js.jimpProxy.mjs" />
+        <item itemvalue="JavaScript Debug.BezierTool.html" />
+        <item itemvalue="Node.js.splitPDF..js" />
+        <item itemvalue="Node.js.pdfToHtml.js" />
+      </list>
+    </recent_temporary>
   </component>
-  <component name="ShelveChangesManager" show_recycled="false">
-    <option name="remove_strategy" value="false" />
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-WS-241.18034.50" />
+      </set>
+    </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -330,347 +204,336 @@
       <updated>1517584239674</updated>
       <workItem from="1517584241533" duration="36268000" />
       <workItem from="1517737244690" duration="18516000" />
-      <workItem from="1517922763265" duration="7036000" />
+      <workItem from="1517922763265" duration="10300000" />
+      <workItem from="1519395817223" duration="451000" />
+      <workItem from="1519493613694" duration="72000" />
+      <workItem from="1519493728924" duration="28771000" />
+      <workItem from="1519654823076" duration="7041000" />
+      <workItem from="1519738966244" duration="595000" />
+      <workItem from="1520009721942" duration="16417000" />
+      <workItem from="1520075757083" duration="15598000" />
+      <workItem from="1520266438754" duration="19000" />
+      <workItem from="1520524310038" duration="33593000" />
+      <workItem from="1520766211146" duration="4059000" />
+      <workItem from="1520790947718" duration="5616000" />
+      <workItem from="1520843523411" duration="7315000" />
+      <workItem from="1521092364285" duration="2546000" />
+      <workItem from="1523292818330" duration="1261000" />
+      <workItem from="1523347998221" duration="583000" />
+      <workItem from="1523464140277" duration="1214000" />
+      <workItem from="1532877297235" duration="2754000" />
+      <workItem from="1532962231031" duration="2322000" />
+      <workItem from="1533029636528" duration="2542000" />
+      <workItem from="1533112295972" duration="19000" />
+      <workItem from="1533311220160" duration="1244000" />
+      <workItem from="1533482267002" duration="11000" />
+      <workItem from="1534229558567" duration="669000" />
+      <workItem from="1534238834610" duration="8000" />
+      <workItem from="1534493970957" duration="1833000" />
+      <workItem from="1534602512978" duration="656000" />
+      <workItem from="1539780343015" duration="1540000" />
+      <workItem from="1562838520395" duration="2090000" />
+      <workItem from="1563168927585" duration="2491000" />
+      <workItem from="1571236563393" duration="698000" />
+      <workItem from="1619962142307" duration="137000" />
+      <workItem from="1624958642636" duration="7514000" />
+      <workItem from="1625157502181" duration="1263000" />
+      <workItem from="1625202131321" duration="6828000" />
+      <workItem from="1634217741197" duration="1861000" />
+      <workItem from="1641408135658" duration="1393000" />
+      <workItem from="1654875634442" duration="3244000" />
+      <workItem from="1675618477094" duration="1037000" />
+      <workItem from="1675621865933" duration="8000" />
+      <workItem from="1687101486282" duration="8432000" />
+      <workItem from="1694345081419" duration="3414000" />
+      <workItem from="1694356796217" duration="7622000" />
+      <workItem from="1694423001256" duration="10478000" />
+      <workItem from="1744898137570" duration="53534000" />
+      <workItem from="1745162622359" duration="8769000" />
+      <workItem from="1745216516880" duration="36974000" />
+      <workItem from="1745485203509" duration="22842000" />
+      <workItem from="1745573739957" duration="717000" />
+      <workItem from="1745590272069" duration="6625000" />
+      <workItem from="1745600995743" duration="514000" />
+      <workItem from="1745601850877" duration="11607000" />
+      <workItem from="1745685280934" duration="34366000" />
+      <workItem from="1745942900039" duration="5326000" />
+      <workItem from="1745995384834" duration="66240000" />
+      <workItem from="1746336559103" duration="7208000" />
+      <workItem from="1746344963030" duration="19636000" />
+      <workItem from="1746437944450" duration="5000" />
+      <workItem from="1746626244371" duration="476000" />
+      <workItem from="1746638007819" duration="606000" />
+      <workItem from="1746684816199" duration="53000" />
+      <workItem from="1746692270110" duration="587000" />
+      <workItem from="1746805257308" duration="594000" />
+      <workItem from="1746894999288" duration="308000" />
+      <workItem from="1747114039563" duration="40118000" />
+      <workItem from="1747287966950" duration="4377000" />
+      <workItem from="1747553257305" duration="1769000" />
+      <workItem from="1749997707170" duration="3068000" />
+      <workItem from="1750693280233" duration="3597000" />
+      <workItem from="1750844339829" duration="594000" />
+      <workItem from="1751038668718" duration="1163000" />
+      <workItem from="1751273273108" duration="62000" />
+      <workItem from="1751791819361" duration="25126000" />
+      <workItem from="1752214845973" duration="6565000" />
+      <workItem from="1752511383323" duration="625000" />
+      <workItem from="1759400428769" duration="1607000" />
+      <workItem from="1759409396912" duration="6000" />
+      <workItem from="1776937465297" duration="3537000" />
+      <workItem from="1777038962451" duration="1107000" />
+      <workItem from="1777040863298" duration="14000" />
+      <workItem from="1777105089843" duration="22486000" />
+      <workItem from="1777299262928" duration="25000" />
+      <workItem from="1777382608767" duration="1746000" />
+      <workItem from="1777471059868" duration="36000" />
+      <workItem from="1777531836797" duration="22888000" />
     </task>
+    <task id="LOCAL-00001" summary="add conductor.js">
+      <created>1694363133077</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1694363133077</updated>
+    </task>
+    <task id="LOCAL-00002" summary="add conductor.js">
+      <created>1694367784007</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1694367784007</updated>
+    </task>
+    <task id="LOCAL-00003" summary="integrate new version of Jimp">
+      <option name="closed" value="true" />
+      <created>1745217341226</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1745217341226</updated>
+    </task>
+    <task id="LOCAL-00004" summary="integrate new version of Jimp">
+      <option name="closed" value="true" />
+      <created>1745243608284</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1745243608284</updated>
+    </task>
+    <task id="LOCAL-00005" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1745259167180</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1745259167180</updated>
+    </task>
+    <task id="LOCAL-00006" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1745568458872</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1745568458872</updated>
+    </task>
+    <task id="LOCAL-00007" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1745654287029</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1745654287029</updated>
+    </task>
+    <task id="LOCAL-00008" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1745772891588</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1745772891588</updated>
+    </task>
+    <task id="LOCAL-00009" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1746031599889</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1746031599890</updated>
+    </task>
+    <task id="LOCAL-00010" summary="autodetectZones">
+      <option name="closed" value="true" />
+      <created>1746114780795</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1746114780795</updated>
+    </task>
+    <task id="LOCAL-00011" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1746169745958</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1746169745958</updated>
+    </task>
+    <task id="LOCAL-00012" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1746203186029</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1746203186029</updated>
+    </task>
+    <task id="LOCAL-00013" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1746203192299</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1746203192300</updated>
+    </task>
+    <task id="LOCAL-00014" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1746343964954</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1746343964954</updated>
+    </task>
+    <task id="LOCAL-00015" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1746429491312</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1746429491312</updated>
+    </task>
+    <task id="LOCAL-00016" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1747327271652</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1747327271652</updated>
+    </task>
+    <task id="LOCAL-00017" summary="new UI">
+      <option name="closed" value="true" />
+      <created>1777135049027</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1777135049027</updated>
+    </task>
+    <task id="LOCAL-00018" summary="corrections zones">
+      <option name="closed" value="true" />
+      <created>1778055213684</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1778055213684</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
-  <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="61820000" />
-  </component>
-  <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
-    <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24920969" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="npm" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32934782" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25543478" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-    </layout>
-  </component>
   <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="1" />
+    <option name="version" value="3" />
   </component>
-  <component name="VcsContentAnnotationSettings">
-    <option name="myLimit" value="2678400000" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="implements ScoreDraw with canvas instead of d3" />
+    <MESSAGE value="add conductor.js" />
+    <MESSAGE value="integrate new version of Jimp" />
+    <MESSAGE value="autodetectZones" />
+    <MESSAGE value="new UI" />
+    <MESSAGE value="corrections zones" />
+    <option name="LAST_COMMIT_MESSAGE" value="corrections zones" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/routes/index.js</url>
-          <line>11</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="95" />
+          <url>file://$PROJECT_DIR$/public/js/scoreD3.js</url>
+          <line>21</line>
+          <option name="timeStamp" value="306" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/app.js</url>
-          <line>29</line>
+          <url>file://$PROJECT_DIR$/public/js/old/scoreD3b.js</url>
+          <line>20</line>
+          <option name="timeStamp" value="307" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/scoreD3.js</url>
+          <line>42</line>
+          <option name="timeStamp" value="308" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/conductor.js</url>
+          <line>158</line>
+          <option name="timeStamp" value="309" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/voices.js</url>
+          <line>105</line>
+          <option name="timeStamp" value="630" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/scoreParts.js</url>
+          <line>163</line>
+          <option name="timeStamp" value="708" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/scoreParts.js</url>
+          <line>39</line>
+          <option name="timeStamp" value="725" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>65</line>
+          <option name="timeStamp" value="728" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>78</line>
+          <option name="timeStamp" value="751" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>102</line>
+          <option name="timeStamp" value="756" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>101</line>
+          <option name="timeStamp" value="757" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>232</line>
+          <option name="timeStamp" value="758" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
+          <line>268</line>
+          <option name="timeStamp" value="759" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/public/js/voices.js</url>
+          <line>47</line>
           <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="96" />
+          <option name="timeStamp" value="773" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="97" />
     </breakpoint-manager>
-    <watches-manager />
-  </component>
-  <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/imageSplitter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3434">
-          <caret line="202" column="0" lean-forward="false" selection-start-line="202" selection-start-column="0" selection-end-line="202" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreD3.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1207">
-          <caret line="71" column="30" lean-forward="false" selection-start-line="71" selection-start-column="30" selection-end-line="71" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreD3b.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1411">
-          <caret line="83" column="12" lean-forward="false" selection-start-line="83" selection-start-column="12" selection-end-line="83" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreParts.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2125">
-          <caret line="125" column="24" lean-forward="false" selection-start-line="125" selection-start-column="24" selection-end-line="125" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/pdfToImages..js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="18" column="0" lean-forward="false" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/fileUpload.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="21" column="80" lean-forward="false" selection-start-line="21" selection-start-column="80" selection-end-line="21" selection-end-column="80" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/routes/index.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="29" column="34" lean-forward="false" selection-start-line="29" selection-start-column="34" selection-end-line="29" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2601">
-          <caret line="153" column="39" lean-forward="false" selection-start-line="153" selection-start-column="39" selection-end-line="153" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/scoreSplitter..js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4845">
-          <caret line="285" column="2" lean-forward="false" selection-start-line="285" selection-start-column="2" selection-end-line="285" selection-end-column="2" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/scoreSplitter..js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/imageSplitter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3485">
-          <caret line="205" column="33" lean-forward="false" selection-start-line="204" selection-start-column="4" selection-end-line="205" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreD3.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="561">
-          <caret line="33" column="39" lean-forward="false" selection-start-line="33" selection-start-column="39" selection-end-line="33" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreParts.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1343">
-          <caret line="79" column="44" lean-forward="false" selection-start-line="79" selection-start-column="44" selection-end-line="79" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/fileUpload.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="21" column="80" lean-forward="false" selection-start-line="21" selection-start-column="80" selection-end-line="21" selection-end-column="80" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/www">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="13" column="0" lean-forward="false" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/routes/index.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="29" column="34" lean-forward="false" selection-start-line="29" selection-start-column="34" selection-end-line="29" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/package.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="30" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2329">
-          <caret line="137" column="12" lean-forward="false" selection-start-line="137" selection-start-column="12" selection-end-line="137" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/package.json" />
-    <entry file="file://$PROJECT_DIR$/data/rameau1-0.png.XX.png" />
-    <entry file="file://$PROJECT_DIR$/data/Rameau1-3.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/www">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="13" column="0" lean-forward="false" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/jquery/images/ui-bg_diagonals-thick_20_666666_40x40.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/pdfToImages..js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="18" column="0" lean-forward="false" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/imageSplitter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3434">
-          <caret line="202" column="0" lean-forward="false" selection-start-line="202" selection-start-column="0" selection-end-line="202" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/index2.html" />
-    <entry file="file://$PROJECT_DIR$/public/js/scoreD3.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1207">
-          <caret line="71" column="30" lean-forward="false" selection-start-line="71" selection-start-column="30" selection-end-line="71" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreParts.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2125">
-          <caret line="125" column="24" lean-forward="false" selection-start-line="125" selection-start-column="24" selection-end-line="125" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/scoreD3b.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1411">
-          <caret line="83" column="12" lean-forward="false" selection-start-line="83" selection-start-column="12" selection-end-line="83" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/pdf/readme.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/png/raw/readme.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/package.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="19" column="4" lean-forward="true" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/fileUpload.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="21" column="80" lean-forward="true" selection-start-line="21" selection-start-column="80" selection-end-line="21" selection-end-column="80" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/bin/scoreSplitter..js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="370">
-          <caret line="323" column="0" lean-forward="true" selection-start-line="323" selection-start-column="0" selection-end-line="323" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="282">
-          <caret line="135" column="84" lean-forward="false" selection-start-line="135" selection-start-column="70" selection-end-line="135" selection-end-column="84" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="19" column="27" lean-forward="true" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/routes/index.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="20" lean-forward="true" selection-start-line="5" selection-start-column="20" selection-end-line="5" selection-end-column="20" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
   </component>
   <component name="masterDetails">
     <states>

@@ -1,0 +1,72 @@
+<div id="controlPanelDivxxx" style="width:400px;height:600px;visibility: visible">
+    <td><img src="images/waitAnimated.gif" id="waitImg" width="20px" style="visibility: hidden"></td>
+
+    <table>
+<tr>
+    <td>
+
+    </td>
+</tr>
+
+        <tr>
+            <td>
+
+                hauteur zone<input id="zoneHeight" value="50" size="3">
+                <div id="mousePositionDiv"></div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+
+                &nbsp;&nbsp;
+                <button onclick=scoreParts.restartAll()>tout recommencer</button>
+                <button onclick=scoreParts.deletePageZones()>effacer Page</button>
+                <button onclick=scoreParts.clearMeasures()>effacer Measures</button>
+
+            <!--    <button onclick="scoreParts.registerZoneVoices(this)" style="visibility: hidden"
+                        id="duplicateZonesButton">Copier Zones
+                </button>-->
+                <button onclick="scoreParts.repeatZonesFromPreviousPage(true)" style="visibility: visible">Dupliquer detect
+                </button>
+
+                <button onclick="Paper.drawZones( scoreParts.currentZones,true)" style="visibility: visible">Dupliquer simple
+                    Zones
+                </button>
+
+                <button onclick="
+
+ZonesChecker.checkZones( scoreParts.currentZones)" style="visibility: visible">check zones
+                </button>
+
+            </td>
+        </tr>
+        <!--
+        <tr>
+            <td>
+
+
+                <button class="buttonImportant" id="generatePartButton2" style="visibility:visible"
+                        onclick=" Voices.showVoicesDialog()">Générer multiples voix (pdf)
+
+                </button>
+                <button class="buttonImportant" id="generatePartButton" style="visibility:visible"
+                        onclick="Proxy.generateInstrumentScore()">Générer simple voix (pdf)
+
+                </button>
+
+            </td>
+        </tr>
+           -->
+        <tr>
+            <td>
+                <button onclick='Proxy.saveZones()'>Save Zones</button>
+                <button onclick='Proxy.loadZones()'>Load Zones</button>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+    </table>
+
+    <div id="message"></div>
+</div>

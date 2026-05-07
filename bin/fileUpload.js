@@ -27,16 +27,20 @@
 
 var fs = require('fs');
 var multer = require('multer');
-var serverParams = require('./serverParams.js')
+
 var path= require('path');
+
+var uploadDir=path.resolve(__dirname,'../data/pdf');
 
 var diskStorage = multer.diskStorage({
     destination: function (request, file, callback) {
-        callback(null, '/uploads');
+        callback(null,uploadDir);
     },
     filename: function (request, file, callback) {
         console.log(file);
-        callback(null, file.originalname)
+var fileName=file.originalname.trim();
+
+        callback(null, file.originalname.replace(/ /g,"_"));
     }
 });
 var memStorage = multer.memoryStorage()
@@ -45,20 +49,21 @@ var memStorage = multer.memoryStorage()
 
 
 var fileUpload = {
+    maxUploadSize:50*1000*1000,
     upload: function (req, fieldName, callback) {
         var storage = diskStorage;
-        if (callback)
+        if (false  && callback)
             storage = memStorage;
         var upload = multer({
             storage: storage,
-            limits: {fileSize: serverParams.uploadMaxSize}
+            limits: {fileSize: fileUpload.maxUploadSize}
         }).single(fieldName);
         upload(req, null, function (err, data) {
             if (err) {
                 callback('Error Occured' + err);
                 return;
             }
-            callback(null, req)
+            callback(null, req.file,req.body)
 
         })
 
@@ -69,7 +74,7 @@ var fileUpload = {
         var storage = memStorage;
         var upload = multer({
             storage: storage,
-            limits: {fileSize: serverParams.uploadMaxSize}
+            limits: {fileSize: maxUploadSize}
         }).single("xml");
         upload(req, null, function (err, data) {
             if (err) {

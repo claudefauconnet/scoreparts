@@ -54,13 +54,19 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
+
 # dotenv environment variables file
 .env
 
 *.pdf
 *.png
+!infos.png
+!_blank.png
 *.json
-public/js/d3/d3.js
-public/js/Copy of imageSplitter.js
-public/js/jquery/external/jquery/jquery.js
-*.jar
+
+
+
+
+/data/zones/
+/data/pdf/
+/public/data/
