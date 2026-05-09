@@ -226,11 +226,13 @@ var Proxy = (function () {
     }
     self.saveZones = function (callback) {
 
-        if (!scoreParts.modified) {
-            return;
+        if (!scoreParts.pdfName || !scoreParts.modified) {
+            return callback(null);
         }
 
-        var pdfName = $('#scoresSelect').val();
+
+
+        var pdfName = scoreParts.pdfName;
 
         var margin = parseInt($("#zoneMargin").val());
         var zonesStr = JSON.stringify(scoreParts.allPagesZones);
@@ -250,7 +252,7 @@ var Proxy = (function () {
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
-                scoreParts.modified=false
+                scoreParts.modified = false
                 $("#waitImg").css("visibility", "hidden");
                 if (callback) {
                     callback()

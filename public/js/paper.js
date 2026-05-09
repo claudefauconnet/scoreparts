@@ -20,7 +20,8 @@ var Paper = (function () {
         };
 
         self.drawImage = function (imageUrl) {
-            scoreParts.currentPagehasBeenClicked = false
+
+            scoreParts.modified = false
             $("#myCanvas").width(imageWidth)
             $("#myCanvas").height(imageHeight)
 
@@ -35,6 +36,7 @@ var Paper = (function () {
             var canvas = document.getElementById('myCanvas');
             // Create an empty project and a view for the canvas:
             paper.setup(canvas);
+            Paper.deleteZones(true)
             self.raster = new paper.Raster(imageUrl);
             self.raster.data.type == "image"
 
@@ -51,14 +53,14 @@ var Paper = (function () {
                 scoreParts.coefV = coefV
                 scoreParts.coefH = coefH
                 Paper.raster.scale(coefV)
+
             };
 
             var tool = new paper.Tool()
             tool.onMouseDown = function (event) {
-                scoreParts.currentPagehasBeenClicked = true
+                scoreParts.modified = true
                 event.event.preventDefault()
                 event.event.stopPropagation()
-
 
 
                 if (self.currentZoneAction == "removeZone") {// call after delete zone
@@ -110,27 +112,23 @@ var Paper = (function () {
                 var item = event.target
 
 
-
-
-
                 if (event.event.button == 2) {//show zone infos
 
 
                     var zone = item.getItems()[0]
-                    var point={x:event.event.pageX,y:event.event.pageY}
-                    popupMenu.showGraphPopupMenu(zone,point,null)
+                    var windowpoint = {x: event.event.pageX, y: event.event.pageY}
+                    var paperPoint = {x: event.point.x, y: item.bounds.y}
+                    popupMenu.showGraphPopupMenu(item, windowpoint, paperPoint)
                     $("#message").html(JSON.stringify(zone.data))
                     event.preventDefault()
                     event.stopPropagation()
                     return;
                 }
-
+                PopupMenuWidget.hidePopup("popupMenuWidgetDiv")
 
                 if (event.modifiers.alt && event.modifiers.control) {
                     self.currentZoneAction = "removeZone"
-                    item.removeChildren()
-                    item.remove()
-                    paper.project.view.update()
+                    self.deleteZone(item)
                     //  self.currentZoneAction = null;
                     event.preventDefault()
                     event.stopPropagation()
@@ -170,8 +168,9 @@ var Paper = (function () {
             self.dragPath = function (event) {//clear zone
 
 
-                if(!scoreParts.currentMovement)
+                if (!scoreParts.currentMovement) {
                     return;
+                }
                 var item = event.target
                 if (self.currentZoneAction == "resizeZone") {//resize
                     function resizeDimensions(elem, width, height) {
@@ -186,7 +185,7 @@ var Paper = (function () {
                     resizeDimensions(item, self.currentPath.bounds.width, newHeight)
 
 
-                } else if (self.currentZoneAction == "moveZone"  ) {//move
+                } else if (self.currentZoneAction == "moveZone") {//move
                     item.position.y += event.delta.y;
 
                     /*  item.children.forEach(function (child) {
@@ -205,6 +204,9 @@ var Paper = (function () {
         }
 
         self.getPageZones = function () {
+            if (!paper || !paper.project) {
+                return []
+            }
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             var zones = []
@@ -244,13 +246,19 @@ var Paper = (function () {
         }
 
         self.drawAutoDetectedZones = function (data, zoneHeights, zoneVoices) {
-            scoreParts.currentPagehasBeenClicked = true
+
+            lineOverflow=parseInt($("#lineOverflow").val())
+            scoreParts.modified = true
             var zoneHeight = parseInt($("#zoneHeight").val())
             var width = $("#myCanvas").width()
             var interline = data.interline * scoreParts.coefV
             var x = (data.firstVerticalLine * scoreParts.coefV) - 5
+            /*  if(data.topLines.length>1){
+                  var delta=data.topLines[1]-data.topLines[0]
+                  if(delta)
+              }*/
             data.topLines.forEach(function (zoneY, index) {
-                var height = 8 * interline
+                var height = (6+lineOverflow) * interline
                 if (zoneHeights && zoneHeights[index]) {
                     height = zoneHeights[index]
                 }
@@ -260,7 +268,7 @@ var Paper = (function () {
                 }
                 var zone = {
                     x: Math.max(x, scoreParts.margin),
-                    y: (zoneY * scoreParts.coefV) - (2 * interline),
+                    y: (zoneY * scoreParts.coefV) - (lineOverflow * interline),
                     width: width - (2 * scoreParts.margin),
                     height: height,
                     voice: voice,
@@ -274,7 +282,7 @@ var Paper = (function () {
 
 
         self.drawMeasure = function (measureGroup, x, y, number) {
-            scoreParts.currentPagehasBeenClicked = true
+            scoreParts.modified = true
             var text = new paper.PointText(new paper.Point(x, y - 1));
             text.fillColor = 'green';
             text.content = number;
@@ -287,10 +295,29 @@ var Paper = (function () {
             text.insertAbove(rect);
             var group = new paper.Group([rect, text])
             measureGroup.addChild(group)
+            scoreParts.modified = true
 
 
         }
 
+        self.drawtText = function (measureGroup, x, y, textStr) {
+            scoreParts.modified = true
+            var text = new paper.PointText(new paper.Point(x, y - 1));
+            text.fillColor = 'green';
+            text.content = textStr;
+            text.fontSize = 14
+            text.fontSize = 14
+            scoreParts.modified = true;
+            var rect = new paper.Path.Rectangle(text.bounds);
+            rect.fillColor = '#ddd';
+            //  rect.strokeColor = 'black';
+            text.insertAbove(rect);
+            var group = new paper.Group([rect, text])
+            measureGroup.addChild(group)
+            scoreParts.modified = true
+
+
+        }
 
         self.drawZones = function (zones, removeMeasures) {
 
@@ -352,13 +379,8 @@ var Paper = (function () {
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             items.forEach(function (item, index) {
-                /* if (index>0) {//tout sauf image
-                     if (!zoneIndex || zoneIndex == index) {
-                         var x = item.remove()
-                     }
-                 }*/
-                if (item._data && item._data.type == "zone") {
 
+              if (item.data.type) {
                     var x = item.remove()
                 }
 
@@ -366,6 +388,11 @@ var Paper = (function () {
             scoreParts.modified = true
             paper.project.view.update()
 
+        }
+        self.deleteZone = function (item) {
+            item.removeChildren()
+            item.remove()
+            paper.project.view.update()
         }
 
 

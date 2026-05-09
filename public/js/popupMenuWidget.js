@@ -69,6 +69,7 @@ var PopupMenuWidget = (function () {
         } else {
             $("#" + popupDiv).css("left", point.x - popupW);
         }
+
     };
     self.hidePopup = function (popupDiv) {
         if (self.blockHidePopup) {

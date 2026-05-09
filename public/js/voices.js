@@ -43,7 +43,7 @@ var Voices = (function () {
         self.detectWrongPages = function (numberOfVoices) {
             return;
             for (var pageNum in scoreParts.allPagesZones.pages) {
-                var page=scoreParts.allPagesZones.pages[pageNum]
+                var page = scoreParts.allPagesZones.pages[pageNum]
                 //   console.log(page+" "+scoreParts.allPagesZones.pages[page].length)
                 if (page.length > 0 && page.length % numberOfVoices != 0) {
                     alert(" wrong  number of scales in page " + page)
@@ -231,37 +231,41 @@ var Voices = (function () {
                 voicePagesZones.title = title
                 scoreParts.allPagesZones.numberOfVoices = self.numberOfVoices
                 scoreParts.allPagesZones.title = title
-                scoreParts.modified=true;
-                Proxy.saveZones()
+                scoreParts.modified = true;
 
-                self.copyMeasuresOnAllVoices(scoreParts.allPagesZones, self.numberOfVoices)
-                if (merge) {
-                    self.mergeVoicesZones(voicePagesZones)
-                } else {
-                    self.fillVoiceZones(voice, voicePagesZones)
-                }
-
-
-                $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html("processing...");
-
-                // $('#voicesTreeDiv').jstree().uncheck_node(voice.id)
-                Proxy.generateInstrumentScore(voice.label, voicePagesZones, function (err, result) {
+                Proxy.saveZones(function (err) {
                     if (err) {
-                        return callbackEachVoice(err)
+                        alert(err.responseText || err)
                     }
-                    var nodes = $('#voicesTreeDiv').jstree().get_checked(true)
-                    nodes.forEach(function (node) {
-                        if (node.data && node.data.voice == voice.id) {
-                            node.data.pdfLink = result
-                        }
-                    })
-                    $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html(" <a target='_blank' href='" + document.location.href + result + "'>télécharger</a>")
 
+                    self.copyMeasuresOnAllVoices(scoreParts.allPagesZones, self.numberOfVoices)
                     if (merge) {
-                        return callbackEachVoice("mergeEnd")
+                        self.mergeVoicesZones(voicePagesZones)
+                    } else {
+                        self.fillVoiceZones(voice, voicePagesZones)
                     }
-                    callbackEachVoice()
 
+
+                    $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html("processing...");
+
+                    // $('#voicesTreeDiv').jstree().uncheck_node(voice.id)
+                    Proxy.generateInstrumentScore(voice.label, voicePagesZones, function (err, result) {
+                        if (err) {
+                            return callbackEachVoice(err)
+                        }
+                        var nodes = $('#voicesTreeDiv').jstree().get_checked(true)
+                        nodes.forEach(function (node) {
+                            if (node.data && node.data.voice == voice.id) {
+                                node.data.pdfLink = result
+                            }
+                        })
+                        $("#pdfLinkDiv_" + voice.id.replace(/ /, "_")).html(" <a target='_blank' href='" + document.location.href + result + "'>télécharger</a>")
+
+                        if (merge) {
+                            return callbackEachVoice("mergeEnd")
+                        }
+                        callbackEachVoice()
+                    })
 
                 })
             }, function (err) {
@@ -282,8 +286,12 @@ var Voices = (function () {
                         }
                     })
                 }
-                scoreParts.modified=true;
-                Proxy.saveZones()
+                scoreParts.modified = true;
+                Proxy.saveZones(function (err) {
+                    if (err) {
+                        alert(err.responseText || err)
+                    }
+                })
             }
         }
 
@@ -327,7 +335,7 @@ var Voices = (function () {
 
 
                     var x = scoreParts.allPagesZones.pages
-                    scoreParts.modified=true
+                    scoreParts.modified = true
                     Proxy.saveZones(function (err) {
                         if (!err) {
                             Paper.drawZones(scoreParts.currentZones)

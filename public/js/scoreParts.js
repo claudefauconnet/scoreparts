@@ -8,67 +8,68 @@ var scoreParts = (function () {
 
     self.openFirstPdfPage = function (clearAll) {
         document.addEventListener("contextmenu", e => e.preventDefault());
-        var pdfName = $('#scoresSelect').val();
 
-        $("#scoresSelect").val(pdfName);
-        if (pdfName == "") {
-            return;
-        }
-        self.pdfName = pdfName
 
-        if(scoreParts.currentPagehasBeenClicked) {
-
-            ;// to be done
             self.writeCurrentPageZones()
 
-            Proxy.saveZones()
-        }
+        
 
 
-
-
-        Proxy.loadZones(function (err, data) {
-            if (err || clearAll) {
-                self.allPagesZones = {pages: {}, title: "", pdfName: self.pdfName, date: new Date(), author: "cf"}
-            } else {
-                self.allPagesZones = data
+        Proxy.saveZones(function (err) {
+            if (err) {
+                alert(err.responseText || err)
             }
 
 
-
-
-            var movements = ["", "Nouveau"]
-            for (var page in scoreParts.allPagesZones.pages) {
-                scoreParts.allPagesZones.pages[page].forEach(function (zone) {
-                    if (zone.movement && movements.indexOf(zone.movement) < 0) {
-                        movements.push(zone.movement)
-                    }
-
-                })
+            var pdfName = $('#scoresSelect').val();
+            $("#scoresSelect").val(pdfName);
+            if (pdfName == "") {
+                return;
             }
-
-            Common.fillSelectOptions("movementSelect", movements, false)
-
-
-            var pageImage = imagesDir + pdfName + "-0.png";
-          //  Paper.drawImage(pageImage)
-
-            self.voices = []
-            self.currentPage = 0;
-            self.changePage(self.currentPage)
-            $("#page").html(" " + (self.currentPage + 1));
-            //  $('#controlPanelDiv').css('visibility', 'visible');
-            var message = ""
-            message += "<ul> <li>pour créer une zone de découpage : clic sur le milieu d'une portée</li>";
-            message += "<li>pour effacer une zone : clic+Alt sur la zone</li>";
-            message += "<li>pour déplacer une zone : glisser sur la zone avec la souris</li>";
-            message += "<li>pour déplacer toutes les zones d'une page  : clic+Ctl sur une zone</li>";
-            message += "<li>Une fois le découpage terminé sur toutes les pages, cliquer sur le bouton \"générer voix (pdf)\"</li>";
-            message += "<ul> ";
-            self.setMessage(message, "blue")
-            self.margin = parseInt($("#zoneMargin").val()) ||10;
+            self.pdfName = pdfName
 
 
+            Proxy.loadZones(function (err, data) {
+                if (err || clearAll) {
+                    self.allPagesZones = {pages: {}, title: "", pdfName: self.pdfName, date: new Date(), author: "cf"}
+                } else {
+                    self.allPagesZones = data
+                }
+
+
+                var movements = ["", "Nouveau"]
+                for (var page in scoreParts.allPagesZones.pages) {
+                    scoreParts.allPagesZones.pages[page].forEach(function (zone) {
+                        if (zone.movement && movements.indexOf(zone.movement) < 0) {
+                            movements.push(zone.movement)
+                        }
+
+                    })
+                }
+
+                Common.fillSelectOptions("movementSelect", movements, false)
+
+
+                var pageImage = imagesDir + pdfName + "-0.png";
+                //  Paper.drawImage(pageImage)
+
+                self.voices = []
+                self.currentPage = 0;
+                self.changePage(self.currentPage)
+                $("#page").html(" " + (self.currentPage + 1));
+                //  $('#controlPanelDiv').css('visibility', 'visible');
+                var message = ""
+                message += "<ul> <li>pour créer une zone de découpage : clic sur le milieu d'une portée</li>";
+                message += "<li>pour effacer une zone : clic+Alt sur la zone</li>";
+                message += "<li>pour déplacer une zone : glisser sur la zone avec la souris</li>";
+                message += "<li>pour déplacer toutes les zones d'une page  : clic+Ctl sur une zone</li>";
+                message += "<li>Une fois le découpage terminé sur toutes les pages, cliquer sur le bouton \"générer voix (pdf)\"</li>";
+                message += "<ul> ";
+                self.setMessage(message, "blue")
+                self.margin = parseInt($("#zoneMargin").val()) || 10;
+
+
+            })
         })
     }
 
@@ -85,29 +86,32 @@ var scoreParts = (function () {
     }
 
     self.changePage = function (newPage, forceSave) {
-        if(scoreParts.currentPagehasBeenClicked) {
+
 
             ;// to be done
             self.writeCurrentPageZones()
 
-            Proxy.saveZones()
-        }
 
 
-        self.currentPage = newPage;
-        var name = $('#scoresSelect').val() + "-" + (self.currentPage);
+        Proxy.saveZones(function (err) {
+            if (err) {
+                alert(err.responseText || err)
+            }
 
-        Paper.drawImage(imagesDir + name + ".png");
-        var zones = self.allPagesZones.pages[self.currentPage]
-        if (zones && zones.length > 0) {
-            self.currentZones = zones
-            Paper.drawZones(zones)
+            self.currentPage = newPage;
+            var name = $('#scoresSelect').val() + "-" + (self.currentPage);
 
-        }
+            Paper.drawImage(imagesDir + name + ".png");
+            var zones = self.allPagesZones.pages[self.currentPage]
+            if (zones && zones.length > 0) {
+                self.currentZones = zones
+                Paper.drawZones(zones)
 
-        $("#page").html(" " + (self.currentPage));
+            }
 
+            $("#page").html(" " + (self.currentPage+1));
 
+        })
     }
 
 
@@ -138,17 +142,23 @@ var scoreParts = (function () {
     }
 
     self.restartAll = function () {
-        self.deletePageZones()
+
         if (confirm("recommencer tout ?")) {
+            for(var pageNum in self.allPagesZones.pages){
+                self.deletePageZones(pageNum)
+            }
+
             self.openFirstPdfPage(true);
         }
     }
 
     self.deletePageZones = function (page) {
-        //  var page = $("#currentPage").val()
-        scoreParts.modified=true
-        delete self.allPagesZones.pages[page || self.currentPage]
-        Paper.deleteZones()
+
+            //  var page = $("#currentPage").val()
+            scoreParts.modified = true
+         self.allPagesZones.pages[page || self.currentPage]=[]
+            Paper.deleteZones()
+
     }
 
 
@@ -261,10 +271,12 @@ var scoreParts = (function () {
 
             })
         }
-        Proxy.saveZones(function () {
-            /* self.deletePageZones(self.currentPage)
-                scoreParts.openSelectMovement()*/
-        });
+
+        Proxy.saveZones(function (err) {
+            if (err) {
+                alert(err.responseText || err)
+            }
+        })
 
     }
 

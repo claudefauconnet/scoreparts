@@ -156,14 +156,7 @@ var previousNotePoints=0
 
 module.exports = ZonesDetector;
 
-var obj = {
-    "generatePart": "1",
-    "part": "XXX",
-    "margin": "15",
-    "pdfName": "IMSLP497429-PMLP649379-zelenka_requiem_45_conducteur",
-    "zonesStr": "{\"0\":[],\"1\":[{\"x\":10,\"y\":233,\"width\":585,\"height\":50,\"page\":1,\"voice\":\"aa\"},{\"x\":10,\"y\":345,\"width\":585,\"height\":50,\"page\":1,\"voice\":\"BB\"}],\"2\":[{\"x\":10,\"y\":43,\"width\":585,\"height\":50,\"page\":2},{\"x\":10,\"y\":115,\"width\":585,\"height\":50,\"page\":2}]}",
-    "imgScaleCoef": "0.35378151260504204"
-}
+
 
 
 if (false) {
