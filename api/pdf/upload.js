@@ -1,8 +1,9 @@
-var express = require('express');
+﻿import express from 'express';
+import scoreSplitter from '../../bin/scoreSplitter..js';
+import fileUpload from '../../bin/fileUpload.js';
+import processResponse from '../../bin/processResponse.js';
+
 var router = express.Router();
-var scoreSplitter = require('../../bin/scoreSplitter..js');
-var fileUpload = require('../../bin/fileUpload.js');
-var processResponse = require('../../bin/processResponse');
 
 /**
  * @openapi
@@ -36,4 +37,4 @@ router.post('/upload', function (req, res) {
   });
 });
 
-module.exports = router;
+export default router;

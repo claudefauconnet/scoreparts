@@ -1,5 +1,10 @@
-var swaggerJsdoc = require('swagger-jsdoc');
-var path = require('path');
+﻿import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
 
 var options = {
   definition: {
@@ -18,4 +23,4 @@ var options = {
   apis: [path.join(__dirname, '**/*.js')],
 };
 
-module.exports = swaggerJsdoc(options);
+export default swaggerJsdoc(options);

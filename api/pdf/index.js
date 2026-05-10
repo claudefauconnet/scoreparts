@@ -1,8 +1,12 @@
-var express = require('express');
+﻿import express from 'express';
+import upload from './upload.js';
+import saveFile from './saveFile.js';
+import loadFile from './loadFile.js';
+
 var router = express.Router();
 
-router.use(require('./upload'));
-router.use(require('./saveFile'));
-router.use(require('./loadFile'));
+router.use(upload);
+router.use(saveFile);
+router.use(loadFile);
 
-module.exports = router;
+export default router;

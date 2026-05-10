@@ -1,4 +1,4 @@
-function processResponse(response, error, result) {
+﻿function processResponse(response, error, result) {
   if (response && !response.finished) {
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
@@ -33,4 +33,4 @@ function processResponse(response, error, result) {
   }
 }
 
-module.exports = processResponse;
+export default processResponse;

@@ -1,8 +1,14 @@
-var express = require('express');
+﻿import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import processResponse from '../../bin/processResponse.js';
+
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
+
 var router = express.Router();
-var fs = require('fs');
-var path = require('path');
-var processResponse = require('../../bin/processResponse');
 
 /**
  * @openapi
@@ -33,4 +39,4 @@ router.post('/loadZones', function (req, res) {
   }
 });
 
-module.exports = router;
+export default router;

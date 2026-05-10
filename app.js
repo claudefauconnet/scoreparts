@@ -1,16 +1,21 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var swaggerUi = require('swagger-ui-express');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import favicon from 'serve-favicon';
+import logger from 'morgan';
+import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
+import swaggerUi from 'swagger-ui-express';
 
-var swaggerSpec = require('./api/swagger');
-var scoreRouter = require('./api/score');
-var pdfRouter = require('./api/pdf');
+import swaggerSpec from './api/swagger.js';
+import scoreRouter from './api/score/index.js';
+import pdfRouter from './api/pdf/index.js';
 
-var app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app = express();
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -35,7 +40,7 @@ app.get('/api/swagger.json', function (req, res) {
 app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(function (req, res, next) {
-  var err = new Error(
+  const err = new Error(
     'Not Found' + req.headers.host + req.url + '  original url ' + req.originalUrl
   );
   err.status = 404;
@@ -49,4 +54,4 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+export default app;

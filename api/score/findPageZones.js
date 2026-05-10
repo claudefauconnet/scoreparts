@@ -1,7 +1,8 @@
-var express = require('express');
+﻿import express from 'express';
+import ZonesDetector from '../../bin/zonesDetector.js';
+import processResponse from '../../bin/processResponse.js';
+
 var router = express.Router();
-var ZonesDetector = require('../../bin/zonesDetector.js');
-var processResponse = require('../../bin/processResponse');
 
 /**
  * @openapi
@@ -28,4 +29,4 @@ router.post('/findPageZones', function (req, res) {
   });
 });
 
-module.exports = router;
+export default router;

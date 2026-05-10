@@ -1,18 +1,19 @@
-require('dotenv').config();
-var fs = require('fs');
-//var PDFImage = require("pdf-image").PDFImage;
-//var Jimp = require("jimp");
-var JimpProxy = null;
-var async = require('async');
-var PDFDocument = require('pdfkit');
-var exec = require('child_process').exec;
-var path = require('path');
+﻿import 'dotenv/config';
+import fs from 'fs';
+import * as JimpProxy from './jimpProxy.js';
+import async from 'async';
+import PDFDocument from 'pdfkit';
+import { exec } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import zipdir from 'zip-dir';
 
-var zipdir = require('zip-dir');
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
 
 var scoreSplitter = {
   zones: [],
-  //  imagesDir: "./public/data/images/",
 
   rawImagesDir: 'data/pdf',
   sourcePdfsDir: '../data/pdf/',
@@ -22,27 +23,24 @@ var scoreSplitter = {
   targetPdfDir: '../public/data/pdfs/',
   pageWidth: 595,
   pageHeight: 842,
-  scaleCorrection: 1, //agrandit chaque image
-  // imageBackOffset: -150,//retrait de l'image vers la gauche
-  // imageBackOffset:120,
+  scaleCorrection: 1,
   imageBackOffset: 20,
 
-  // leftMargin: 70,
   leftMargin: 0,
   anamorphoseCoef: 1.5,
   firstScaleY: 70,
-  interScale: 10, // espace entre les portées
+  interScale: 10,
 
-  coefHV: 0.95, //1.15
+  coefHV: 0.95,
 
   listScores: function (callback) {
     var pdfs = [];
     var pdfsDir = path.resolve(__dirname, scoreSplitter.sourcePdfsDir);
     var files = fs.readdirSync(pdfsDir, 'utf8');
-    for (var i = 0; i < files.length; i++) {
-      var p = files[i].toLowerCase().lastIndexOf('.pdf');
-      if (p > -1) {
-        pdfs.push(files[i].substring(0, p));
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      var pdfExtIndex = files[fileIndex].toLowerCase().lastIndexOf('.pdf');
+      if (pdfExtIndex > -1) {
+        pdfs.push(files[fileIndex].substring(0, pdfExtIndex));
       }
     }
     return callback(null, pdfs);
@@ -54,16 +52,13 @@ var scoreSplitter = {
     }
     var width = scoreSplitter.pageWidth;
     var imgQualities = { low: width * 2, medium: width * 4, high: width * 8 };
-    var imageWitdh = imgQualities[quality];
+    var imageWidth = imgQualities[quality];
 
-    //   var jarPath = path.resolve(__dirname, "../java/pdfbox-app-2.0.8.jar");
-    // var jarPath = path.resolve(__dirname, "../java/pdf2images.jar");
-    var pdfName = path.basename(pdfPath);
-    pdfName = pdfName.substring(0, pdfName.lastIndexOf('.'));
+    var pdfName = path.basename(pdfPath).replace(/\.[^.]+$/, '');
     var time = new Date();
     var time0 = time;
 
-    var outputPrefix = path.resolve(__dirname, scoreSplitter.extractedImagesDir + pdfName + '-');
+    let outputPrefix = path.resolve(__dirname, scoreSplitter.extractedImagesDir + pdfName + '-');
 
     if (options.targetDir) {
       outputPrefix = options.targetDir;
@@ -82,7 +77,7 @@ var scoreSplitter = {
       pdfPath +
       pages +
       ' -resize ' +
-      imageWitdh +
+      imageWidth +
       ' +adjoin ' +
       outputPrefix +
       '%d.png';
@@ -95,7 +90,6 @@ var scoreSplitter = {
       }
       var time2 = new Date();
       console.log('extract images form pdf took : ' + (time2 - time));
-      time = time2;
       console.log(stdout);
 
       callback(null, { pages: 0, pdfName: pdfName, duration: time2 - time0 });
@@ -114,51 +108,43 @@ var scoreSplitter = {
   ) {
     var obj = JSON.parse(zonesStr);
     var zones = obj.pages;
-    var title = obj.title;
 
-    //store the zones coordinates for a replay (eventually)
-    //  fs.writeFileSync(scoreSplitter.imagesDir + "zones-" + pdfName + "-" + part + ".json", zonesStr)
-    //    scoreSplitter.zones = zones;
-    import('../bin/jimpProxy.mjs').then((mod) => {
-      JimpProxy = mod;
-
-      var targetPagesImages = [];
-      async.waterfall(
-        [
-          async.apply(
-            scoreSplitter.cropImages,
-            sourcePdfName,
-            zones,
-            margin,
-            imgScaleCoefH,
-            imgScaleCoefV
-          ),
-          scoreSplitter.setTargetPages,
-          scoreSplitter.blitImages,
-        ],
-        function (err, pagesImagesArray) {
-          if (err) {
-            console.log(err);
-            return callback(err);
-          }
-
-          scoreSplitter.writePagesToPdf(
-            targetPdfName,
-            part,
-            pagesImagesArray,
-            function (err, result) {
-              if (err) {
-                return callback(err);
-              }
-              callback(null, result);
-            }
-          );
+    var targetPagesImages = [];
+    async.waterfall(
+      [
+        async.apply(
+          scoreSplitter.cropImages,
+          sourcePdfName,
+          zones,
+          margin,
+          imgScaleCoefH,
+          imgScaleCoefV
+        ),
+        scoreSplitter.setTargetPages,
+        scoreSplitter.blitImages,
+      ],
+      function (err, pagesImagesArray) {
+        if (err) {
+          console.log(err);
+          return callback(err);
         }
-      );
-    });
+
+        scoreSplitter.writePagesToPdf(
+          targetPdfName,
+          part,
+          pagesImagesArray,
+          function (err, result) {
+            if (err) {
+              return callback(err);
+            }
+            callback(null, result);
+          }
+        );
+      }
+    );
   },
+
   cropImages: function (pdfName, zones, margin, scaleH, scaleV, callbackWaterfall) {
-    ///  var zonesWithImages = []
     var pageNums = Object.keys(zones);
 
     async.eachSeries(
@@ -177,7 +163,7 @@ var scoreSplitter = {
           pageZones,
           function (zone, callbackEachZone) {
             if (zone.x < 0 || zone.y < 0) {
-              return callbackWaterfall(err + '*********\n' + JSON.stringify(zone));
+              return callbackWaterfall('invalid zone coordinates: ' + JSON.stringify(zone));
             }
 
             try {
@@ -191,17 +177,7 @@ var scoreSplitter = {
                   if (err) {
                     return callbackWaterfall(err + '*********\n' + JSON.stringify(zone));
                   }
-                  // JimpProxy.getImageColors(zoneImg)
-                  var w = zoneImg.bitmap.width;
-                  var h = zoneImg.bitmap.height;
-
                   zone.bitmap = zoneImg.bitmap;
-                  /*  try {
-                                  zoneImg.write("C:\\Users\\claud\\Downloads\\testXXX.png")
-                              }
-                              catch( e){
-                                     var x=e
-                              }*/
                   return callbackEachZone(err);
                 }
               );
@@ -223,19 +199,17 @@ var scoreSplitter = {
   setTargetPages: function (zonesWithImages, scaleH, scaleV, callbackWaterfall) {
     var initialYOffset = 20 / scaleV;
     var offsetX = 20 / scaleV;
-    var offsetY = initialYOffset;
+    let offsetY = initialYOffset;
     var vertStep = scoreSplitter.interScale / scaleV;
-    var currentPage = [];
+    let currentPage = [];
     var maxPageYoffset = 800 / scaleV;
-    var pageFull = false;
     var pages = [];
 
-    var nVoices = 0;
+    let nVoices = 0;
     var pageNums = [];
     Object.keys(zonesWithImages).forEach(function (pageStr) {
       pageNums.push(parseInt(pageStr));
     });
-    // pageNums.sort()
 
     pageNums.forEach(function (pageNum) {
       zonesWithImages[pageNum].forEach(function (zone, index) {
@@ -248,11 +222,9 @@ var scoreSplitter = {
 
         currentPage.push(zone);
         zone.yOnPage = offsetY;
-        // zone.xOnPage = (scoreSplitter.leftMargin) / (scaleH)
         zone.xOnPage = scoreSplitter.leftMargin;
 
         if (zone.measure) {
-          //   console.log(zone.measure.number + " " + offsetY)
           zone.measure.y = offsetY;
         }
 
@@ -305,8 +277,6 @@ var scoreSplitter = {
                     callbackZones();
                   }
                 );
-
-                // })
               } catch (e) {
                 if (e) {
                   return callbackZones(e);
@@ -318,7 +288,6 @@ var scoreSplitter = {
               if (err) {
                 return callbackPages(err);
               }
-              //  JimpProxy.getImageColors(blanckImg)
 
               JimpProxy.getBuffer(blanckImg, function (err, imgBuffer) {
                 targetPage.imageBuffer = imgBuffer;
@@ -337,6 +306,7 @@ var scoreSplitter = {
       }
     );
   },
+
   writePagesToPdf: function (targetPdfName, part, pagesImagesArray, callback) {
     var movementDir = path.resolve(
       __dirname,
@@ -368,19 +338,17 @@ var scoreSplitter = {
         scoreSplitter.pageHeight / pagesImagesArray.scaleV,
       ],
     });
-    var pageNumber = 1;
+    let pageNumber = 1;
 
     doc.pipe(fs.createWriteStream(partPdfFile));
-    for (var i = 0; i < pagesImagesArray.length; i++) {
-      var imageBuffer = pagesImagesArray[i].imageBuffer;
-      //   doc.image(pagesImagesArray[i], 0, 50, {scale: (1 / pagesImagesArray.scale)})
+    for (let pageIndex = 0; pageIndex < pagesImagesArray.length; pageIndex++) {
+      var imageBuffer = pagesImagesArray[pageIndex].imageBuffer;
       doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {
         scale: scoreSplitter.scaleCorrection,
       });
-      var left = 30; // (0.5 * doc.page.width) - 400
-      if (i == 0) {
+      var left = 30;
+      if (pageIndex == 0) {
         doc.fontSize(36);
-        //  doc.text(targetPdfName.replace(/[_-]/g, " "), (0.5 * doc.page.width) - 400, 30, {
         doc.text(targetPdfName.replace(/[_-]/g, ' '), left, 30, {
           width: doc.page.width - 30,
           align: 'center',
@@ -399,10 +367,9 @@ var scoreSplitter = {
           }
         );
       }
-      if (pagesImagesArray[i].measures) {
-        pagesImagesArray[i].measures.forEach(function (measure) {
+      if (pagesImagesArray[pageIndex].measures) {
+        pagesImagesArray[pageIndex].measures.forEach(function (measure) {
           doc.fontSize(18);
-          //  doc.text(measure.number, measure.x , measure.y+ scoreSplitter.firstScaleY-2, {
           doc.text(measure.number, 30, measure.y - 5 + scoreSplitter.firstScaleY, {
             width: 200,
             align: 'center',
@@ -420,9 +387,8 @@ var scoreSplitter = {
     doc.end();
     callback(null, partPdfUrl);
   },
-  createZip: function (movementDirName, callback) {
-    //  setTimeout(function () {
 
+  createZip: function (movementDirName, callback) {
     var movementDir = path.resolve(
       __dirname,
       scoreSplitter.targetPdfDir + path.sep + movementDirName
@@ -439,32 +405,7 @@ var scoreSplitter = {
         zipPath: zipUrl,
       });
     });
-    // }, 100)
   },
 };
 
-module.exports = scoreSplitter;
-
-var obj = {
-  generatePart: '1',
-  part: 'XXX',
-  margin: '15',
-  pdfName: 'IMSLP497429-PMLP649379-zelenka_requiem_45_conducteur',
-  zonesStr:
-    '{"0":[],"1":[{"x":10,"y":233,"width":585,"height":50,"page":1,"voice":"aa"},{"x":10,"y":345,"width":585,"height":50,"page":1,"voice":"BB"}],"2":[{"x":10,"y":43,"width":585,"height":50,"page":2},{"x":10,"y":115,"width":585,"height":50,"page":2}]}',
-  imgScaleCoef: '0.35378151260504204',
-};
-
-if (false) {
-  scoreSplitter.generatePart(
-    obj.pdfName,
-    obj.part,
-    obj.zonesStr,
-    obj.margin,
-    obj.imgScaleCoefV,
-    obj.imgScaleCoefH,
-    function (err, result) {
-      var x = err;
-    }
-  );
-}
+export default scoreSplitter;

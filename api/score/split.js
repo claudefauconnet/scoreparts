@@ -1,7 +1,8 @@
-var express = require('express');
+﻿import express from 'express';
+import scoreSplitter from '../../bin/scoreSplitter..js';
+import processResponse from '../../bin/processResponse.js';
+
 var router = express.Router();
-var scoreSplitter = require('../../bin/scoreSplitter..js');
-var processResponse = require('../../bin/processResponse');
 
 /**
  * @openapi
@@ -37,4 +38,4 @@ router.post('/split', function (req, res) {
   });
 });
 
-module.exports = router;
+export default router;

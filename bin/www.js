@@ -1,57 +1,33 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
+import app from '../app.js';
+import debug from 'debug';
+import http from 'http';
 
-var app = require('../app');
-var debug = require('debug')('scoreparts:server');
-var http = require('http');
-
-/**
- * Get port from environment and store in Express.
- */
+var serverDebug = debug('scoreparts:server');
 
 var port = normalizePort(process.env.PORT || '3006');
 app.set('port', port);
 
-/**
- * Create HTTP server.
- */
-
 var server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
 
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-/**
- * Normalize a port into a number, string, or false.
- */
-
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+  var portNum = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
+  if (isNaN(portNum)) {
     return val;
   }
 
-  if (port >= 0) {
-    // port number
-    return port;
+  if (portNum >= 0) {
+    return portNum;
   }
 
   return false;
 }
-
-/**
- * Event listener for HTTP server "error" event.
- */
 
 function onError(error) {
   if (error.syscall !== 'listen') {
@@ -62,7 +38,6 @@ function onError(error) {
     ? 'Pipe ' + port
     : 'Port ' + port;
 
-  // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges');
@@ -77,14 +52,10 @@ function onError(error) {
   }
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  serverDebug('Listening on ' + bind);
 }

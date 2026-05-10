@@ -2,8 +2,9 @@
   "name": "scoreparts",
   "version": "0.1.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "node ./bin/www.js",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\""
   },
@@ -29,7 +30,7 @@
   "description": "score scrapper",
   "main": "app.js",
   "bin": {
-    "scoreparts": "scoreSplitter..js"
+    "scoreparts": "bin/scoreSplitter..js"
   },
   "repository": {
     "type": "git",

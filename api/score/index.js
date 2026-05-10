@@ -1,12 +1,20 @@
-var express = require('express');
+﻿import express from 'express';
+import list from './list.js';
+import split from './split.js';
+import generatePart from './generatePart.js';
+import findPageZones from './findPageZones.js';
+import createZip from './createZip.js';
+import saveZones from './saveZones.js';
+import loadZones from './loadZones.js';
+
 var router = express.Router();
 
-router.use(require('./list'));
-router.use(require('./split'));
-router.use(require('./generatePart'));
-router.use(require('./findPageZones'));
-router.use(require('./createZip'));
-router.use(require('./saveZones'));
-router.use(require('./loadZones'));
+router.use(list);
+router.use(split);
+router.use(generatePart);
+router.use(findPageZones);
+router.use(createZip);
+router.use(saveZones);
+router.use(loadZones);
 
-module.exports = router;
+export default router;
