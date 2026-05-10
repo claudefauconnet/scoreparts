@@ -9,7 +9,7 @@ var Proxy = (function () {
         }
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/list",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
@@ -37,7 +37,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         scoreParts.setMessage("import en cours <br>cela peut prendre plusieurs minutes, <br>merci de patienter ...", "blue")
         $.ajax({
-            url: './pdfUpload',
+            url: './api/pdf/upload',
             data: formData,
             type: 'POST',
             contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
@@ -114,7 +114,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/generatePart",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
@@ -163,7 +163,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/createZip",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
@@ -204,7 +204,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/findPageZones",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
@@ -248,7 +248,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/saveZones",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
@@ -278,7 +278,7 @@ var Proxy = (function () {
         $("#waitImg").css("visibility", "visible");
         $.ajax({
             type: "POST",
-            url: "./score",
+            url: "./api/score/loadZones",
             data: payload,
             dataType: "json",
             success: function (data, textStatus, jqXHR) {

@@ -6,11 +6,11 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "dotenv": "^16.0.0",
     "async": "latest",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
+    "dotenv": "^16.0.0",
     "express": "~4.15.5",
     "jade": "~1.11.0",
     "jimp": "^1.6.0",
@@ -20,6 +20,8 @@
     "pdf-image": "latest",
     "pdfkit": "^0.12.1",
     "serve-favicon": "~2.4.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "zip-dir": "^2.0.0"
   },
   "description": "score scrapper",
