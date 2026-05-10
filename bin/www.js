@@ -34,9 +34,7 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
   switch (error.code) {
     case 'EACCES':
@@ -54,8 +52,6 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   serverDebug('Listening on ' + bind);
 }
