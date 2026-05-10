@@ -23,9 +23,9 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Detected zones }
  */
 router.post('/findPageZones', function (req, res) {
-    ZonesDetector.findPageZones(req.body.pdfName, req.body.pageNum, function (error, result) {
-        processResponse(res, error, result);
-    });
+  ZonesDetector.findPageZones(req.body.pdfName, req.body.pageNum, function (error, result) {
+    processResponse(res, error, result);
+  });
 });
 
 module.exports = router;

@@ -9,7 +9,8 @@ var processResponse = require('../../bin/processResponse');
  * /api/pdf/file/save:
  *   post:
  *     tags: [PDF]
- *     summary: Save a file to data dir
+ *     summary: Save a file to data directory
+ *     description: Écrit un contenu texte dans un fichier sous data/.
  *     requestBody:
  *       required: true
  *       content:
@@ -18,20 +19,37 @@ var processResponse = require('../../bin/processResponse');
  *             type: object
  *             required: [filePath, contentStr]
  *             properties:
- *               filePath: { type: string }
- *               contentStr: { type: string }
+ *               filePath:
+ *                 type: string
+ *                 description: Chemin relatif sous data/ (incluant le nom de fichier)
+ *                 example: "zones/monScore.json"
+ *               contentStr:
+ *                 type: string
+ *                 description: Contenu texte à écrire
+ *                 example: "{\"pages\":{}}"
  *     responses:
- *       200: { description: Save result }
+ *       200:
+ *         description: Fichier écrit
+ *       400:
+ *         description: Paramètres filePath ou contentStr manquants
  */
 router.post('/file/save', function (req, res) {
-    try {
-        var dirPath = path.resolve(__dirname, '../../data/');
-        fs.writeFile(dirPath + path.sep + req.body.filePath, req.body.contentStr, null, function (error, result) {
-            processResponse(res, error, result);
-        });
-    } catch (error) {
-        processResponse(res, error, null);
-    }
+  if (!req.body || !req.body.filePath || typeof req.body.contentStr === 'undefined') {
+    return processResponse(res, 'missing parameters: filePath, contentStr', null);
+  }
+  try {
+    var dirPath = path.resolve(__dirname, '../../data/');
+    fs.writeFile(
+      dirPath + path.sep + req.body.filePath,
+      req.body.contentStr,
+      null,
+      function (error, result) {
+        processResponse(res, error, result);
+      }
+    );
+  } catch (error) {
+    processResponse(res, error, null);
+  }
 });
 
 module.exports = router;

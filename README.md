@@ -48,3 +48,31 @@ npm run start
 ```
 
 Ouvrir : <http://localhost:3006/>
+
+## Formatage du code (Prettier)
+
+Ce projet utilise [Prettier](https://prettier.io/) pour garantir un style uniforme et éviter les conflits Git sur le formatage.
+
+### Formater le code
+
+```sh
+npm run format
+```
+
+### Vérifier sans modifier
+
+```sh
+npm run format:check
+```
+
+### Avant de pousser en production
+
+> **Conseil** : Toujours lancer `npm run format` avant de pousser. Un code non formaté génère des diffs parasites, complique les revues et augmente les risques de conflits Git stylistiques.
+
+```sh
+npm run format
+git add -A
+git commit -m "style: format code"
+```
+
+La config Prettier est dans [.prettierrc](.prettierrc), les exclusions dans [.prettierignore](.prettierignore).

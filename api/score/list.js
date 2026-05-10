@@ -14,9 +14,9 @@ var processResponse = require('../../bin/processResponse');
  *         description: Array of score PDF names
  */
 router.post('/list', function (req, res) {
-    scoreSplitter.listScores(function (error, result) {
-        processResponse(res, error, result);
-    });
+  scoreSplitter.listScores(function (error, result) {
+    processResponse(res, error, result);
+  });
 });
 
 module.exports = router;

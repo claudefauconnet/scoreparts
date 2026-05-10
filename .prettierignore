@@ -1,0 +1,7 @@
+node_modules/
+data/
+public/data/
+*.min.js
+public/js/jquery/
+public/js/jsTree/jstree.js
+

@@ -3,7 +3,9 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md}\""
   },
   "dependencies": {
     "async": "latest",
@@ -41,5 +43,8 @@
   "bugs": {
     "url": "https://github.com/claudefauconnet/scoreparts/issues"
   },
-  "homepage": "https://github.com/claudefauconnet/scoreparts#readme"
+  "homepage": "https://github.com/claudefauconnet/scoreparts#readme",
+  "devDependencies": {
+    "prettier": "^3.8.3"
+  }
 }

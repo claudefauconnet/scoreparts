@@ -28,18 +28,18 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Generated PDF path }
  */
 router.post('/generatePart', function (req, res) {
-    scoreSplitter.generatePart(
-        req.body.sourcePdfName,
-        req.body.targetPdfName,
-        req.body.part,
-        req.body.zonesStr,
-        parseInt(req.body.margin),
-        parseFloat(req.body.imgScaleCoefV),
-        parseFloat(req.body.imgScaleCoefH),
-        function (error, result) {
-            processResponse(res, error, result);
-        }
-    );
+  scoreSplitter.generatePart(
+    req.body.sourcePdfName,
+    req.body.targetPdfName,
+    req.body.part,
+    req.body.zonesStr,
+    parseInt(req.body.margin),
+    parseFloat(req.body.imgScaleCoefV),
+    parseFloat(req.body.imgScaleCoefH),
+    function (error, result) {
+      processResponse(res, error, result);
+    }
+  );
 });
 
 module.exports = router;

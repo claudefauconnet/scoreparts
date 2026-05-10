@@ -24,14 +24,14 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Saved confirmation }
  */
 router.post('/saveZones', function (req, res) {
-    var dirPath = path.resolve(__dirname, '../../data/zones/');
-    var filePath = dirPath + req.body.fileName;
-    try {
-        fs.writeFileSync(filePath, req.body.zonesStr);
-        processResponse(res, null, "zones Saved");
-    } catch (error) {
-        processResponse(res, error, null);
-    }
+  var dirPath = path.resolve(__dirname, '../../data/zones/');
+  var filePath = dirPath + req.body.fileName;
+  try {
+    fs.writeFileSync(filePath, req.body.zonesStr);
+    processResponse(res, null, 'zones Saved');
+  } catch (error) {
+    processResponse(res, error, null);
+  }
 });
 
 module.exports = router;

@@ -26,14 +26,14 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Upload + conversion result }
  */
 router.post('/upload', function (req, res) {
-    fileUpload.upload(req, "pdfFile", function (error, file, reqBody) {
-        if (error) return processResponse(res, error);
-        if (file.size > 10000000) return processResponse(res, null, {bigFile: file.size});
-        if (!file || !file.path) return processResponse(res, "wrong file", null);
-        scoreSplitter.pdfToImages(file.path, reqBody.imageQuality, {}, function (error, result) {
-            processResponse(res, error, result);
-        });
+  fileUpload.upload(req, 'pdfFile', function (error, file, reqBody) {
+    if (error) return processResponse(res, error);
+    if (file.size > 10000000) return processResponse(res, null, { bigFile: file.size });
+    if (!file || !file.path) return processResponse(res, 'wrong file', null);
+    scoreSplitter.pdfToImages(file.path, reqBody.imageQuality, {}, function (error, result) {
+      processResponse(res, error, result);
     });
+  });
 });
 
 module.exports = router;

@@ -28,87 +28,72 @@
 var fs = require('fs');
 var multer = require('multer');
 
-var path= require('path');
+var path = require('path');
 
-var uploadDir=path.resolve(__dirname,'../data/pdf');
+var uploadDir = path.resolve(__dirname, '../data/pdf');
 
 var diskStorage = multer.diskStorage({
-    destination: function (request, file, callback) {
-        callback(null,uploadDir);
-    },
-    filename: function (request, file, callback) {
-        console.log(file);
-var fileName=file.originalname.trim();
+  destination: function (request, file, callback) {
+    callback(null, uploadDir);
+  },
+  filename: function (request, file, callback) {
+    console.log(file);
+    var fileName = file.originalname.trim();
 
-        callback(null, file.originalname.replace(/ /g,"_"));
-    }
+    callback(null, file.originalname.replace(/ /g, '_'));
+  },
 });
-var memStorage = multer.memoryStorage()
+var memStorage = multer.memoryStorage();
 
 //var upload = multer({storage: storage}).single('photo');
 
-
 var fileUpload = {
-    maxUploadSize:50*1000*1000,
-    upload: function (req, fieldName, callback) {
-        var storage = diskStorage;
-        if (false  && callback)
-            storage = memStorage;
-        var upload = multer({
-            storage: storage,
-            limits: {fileSize: fileUpload.maxUploadSize}
-        }).single(fieldName);
-        upload(req, null, function (err, data) {
-            if (err) {
-                callback('Error Occured' + err);
-                return;
-            }
-            callback(null, req.file,req.body)
+  maxUploadSize: 50 * 1000 * 1000,
+  upload: function (req, fieldName, callback) {
+    var storage = diskStorage;
+    if (false && callback) storage = memStorage;
+    var upload = multer({
+      storage: storage,
+      limits: { fileSize: fileUpload.maxUploadSize },
+    }).single(fieldName);
+    upload(req, null, function (err, data) {
+      if (err) {
+        callback('Error Occured' + err);
+        return;
+      }
+      callback(null, req.file, req.body);
+    });
+  },
+  uploadData: function (req, callback) {
+    var storage = memStorage;
+    var upload = multer({
+      storage: storage,
+      limits: { fileSize: maxUploadSize },
+    }).single('xml');
+    upload(req, null, function (err, data) {
+      if (err) {
+        if (callback) callback('Error Occured' + err);
+        return;
+      }
+      if (req.body.callback) {
+        // "module.function" string to be called as callback
 
-        })
-
-    }
-    ,
-    uploadData: function (req,callback) {
-
-        var storage = memStorage;
-        var upload = multer({
-            storage: storage,
-            limits: {fileSize: maxUploadSize}
-        }).single("xml");
-        upload(req, null, function (err, data) {
-            if (err) {
-                if (callback)
-                    callback('Error Occured' + err);
-                return;
-            }
-            if (req.body.callback) {// "module.function" string to be called as callback
-
-                var data = "" + req.file.buffer;
-                var p = req.body.callback.indexOf(".");
-                if (p > -1) {
-                    var moduleName = req.body.callback.substring(0, p);
-                    var functionName = req.body.callback.substring(p + 1);
-                  //  var module = require('./transform/'+moduleName+'.js');
-                    var pathStr=path.normalize('./transform/'+moduleName+'.js')
-                    var pathStr='./transform/'+moduleName+'.js'
-                    console.log(pathStr)
-                    var module = require(pathStr);
-                    if (callback)
-                        module[functionName](data, callback);
-                    else
-                        module[functionName](data, null);
-
-                }
-
-            }
-
-
-        })
-
-    }
-
-}
-
+        var data = '' + req.file.buffer;
+        var p = req.body.callback.indexOf('.');
+        if (p > -1) {
+          var moduleName = req.body.callback.substring(0, p);
+          var functionName = req.body.callback.substring(p + 1);
+          //  var module = require('./transform/'+moduleName+'.js');
+          var pathStr = path.normalize('./transform/' + moduleName + '.js');
+          var pathStr = './transform/' + moduleName + '.js';
+          console.log(pathStr);
+          var module = require(pathStr);
+          if (callback) module[functionName](data, callback);
+          else module[functionName](data, null);
+        }
+      }
+    });
+  },
+};
 
 module.exports = fileUpload;

@@ -22,13 +22,13 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Zip path }
  */
 router.post('/createZip', function (req, res) {
-    scoreSplitter.createZip(req.body.movementDirName, function (err, result) {
-        try {
-            processResponse(res, null, result);
-        } catch (error) {
-            processResponse(res, error, null);
-        }
-    });
+  scoreSplitter.createZip(req.body.movementDirName, function (err, result) {
+    try {
+      processResponse(res, null, result);
+    } catch (error) {
+      processResponse(res, error, null);
+    }
+  });
 });
 
 module.exports = router;

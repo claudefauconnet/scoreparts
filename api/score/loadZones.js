@@ -23,14 +23,14 @@ var processResponse = require('../../bin/processResponse');
  *       200: { description: Zones JSON content }
  */
 router.post('/loadZones', function (req, res) {
-    var dirPath = path.resolve(__dirname, '../../data/zones/');
-    var filePath = dirPath + req.body.fileName;
-    try {
-        var data = "" + fs.readFileSync(filePath);
-        processResponse(res, null, data);
-    } catch (error) {
-        processResponse(res, error, null);
-    }
+  var dirPath = path.resolve(__dirname, '../../data/zones/');
+  var filePath = dirPath + req.body.fileName;
+  try {
+    var data = '' + fs.readFileSync(filePath);
+    processResponse(res, null, data);
+  } catch (error) {
+    processResponse(res, error, null);
+  }
 });
 
 module.exports = router;
