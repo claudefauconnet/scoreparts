@@ -52,7 +52,8 @@ var popupMenu = (function () {
         if (text) {
 
             self.currentZone.data.text = {x: self.currentPaperPoint.x, y: self.currentZone.bounds.y, text: text}
-            Paper.drawtText(self.currentZoneGroup, self.currentPaperPoint.x, self.currentZone.bounds.y, text)
+           // scoreParts.allPagesZones.pages[""+self.currentZone.data.page].text= self.currentZone.data.text
+            Paper.drawText(self.currentZoneGroup, self.currentPaperPoint.x, self.currentZone.bounds.y, text)
             PopupMenuWidget.hidePopup("popupMenuWidgetDiv")
         }
     }

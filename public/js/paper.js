@@ -220,7 +220,8 @@ var Paper = (function () {
                         page: item.data.page,
                         voice: item.data.voice,
                         movement: item.data.movement,
-                        measure: item.data.measure
+                        measure: item.data.measure,
+                        text: item.data.text
                     })
                 }
             })
@@ -296,11 +297,15 @@ var Paper = (function () {
             var group = new paper.Group([rect, text])
             measureGroup.addChild(group)
             scoreParts.modified = true
+            setTimeout(function(){
+                scoreParts.writeCurrentPageZones ()
+            },500)
+
 
 
         }
 
-        self.drawtText = function (measureGroup, x, y, textStr) {
+        self.drawText = function (measureGroup, x, y, textStr) {
             scoreParts.modified = true
             var text = new paper.PointText(new paper.Point(x, y - 1));
             text.fillColor = 'green';
@@ -315,6 +320,10 @@ var Paper = (function () {
             var group = new paper.Group([rect, text])
             measureGroup.addChild(group)
             scoreParts.modified = true
+            setTimeout(function(){
+                scoreParts.writeCurrentPageZones ()
+            },500)
+
 
 
         }
@@ -330,6 +339,7 @@ var Paper = (function () {
 
 
         self.drawZone = function (zone, removeMeasures) {
+            var removeText=false;
             var width = $("#myCanvas").width() - 10
             var rectangle = new paper.Rectangle(
                 new paper.Point(Math.round(zone.x), Math.round(zone.y)),
@@ -372,10 +382,16 @@ var Paper = (function () {
                 path.data.measure = zone.measure
                 self.drawMeasure(group, zone.measure.x, zone.y - 2, zone.measure.number)
             }
+            if (zone.text && !removeText) {
+                path.data.text = zone.text
+                self.drawText(group, zone.text.x, zone.text.y - 2, zone.text.text)
+            }
 
         }
 
         self.deleteZones = function (zoneIndex) {
+            if(   !paper|| ! paper.project)
+                return;
             paper.project.selectAll()
             var items = paper.project.selectedItems;
             items.forEach(function (item, index) {

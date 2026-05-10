@@ -186,15 +186,21 @@ var Voices = (function () {
         }
 
 
-        self.copyMeasuresOnAllVoices = function (voicePagesZones, numOfVoices) {
+        self.copyAnnotationsOnAllVoices = function (_pageNum) {
+            var currentMeasure = null;
+            var currentText = null;
+            for (var pageNum in scoreParts.allPagesZones.pages) {
+                if (_pageNum > -1 && _pageNum == pageNum) {
+                    var zones = scoreParts.allPagesZones.pages[parseInt(pageNum)]
+                    for (var i = 0; i < zones.length; i++) {
+                        if (i == 0 || i == self.numberOfVoices) {
+                            currentMeasure = zones[i].measure
+                            currentText == zones[i].text
+                        } else {
+                            zones[i].measure = currentMeasure
+                            zones[i].text = currentText
 
-            for (var pageNum in voicePagesZones.pages) {
-                var zones = voicePagesZones.pages[parseInt(pageNum)]
-                for (var i = 0; i < zones.length; i++) {
-                    if (i == 0 || i == numOfVoices) {
-                        currentMeasure = zones[i].measure
-                    } else {
-                        zones[i].measure = currentMeasure
+                        }
                     }
 
 
@@ -238,7 +244,7 @@ var Voices = (function () {
                         alert(err.responseText || err)
                     }
 
-                    self.copyMeasuresOnAllVoices(scoreParts.allPagesZones, self.numberOfVoices)
+                    self.copyAnnotationsOnAllVoices(-1)
                     if (merge) {
                         self.mergeVoicesZones(voicePagesZones)
                     } else {

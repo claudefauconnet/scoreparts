@@ -268,7 +268,8 @@ var Proxy = (function () {
     }
 
     self.loadZones = function (callback) {
-        var pdfName = $('#scoresSelect').val();
+        var pdfName = scoreParts.pdfName;
+      //  var pdfName = $('#scoresSelect').val();
         var payload = {
             loadZones: 1,
             fileName: pdfName + "_zones.json",

@@ -60,7 +60,7 @@ ZonesChecker.checkZones( scoreParts.currentZones)" style="visibility: visible">c
            -->
         <tr>
             <td>
-                <button onclick='Proxy.saveZones(function(){})'>Save Zones</button>
+                <button onclick='scoreParts.modified=true;Proxy.saveZones(function(){})'>Save Zones</button>
                 <button onclick='Proxy.loadZones()'>Load Zones</button>
             </td>
         </tr>

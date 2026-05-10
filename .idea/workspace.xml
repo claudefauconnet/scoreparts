@@ -6,12 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="cd007939-7fbd-4eae-9504-25a4facc9d1a" name="Default" comment="corrections zones">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/zonesDetector.js" beforeDir="false" afterPath="$PROJECT_DIR$/bin/zonesDetector.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/cutParts.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/cutParts.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/paper.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/paper.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/popupMenu.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/popupMenu.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/js/popupMenuWidget.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/popupMenuWidget.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/proxy.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/proxy.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/scoreParts.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/scoreParts.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/js/voices.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/js/voices.js" afterDir="false" />
@@ -294,7 +291,7 @@
       <workItem from="1777531836797" duration="22888000" />
       <workItem from="1778082596643" duration="10902000" />
       <workItem from="1778172330796" duration="21311000" />
-      <workItem from="1778339120921" duration="4443000" />
+      <workItem from="1778339120921" duration="13736000" />
     </task>
     <task id="LOCAL-00001" summary="add conductor.js">
       <created>1694363133077</created>
@@ -446,7 +443,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778086769281</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="corrections zones">
+      <option name="closed" value="true" />
+      <created>1778344884950</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1778344884950</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -532,7 +537,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/proxy.js</url>
-          <line>270</line>
+          <line>271</line>
           <option name="timeStamp" value="759" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
@@ -542,7 +547,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/public/js/paper.js</url>
-          <line>324</line>
+          <line>333</line>
           <option name="timeStamp" value="774" />
         </line-breakpoint>
       </breakpoints>

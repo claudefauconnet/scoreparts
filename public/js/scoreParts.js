@@ -22,12 +22,12 @@ var scoreParts = (function () {
 
 
             var pdfName = $('#scoresSelect').val();
-            $("#scoresSelect").val(pdfName);
+           // $("#scoresSelect").val(pdfName);
             if (pdfName == "") {
                 return;
             }
             self.pdfName = pdfName
-
+            Paper.deleteZones()
 
             Proxy.loadZones(function (err, data) {
                 if (err || clearAll) {
@@ -81,7 +81,7 @@ var scoreParts = (function () {
         }
         self.currentZones = zones
         self.allPagesZones.pages[self.currentPage] = zones
-
+        Voices.copyAnnotationsOnAllVoices(self.currentPage)
 
     }
 
@@ -240,24 +240,7 @@ var scoreParts = (function () {
 
     }
 
-    self.copyMeasuresOnAllVoices = function (zones,numOfVoices) {
-        var zonesWithMeasures = []
-        for (var page in scoreParts.allPagesZones.pages) {
-            var zones = scoreParts.allPagesZones.pages[page]
-            scoreParts.modified=true
-            for (var i = 0; i < zones.length; i++) {
-                if (i == 0 || numOfVoices % i == 0) {
-                    currentMeasure = zones[i].measure
-                } else {
-                    zones[i].measure = currentMeasure
-                }
-            }
 
-
-        }
-
-
-    }
 
     self.clearMeasures = function () {
         var zonesWithMeasures = []
