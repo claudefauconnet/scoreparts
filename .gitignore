@@ -70,3 +70,6 @@ typings/
 /data/zones/
 /data/pdf/
 /public/data/
+
+/.serena
+.env

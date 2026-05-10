@@ -1,3 +1,4 @@
+require('dotenv').config();
 var fs = require('fs');
 //var PDFImage = require("pdf-image").PDFImage;
 //var Jimp = require("jimp");
@@ -71,15 +72,16 @@ var scoreSplitter = {
         }
 
         var pages = "[0-500]"
-        var GraphicsMagickExe = "gm";
-        if (path.sep == "\\") {//windows
-            GraphicsMagickExe = "\"C:\\Program Files\\GraphicsMagick-1.3.36-Q8\\gm.exe\"";
-            GraphicsMagickExe = "\"C:\\Program Files\\GraphicsMagick-1.4-Q8\\gm.exe\"";
+        var GraphicsMagickExe = process.env.GM_EXE || "gm";
+        var execEnv = Object.assign({}, process.env);
+        if (process.env.GS_BIN) {
+            var pathSep = path.sep === "\\" ? ";" : ":";
+            execEnv.PATH = process.env.GS_BIN + pathSep + execEnv.PATH;
         }
         var cmd = GraphicsMagickExe + " convert -density 600 " + pdfPath + pages + " -resize " + imageWitdh + " +adjoin " + outputPrefix + "%d.png"
 
         console.log("EXECUTING " + cmd)
-        exec(cmd, function (err, stdout, stderr) {
+        exec(cmd, { env: execEnv }, function (err, stdout, stderr) {
             if (err) {
                 console.log(stderr);
                 return callback(err);
