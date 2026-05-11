@@ -1,169 +1,130 @@
-var path = require('path');
-var scoreSplitter = require('./scoreSplitter..js')
+﻿import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import * as JimpProxy from './jimpProxy.js';
+import scoreSplitter from './scoreSplitter..js';
 
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
 
 var ZonesDetector = {
+  getPageImage: function (pdfName, pageNum, callback) {
+    var sourceImg = pdfName + '-' + pageNum + '.png';
+    var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
+    var imageFile = imageDir + path.sep + sourceImg;
+    JimpProxy.getImage(imageFile, function (err, image) {
+      callback(err, image);
+    });
+  },
 
+  isPixelBlack: function (image, x, y) {
+    var color = image.getPixelColor(x, y);
+    if (color != 4294967295) {
+      var hexaStr = color.toString(16);
+      var r = parseInt(hexaStr.substring(0, 2), 16);
+      var g = parseInt(hexaStr.substring(2, 4), 16);
+      var b = parseInt(hexaStr.substring(4, 6), 16);
+      var brightness = (r + g + b) / 3;
+      if (r == 255 || brightness > 128) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  },
 
-    getPageImage: function (pdfName, pageNum, callback) {
-        var JimpProxy = null
-        import("../bin/jimpProxy.mjs").then((mod) => {
-            JimpProxy = mod;
-            var sourceImg = pdfName + "-" + pageNum + ".png";
-            var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-            var imageFile = imageDir + path.sep + sourceImg;
-            JimpProxy.getImage(imageFile, function (err, image) {
-                callback(err, image)
-            })
-        })
+  detectPageScoreLines: function (image) {
+    var lines = [];
+    let interline = 0;
+    let previousJ = 0;
+    let firstVerticalLine = 0;
+    let vPoints = 0;
 
-    },
+    for (let j = 0; j < image.bitmap.height; j++) {
+      let hPoints = 0;
 
-    isPixelBlack: function (image, x, y) {
-        var color = image.getPixelColor(x, y);
-        var z = color
-        if (color != 4294967295) {
-            var hexaStr = (color).toString(16)
-            var r = parseInt(hexaStr.substring(0, 2), 16)
-            var g = parseInt(hexaStr.substring(2, 4), 16)
-            var b = parseInt(hexaStr.substring(4, 6), 16)
-            const brightness = (r + g + b) / 3;
-            if ((r == 255 || brightness > 128)) {
-                return true;
-            } else {
-                var x = 3
-            }
-            return false
+      for (let i = 10; i < image.bitmap.width; i += 3) {
+        if (ZonesDetector.isPixelBlack(image, i, j)) {
+          hPoints += 1;
         }
-        return false;
-
-    },
-
-    detectPageScoreLines: function (image) {
-
-
-        var lines = []
-        var interline = 0
-        var previousJ = 0
-        var firstVerticalLine = 0
-        var vPoints = 0
-        // detect horizontal lines (portées)
-        for (var j = 0; j < image.bitmap.height; j++) {
-            var hPoints = 0
-
-            for (var i = 10; i < image.bitmap.width; i += 3) {
-                if (ZonesDetector.isPixelBlack(image, i, j)) {
-                    hPoints += 1
-
-
-                }
-                if (j - previousJ > 5) {
-                    if (hPoints > 400) {
-                        lines.push(j)
-                        if (lines.length == 2) {
-                            interline = lines[1] - lines[0]
-                        }
-                        previousJ = j
-                        break;
-                    } else {
-                    }
-                }
-
-
+        if (j - previousJ > 5) {
+          if (hPoints > 400) {
+            lines.push(j);
+            if (lines.length == 2) {
+              interline = lines[1] - lines[0];
             }
-
+            previousJ = j;
+            break;
+          }
         }
+      }
+    }
 
-        var measures = {}
-        var topLines = []
-        for (var i = 0; i < lines.length; i += 5) {
-            topLines.push(lines[i])
+    var topLines = [];
+    for (let i = 0; i < lines.length; i += 5) {
+      topLines.push(lines[i]);
+    }
+
+    for (let i = 0; i < image.bitmap.width; i++) {
+      for (let j = 10; j < image.bitmap.height; j += 1) {
+        if (ZonesDetector.isPixelBlack(image, i, j)) {
+          vPoints += 1;
         }
-
-
-        //detect vertical line;
-        for (var i = 0; i < image.bitmap.width; i++) {
-            for (var j = 10; j < image.bitmap.height; j += 1) {
-
-                if (ZonesDetector.isPixelBlack(image, i, j)) {
-                    vPoints += 1
-                }
-                if (!firstVerticalLine && vPoints > 50) {
-                    firstVerticalLine = i;
-                    break;
-                    i = image.bitmap.width
-                }
-
-            }
+        if (!firstVerticalLine && vPoints > 50) {
+          firstVerticalLine = i;
+          break;
         }
+      }
+    }
 
-        var bars = {}
-        topLines.forEach(function (topLine, index) {
-          //  bars[index] = ZonesDetector.findBarsInScale(image, firstVerticalLine, topLine, interline)
-        })
+    var bars = {};
+    topLines.forEach(function (topLine, index) {
+      // bars[index] = ZonesDetector.findBarsInScale(image, firstVerticalLine, topLine, interline)
+    });
 
+    return {
+      topLines: topLines,
+      interline: interline,
+      firstVerticalLine: firstVerticalLine,
+      bars: bars,
+    };
+  },
 
-        return {topLines: topLines, interline: interline, firstVerticalLine: firstVerticalLine, bars: bars}
-
-
-        return lines;
-
-
-    },
-
-
-    findBarsInScale: function (image, firstVerticalLine, topZoneLine, interline) {
-        var bars = []
-        var barPoints = 0
-var previousNotePoints=0
-        var previousbarPoints = 0
-        var barHeight = (interline * 4)+1
-        for (var i = firstVerticalLine; i < image.bitmap.width; i++) {
-            barPoints = 0
-            for (var j = topZoneLine-1; j < (barHeight + topZoneLine+1); j += 1) {
-                if (ZonesDetector.isPixelBlack(image, i, j)) {
-                    barPoints += 1
-                }
-            }
-            if (barPoints >= barHeight) { //taille de la barre de mesure
-                if (!previousbarPoints || i - previousbarPoints > 100) {
-                    previousbarPoints = i
-                    bars.push(i)
-                   console.log(i + "   " + barPoints )
-                }
-            }else  if (barPoints == interline) {// note ou barre de note
-                previousNotePoints = i
-            }
+  findBarsInScale: function (image, firstVerticalLine, topZoneLine, interline) {
+    var bars = [];
+    let barPoints = 0;
+    let previousNotePoints = 0;
+    let previousbarPoints = 0;
+    var barHeight = interline * 4 + 1;
+    for (let i = firstVerticalLine; i < image.bitmap.width; i++) {
+      barPoints = 0;
+      for (let j = topZoneLine - 1; j < barHeight + topZoneLine + 1; j += 1) {
+        if (ZonesDetector.isPixelBlack(image, i, j)) {
+          barPoints += 1;
         }
-        return bars
-    },
+      }
+      if (barPoints >= barHeight) {
+        if (!previousbarPoints || i - previousbarPoints > 100) {
+          previousbarPoints = i;
+          bars.push(i);
+          console.log(i + '   ' + barPoints);
+        }
+      } else if (barPoints == interline) {
+        previousNotePoints = i;
+      }
+    }
+    return bars;
+  },
 
-    findPageZones: function (pdfName, pageNum, callback) {
-        ZonesDetector.getPageImage(pdfName, pageNum, function (err, image) {
-            if (err) {
-                return callback(err)
-            }
-            var zones = ZonesDetector.detectPageScoreLines(image);
+  findPageZones: function (pdfName, pageNum, callback) {
+    ZonesDetector.getPageImage(pdfName, pageNum, function (err, image) {
+      if (err) {
+        return callback(err);
+      }
+      var zones = ZonesDetector.detectPageScoreLines(image);
+      return callback(null, zones);
+    });
+  },
+};
 
-
-            return callback(null, zones)
-        })
-
-    },
-
-
-}
-
-module.exports = ZonesDetector;
-
-
-
-
-if (false) {
-
-
-    ZonesDetector.findPageZones(obj.pdfName, 2, function (err, result) {
-
-    })
-
-}
+export default ZonesDetector;
