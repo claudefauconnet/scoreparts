@@ -168,14 +168,18 @@ var Voices = (function () {
     var currentMeasure = null;
     var currentText = null;
     for (var pageNum in scoreParts.allPagesZones.pages) {
-      if (_pageNum > -1 && _pageNum == pageNum) {
+      if (_pageNum ==-1 ||  _pageNum == pageNum) {
         var zones = scoreParts.allPagesZones.pages[parseInt(pageNum)];
         for (var i = 0; i < zones.length; i++) {
           if (i == 0 || i == self.numberOfVoices) {
+            if(zones[i].measure)
             currentMeasure = zones[i].measure;
-            currentText == zones[i].text;
+            if(zones[i].text)
+            currentText =zones[i].text;
           } else {
+            if(currentMeasure)
             zones[i].measure = currentMeasure;
+            if(currentText)
             zones[i].text = currentText;
           }
         }
@@ -207,6 +211,7 @@ var Voices = (function () {
         voicePagesZones.title = title;
         scoreParts.allPagesZones.numberOfVoices = self.numberOfVoices;
         scoreParts.allPagesZones.title = title;
+        self.copyAnnotationsOnAllVoices(-1);
         scoreParts.modified = true;
 
         Proxy.saveZones(function (err) {
@@ -214,7 +219,7 @@ var Voices = (function () {
             alert(err.responseText || err);
           }
 
-          self.copyAnnotationsOnAllVoices(-1);
+
           if (merge) {
             self.mergeVoicesZones(voicePagesZones);
           } else {

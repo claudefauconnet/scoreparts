@@ -188,7 +188,7 @@
 
 
         <td>
-            Mouvement: <select id="movementSelect" onchange="scoreParts.openSelectMovement()"> </select>
+            mouvement <span id="movementSpan"> </span><button onClick="scoreParts.openMovementDialog()">changer </button>
         </td>
         <td>
 
@@ -210,7 +210,7 @@
     <div id='tabsDiv'>
 
         <ul>
-            <li><a href="#tagUsageDiv"> Usage </a></li>
+
             <li><a href="#tabCutDiv"> Decouper voix </a></li>
             <li><a href="#tabGeneratePartsDiv"> Generer voix </a></li>
             <li><a href="#tabimportDiv"> Importer PDF </a></li>
@@ -239,7 +239,7 @@
 
         <div style="width:400px;height:600px;" id='tabGeneratePartsDiv'></div>
 
-        <div style="width:400px;height:600px;" id='tagUsageDiv'></div>
+
 
 
     </div>

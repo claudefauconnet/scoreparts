@@ -2,7 +2,7 @@ var ZonesChecker = (function () {
   var self = {};
 
   self.message = '';
-  self.checkZones = function () {
+  self.checkZones = function (callback) {
     self.message = '';
 
     for (var pagenum in scoreParts.allPagesZones.pages) {
@@ -19,6 +19,8 @@ var ZonesChecker = (function () {
       });
     }
 
+    if(callback)
+     return  callback(self.message)
     self.printMessage();
   };
 

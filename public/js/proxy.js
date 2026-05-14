@@ -82,72 +82,80 @@ var Proxy = (function () {
       scoreParts.allPagesZones.pages[page] = zones;
       selectedZones = scoreParts.allPagesZones.pages;
     }
-    if (!scoreParts.currentMovement) {
-      scoreParts.currentMovement = $('#movementSelect').val();
+
+
+    ZonesChecker.checkZones(function(message) {
+if(message){
+  return alert (message)
+}
+
       if (!scoreParts.currentMovement) {
-        return alert('selectionnez un mouvement ou declarez le');
+        scoreParts.currentMovement = $('#movementSelect').val();
+        if (!scoreParts.currentMovement) {
+          return alert('selectionnez un mouvement ou declarez le');
+        }
       }
-    }
 
-    if (!part || part == '') {
-      return alert(' selectionnez une voix');
-    }
-    scoreParts.setMessage(
-      '  La partie est en cours de génération , merci de patienter ...',
-      ' blue'
-    );
-    $('body').css('cursor', 'progress');
-    var pdfName = $('#scoresSelect').val();
+      if (!part || part == '') {
+        return alert(' selectionnez une voix');
+      }
+      scoreParts.setMessage(
+          '  La partie est en cours de génération , merci de patienter ...',
+          ' blue'
+      );
+      $('body').css('cursor', 'progress');
+      var pdfName = $('#scoresSelect').val();
 
-    var movementName = self.getPdfMovementName();
-    var zonesStr = JSON.stringify(selectedZones);
-    var payload = {
-      generatePart: 1,
-      part: part,
-      margin: scoreParts.margin,
-      sourcePdfName: pdfName,
-      zonesStr: zonesStr,
-      imgScaleCoefV: scoreParts.coefV,
-      imgScaleCoefH: scoreParts.coefH,
-      targetPdfName: movementName,
-    };
+      var movementName = self.getPdfMovementName();
+      var zonesStr = JSON.stringify(selectedZones);
+      var payload = {
+        generatePart: 1,
+        part: part,
+        margin: scoreParts.margin,
+        sourcePdfName: pdfName,
+        zonesStr: zonesStr,
+        imgScaleCoefV: scoreParts.coefV,
+        imgScaleCoefH: scoreParts.coefH,
+        targetPdfName: movementName,
+      };
 
-    $('#waitImg').css('visibility', 'visible');
-    $.ajax({
-      type: 'POST',
-      url: './api/score/generatePart',
-      data: payload,
-      dataType: 'json',
-      success: function (data, textStatus, jqXHR) {
-        $('#waitImg').css('visibility', 'hidden');
+      $('#waitImg').css('visibility', 'visible');
+      $.ajax({
+        type: 'POST',
+        url: './api/score/generatePart',
+        data: payload,
+        dataType: 'json',
+        success: function (data, textStatus, jqXHR) {
+          $('#waitImg').css('visibility', 'hidden');
 
-        if (callback) {
-          return callback(null, data.result);
-        }
+          if (callback) {
+            return callback(null, data.result);
+          }
 
-        $('#duplicateZonesButton2').css('visibility', 'visible');
-        var message =
-          'la partition ' +
-          part +
-          " est générée , <a target='_blanck' href='" +
-          document.location.href +
-          data.result +
-          "'>télécharger</a>";
-        message +=
-          "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression ";
-        scoreParts.setMessage(message, 'blue');
+          $('#duplicateZonesButton2').css('visibility', 'visible');
+          var message =
+              'la partition ' +
+              part +
+              " est générée , <a target='_blanck' href='" +
+              document.location.href +
+              data.result +
+              "'>télécharger</a>";
+          message +=
+              "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression ";
+          scoreParts.setMessage(message, 'blue');
 
-        $('body').css('cursor', 'default');
-      },
-      error: function (err) {
-        alert(err.responseText);
-        $('#waitImg').css('visibility', 'hidden');
-        scoreParts.setMessage(err, 'red');
-        if (callback) {
-          return callback(err);
-        }
-      },
-    });
+          $('body').css('cursor', 'default');
+        },
+        error: function (err) {
+          alert(err.responseText);
+          $('#waitImg').css('visibility', 'hidden');
+          scoreParts.setMessage(err, 'red');
+          if (callback) {
+            return callback(err);
+          }
+        },
+      });
+    })
   };
   self.getPdfMovementName = function () {
     var str = scoreParts.allPagesZones.title + '_' + scoreParts.currentMovement;

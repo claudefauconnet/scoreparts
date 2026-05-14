@@ -227,6 +227,10 @@ var scoreSplitter = {
         if (zone.measure) {
           zone.measure.y = offsetY;
         }
+        if (zone.text) {
+          zone.text.y = offsetY;
+          zone.text.x = zone.text.x-zone.x;
+        }
 
         offsetY += zone.bitmap.height + vertStep;
 
@@ -255,15 +259,20 @@ var scoreSplitter = {
         var w = Math.round((scoreSplitter.pageWidth - margin) / scaleH);
         var h = Math.round((scoreSplitter.pageHeight - margin) / scaleV);
 
-        var targetPage = { imageBuffer: null, measures: [] };
+        var targetPage = { imageBuffer: null, measures: [],texts:[] };
         JimpProxy.createImage(w, h, function (err, blanckImg) {
           var uniqueMeasures = {};
+          var uniqueTexts = {};
           async.eachSeries(
             page,
             function (pageZone, callbackZones) {
               if (pageZone.measure && !uniqueMeasures[pageZone.measure.number]) {
                 uniqueMeasures[pageZone.measure.number] = 1;
                 targetPage.measures.push(pageZone.measure);
+              }
+              if(pageZone.text && !uniqueTexts[pageZone.text.text]) {
+                uniqueTexts[pageZone.text.text] = 1;
+                targetPage.texts.push(pageZone.text);
               }
 
               try {
@@ -350,7 +359,7 @@ var scoreSplitter = {
       if (pageIndex == 0) {
         doc.fontSize(36);
         doc.text(targetPdfName.replace(/[_-]/g, ' '), left, 30, {
-          width: doc.page.width - 30,
+          width: doc.page.width -left,
           align: 'center',
         });
         doc.fontSize(24);
@@ -359,10 +368,10 @@ var scoreSplitter = {
         doc.fontSize(12);
         doc.text(
           targetPdfName + ' ' + part,
-          30,
+            left,
           (scoreSplitter.pageHeight - 50) / pagesImagesArray.scaleV,
           {
-            width: doc.page.width - 30,
+            width: doc.page.width - left,
             align: 'center',
           }
         );
@@ -370,9 +379,21 @@ var scoreSplitter = {
       if (pagesImagesArray[pageIndex].measures) {
         pagesImagesArray[pageIndex].measures.forEach(function (measure) {
           doc.fontSize(18);
-          doc.text(measure.number, 30, measure.y - 5 + scoreSplitter.firstScaleY, {
+          doc.text(measure.number, left, (measure.y - 5) + scoreSplitter.firstScaleY, {
             width: 200,
             align: 'center',
+          });
+        });
+      }
+      if (pagesImagesArray[pageIndex].texts) {
+        pagesImagesArray[pageIndex].texts.forEach(function (text) {
+          doc.fontSize(24);
+          doc. font ('Times-Bold')
+          var x=(text.x)-left
+          doc.text(text.text, x/ pagesImagesArray.scaleH, (text.y-5)+ scoreSplitter.firstScaleY, {
+            width: 400,
+            align: 'center',
+
           });
         });
       }
