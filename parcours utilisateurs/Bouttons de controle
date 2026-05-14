@@ -1,0 +1,32 @@
+# Boutons de controles de base
+- hauteur zone et debordement auto passe dans paramètres
+- On delete effacer measures, save zone, load zone : effacer measures ne fait rien , save zone sauvegarde automatique à chaque ajout/modification de zone à peaufiner pas besoin de garder le bouton.pareil pour load zone automatique à chaque page ouverte. 
+- check zone: à quoi ca sert ?
+- dupliquer detect = autodetect zones ?
+- Dupliquer simple zone à garder dans les controles
+- autodetect zones dans les bouttons de controles
+- Effacer page à mettre sur la page de la partition.
+- Tout recommencer = sur la partition permet d'effacer tout , mouvements compris. Mettre une alerte avant effacement --> a mettre sur la partition
+- Générer voix --> pas besoin de bouton, ce fait à la volée au moment ou on télécharge avec dialog progression du télachargement qui est ensuite sauvegardé pour les prochaines fois afin d'éviter l'attente. 
+- assembler voix est déja compris dans télécharger au niveau de la partiton car cela télécharge toutes les voix.
+- Télécharger zip --> doit etre intégré
+- que fait ajouter numero mesure et ajouter texte ?
+
+# Boutons de raccourcis
+- Click sur un endroit vide simplement pour créer une zone avec instrument non attribuée : remplacer par créer zone sinon ca va créer de la frustration avec les autres controles qui se font directement sur la partition.
+- effacer,déplacer, attribution zone à un instrument directement sur la zone elle meme. 
+- Déplacer toutes les zones : création d'un nouveau raccourci quand on maintient le click une large zone permettant de sélectionner plusieurs zones à la fois est crée, lorsque le boutton est relaché on peut soit tout déplacer en meme temps soit supprimer toutes les zones séléctionnées à la fois, ou leur changer toutes d'instrument
+
+
+# Boutons de controle à ajouter
+- Effacer toutes les pages --> gardes les mouvements,efface toutes les zones
+- Attribution instrument auto
+- Modifier instrument zone
+
+
+
+# Dans outil 
+
+new zone: au prochain click une zone est crée,auto-detect zones, dupliquer zone page précédente, auto-attibution instrument attribue automatiquement les instruments ajoutés et sélectionnées aux zones intelligement équivalent de la fonctionalitée quand on clique sur l'onglet générer voix qui a disparu.
+
+
