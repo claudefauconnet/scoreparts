@@ -1,2 +1,2 @@
-- Téléchargement à deux endroits Sur un instrument --> télécharge le pdf de l'instrument avec les zones spécifiques à l'instrument uniquement 
-- Téchargement en haut de la partition -->  télécharge tout les instruments sélectionnés par l'utilisateur.
+- Téléchargement à deux endroits Sur un instrument --> télécharge le pdf de l'instrument avec les zones spécifiques à l'instrument uniquement
+- Téchargement en haut de la partition --> télécharge tout les instruments sélectionnés par l'utilisateur.

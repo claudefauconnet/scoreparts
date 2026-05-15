@@ -1,13 +1,12 @@
 # Architecture — ScoreParts
 
-
 ```text
 frontend/
 ├── FileImport/                  — import d'une partition
 │   ├── FileImport.js
 │   └── FileImportTab.html
 │
-├── Partition/                   
+├── Partition/
 │   ├── PartitionSelection/      — selection de partitions et mouvement
 │   │   ├── PartitionSelection.js
 │   │   ├── PartitionSelection.html
@@ -18,7 +17,7 @@ frontend/
 │       └── PartitionPlayer.css
 │
 ├── Zones/                       — création et gestion des zones
-│   ├── PartitionZoneGestion/    — interactions directes (clic, ctrl+clic…) + 
+│   ├── PartitionZoneGestion/    — interactions directes (clic, ctrl+clic…) +
 │   │   └── PartitionZoneGestion.js
 │   └── ZoneActions/             — panneau de commandes (découper voix, autodetect)
 │       ├── ZoneActions.js

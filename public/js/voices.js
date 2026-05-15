@@ -168,19 +168,15 @@ var Voices = (function () {
     var currentMeasure = null;
     var currentText = null;
     for (var pageNum in scoreParts.allPagesZones.pages) {
-      if (_pageNum ==-1 ||  _pageNum == pageNum) {
+      if (_pageNum == -1 || _pageNum == pageNum) {
         var zones = scoreParts.allPagesZones.pages[parseInt(pageNum)];
         for (var i = 0; i < zones.length; i++) {
           if (i == 0 || i == self.numberOfVoices) {
-            if(zones[i].measure)
-            currentMeasure = zones[i].measure;
-            if(zones[i].text)
-            currentText =zones[i].text;
+            if (zones[i].measure) currentMeasure = zones[i].measure;
+            if (zones[i].text) currentText = zones[i].text;
           } else {
-            if(currentMeasure)
-            zones[i].measure = currentMeasure;
-            if(currentText)
-            zones[i].text = currentText;
+            if (currentMeasure) zones[i].measure = currentMeasure;
+            if (currentText) zones[i].text = currentText;
           }
         }
       }
@@ -218,7 +214,6 @@ var Voices = (function () {
           if (err) {
             alert(err.responseText || err);
           }
-
 
           if (merge) {
             self.mergeVoicesZones(voicePagesZones);

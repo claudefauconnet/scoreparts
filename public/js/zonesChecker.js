@@ -19,8 +19,7 @@ var ZonesChecker = (function () {
       });
     }
 
-    if(callback)
-     return  callback(self.message)
+    if (callback) return callback(self.message);
     self.printMessage();
   };
 

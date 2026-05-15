@@ -37,8 +37,6 @@ var scoreParts = (function () {
           self.allPagesZones = data;
         }
 
-      
-
         var pageImage = imagesDir + pdfName + '-0.png';
         //  Paper.drawImage(pageImage)
 
@@ -59,10 +57,7 @@ var scoreParts = (function () {
         self.setMessage(message, 'blue');
         self.margin = parseInt($('#zoneMargin').val()) || 10;
 
-        self.openMovementDialog()
-
-
-
+        self.openMovementDialog();
       });
     });
   };
@@ -156,8 +151,6 @@ var scoreParts = (function () {
     });
   };
 
-
-
   self.setMessage = function (message, color) {
     $('#message').css('visibility', 'visible');
     if (!color) {
@@ -168,11 +161,11 @@ var scoreParts = (function () {
   };
 
   self.openMovementDialog = function () {
+    var html =
+      ' <div style=\'backgRound-color:#90d6e4\'> Mouvement: <select id="movementSelect" onchange="scoreParts.onSelectMovement()"> </select></html>';
+    $('#mainDialogDiv').html(html);
 
-    var html = " <div style='backgRound-color:#90d6e4'> Mouvement: <select id=\"movementSelect\" onchange=\"scoreParts.onSelectMovement()\"> </select></html>"
-    $("#mainDialogDiv").html(html)
-
-    $("#mainDialogDiv").dialog("open")
+    $('#mainDialogDiv').dialog('open');
     var movements = ['', 'Nouveau'];
     for (var page in scoreParts.allPagesZones.pages) {
       scoreParts.allPagesZones.pages[page].forEach(function (zone) {
@@ -183,9 +176,9 @@ var scoreParts = (function () {
     }
 
     Common.fillSelectOptions('movementSelect', movements, false);
-  }
+  };
 
-  self.onSelectMovement=function(){
+  self.onSelectMovement = function () {
     var movement = $('#movementSelect').val();
     if (!movement) {
       return;
@@ -216,10 +209,10 @@ var scoreParts = (function () {
       });
     }
     scoreParts.writeCurrentPageZones();
-    scoreParts.modified=true;
+    scoreParts.modified = true;
     scoreParts.changePage(parseInt(movementPage));
-    $("#movementSpan").html(self.currentMovement)
-    $("#mainDialogDiv").dialog("close")
+    $('#movementSpan').html(self.currentMovement);
+    $('#mainDialogDiv').dialog('close');
   };
 
   self.getInfos = function () {

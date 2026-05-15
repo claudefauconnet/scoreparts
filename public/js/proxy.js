@@ -83,11 +83,10 @@ var Proxy = (function () {
       selectedZones = scoreParts.allPagesZones.pages;
     }
 
-
-    ZonesChecker.checkZones(function(message) {
-if(message){
-  return alert (message)
-}
+    ZonesChecker.checkZones(function (message) {
+      if (message) {
+        return alert(message);
+      }
 
       if (!scoreParts.currentMovement) {
         scoreParts.currentMovement = $('#movementSelect').val();
@@ -100,8 +99,8 @@ if(message){
         return alert(' selectionnez une voix');
       }
       scoreParts.setMessage(
-          '  La partie est en cours de génération , merci de patienter ...',
-          ' blue'
+        '  La partie est en cours de génération , merci de patienter ...',
+        ' blue'
       );
       $('body').css('cursor', 'progress');
       var pdfName = $('#scoresSelect').val();
@@ -134,14 +133,14 @@ if(message){
 
           $('#duplicateZonesButton2').css('visibility', 'visible');
           var message =
-              'la partition ' +
-              part +
-              " est générée , <a target='_blanck' href='" +
-              document.location.href +
-              data.result +
-              "'>télécharger</a>";
+            'la partition ' +
+            part +
+            " est générée , <a target='_blanck' href='" +
+            document.location.href +
+            data.result +
+            "'>télécharger</a>";
           message +=
-              "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression ";
+            "<br> pour l'imprimer pensez à cocher l'option 'ajuster à la page' dans les paramètres d'impression ";
           scoreParts.setMessage(message, 'blue');
 
           $('body').css('cursor', 'default');
@@ -155,7 +154,7 @@ if(message){
           }
         },
       });
-    })
+    });
   };
   self.getPdfMovementName = function () {
     var str = scoreParts.allPagesZones.title + '_' + scoreParts.currentMovement;
