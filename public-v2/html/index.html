@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>ScoreParts — Choisir une partition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+
+<!-- Faded background hint of the main app -->
+<div class="bg-hint">
+  <div class="sb"></div>
+  <div class="topbar"></div>
+  <div class="book"></div>
+</div>
+<div class="dim"></div>
+
+<div class="modal" role="dialog" aria-modal="true">
+
+  <!-- Header -->
+  <div class="modal-head">
+    <div>
+      <div class="title">Choisir une Partition</div>
+      <div class="sub">Sélectionnez une partition dans votre bibliothèque ou importez-en une nouvelle</div>
+    </div>
+    <button class="close-btn" title="Fermer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="modal-body">
+
+    <!-- Tree -->
+    <div class="tree-pane">
+      <div class="pane-head">
+        <div class="lib-tabs">
+          <button class="lib-tab active" data-lib="mine">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+            Ma bibliothèque
+          </button>
+          <button class="lib-tab" data-lib="public">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a16 16 0 0 1 0 18M12 3a16 16 0 0 0 0 18"/></svg>
+            Publiques
+          </button>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input placeholder="Rechercher..." />
+        </div>
+      </div>
+      <div class="tree-scroll" id="tree"></div>
+    </div>
+
+    <!-- Import / Preview -->
+    <div class="import-pane">
+      <div class="preview" id="preview">
+        <div class="preview-empty" id="preview-empty">
+          Sélectionnez une partition dans la liste<br>ou importez-en une nouvelle ci-dessous.
+        </div>
+      </div>
+
+      <div style="padding: 0 20px 16px;">
+        <div class="drop" id="drop">
+          <input type="file" id="file-input" accept=".pdf,.musicxml,.xml,.mxl" />
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+          </div>
+          <div>
+            <div class="drop-title">Glissez un PDF ici</div>
+            <div class="drop-sub">ou cliquez pour parcourir vos fichiers</div>
+          </div>
+          <button id="browse-btn">Parcourir...</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="modal-foot">
+    <div class="foot-info" id="foot-info">Aucune partition sélectionnée</div>
+    <div class="foot-actions">
+      <button class="btn btn-ghost">Annuler</button>
+      <button class="btn btn-primary" id="launch-btn" disabled>
+        Ouvrir la partition
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Launch transition -->
+<div class="launch" id="launch">
+  <div class="clef">𝄞</div>
+  <div>
+    <div class="name" id="launch-name">Quatuor n°14, op. 131</div>
+    <div class="author" id="launch-author">Ludwig van Beethoven</div>
+  </div>
+  <div class="ld">Ouverture sur Mouvement <span style="font-family:var(--serif);font-style:italic;font-weight:600">I</span></div>
+  <div class="dots"><span></span><span></span><span></span></div>
+</div>
+
+<script src="/js/index.js"></script>
+</body>
+</html>

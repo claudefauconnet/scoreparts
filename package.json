@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node ./bin/www.js",
+    "start:v2": "concurrently \"cross-env UI_VERSION=v2 node ./bin/www.js\" \"wait-on http://localhost:3006 && browser-sync start --config bs-config.cjs\"",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\""
   },
@@ -46,6 +47,10 @@
   },
   "homepage": "https://github.com/claudefauconnet/scoreparts#readme",
   "devDependencies": {
-    "prettier": "^3.8.3"
+    "browser-sync": "^3.0.4",
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "prettier": "^3.8.3",
+    "wait-on": "^9.0.10"
   }
 }

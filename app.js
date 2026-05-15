@@ -24,9 +24,13 @@ app.use(logger('dev'));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+const uiFolder = process.env.UI_VERSION === 'v2' ? 'public-v2' : 'public';
+app.use(express.static(path.join(__dirname, uiFolder)));
 
 app.get('/', function (req, res) {
+  if (process.env.UI_VERSION === 'v2') {
+    return res.redirect('/html/index.html');
+  }
   res.render('index', { title: 'Express' });
 });
 

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Partitions — ScoreParts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/partitions.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">𝄞</div>
+      <div class="brand-text">
+        <div class="name">ScoreParts</div>
+        <div class="sub">Éditeur de partitions</div>
+      </div>
+    </div>
+
+    <!-- Découper -->
+    <div class="panel" data-panel="decouper">
+      <h2 class="panel-title">Découper les voix</h2>
+      <p class="panel-desc">Sélectionnez une zone sur la partition et assignez-la à un instrument. Les voix actives apparaîtront colorées sur les pages.</p>
+
+      <div class="section-label">Actions</div>
+      <div class="tool-row">
+        <button class="tool-btn" id="act-new-zone" data-tooltip="New zone" data-tooltip-sub="Au prochain clic sur une page, une nouvelle zone sera créée et attribuée à l'instrument actif.">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="4" y="4" width="12" height="12" rx="1" stroke-dasharray="3 2"/><path d="M18 14v6M15 17h6"/></svg>
+          New zone
+        </button>
+        <button class="tool-btn" data-tooltip="Auto-detect zones" data-tooltip-sub="Analyse la partition et place automatiquement une zone par système musical sur les pages visibles.">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 7h2M3 12h2M3 17h2M7 5h14v3H7zM7 10.5h14v3H7zM7 16h14v3H7z"/><circle cx="19" cy="6.5" r="1" fill="currentColor"/></svg>
+          Auto-detect
+        </button>
+        <button class="tool-btn" data-tooltip="Dupliquer la page précédente" data-tooltip-sub="Copie toutes les zones et leurs attributions d'instruments depuis la page précédente vers la page courante.">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="8" y="3" width="12" height="14" rx="1"/><path d="M16 7H4v14h12v-4"/></svg>
+          Dupliquer
+        </button>
+        <button class="tool-btn" data-tooltip="Auto-attribution" data-tooltip-sub="Attribue automatiquement et intelligemment les instruments sélectionnés aux zones existantes (équivalent de l'ancien onglet Générer voix).">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M5 19l8-8M11 3l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3zM17 13l.7 1.8L19.5 16l-1.8.7L17 18.5l-.7-1.8L14.5 16l1.8-.7L17 13z"/></svg>
+          Auto-attribuer
+        </button>
+      </div>
+
+      <div class="section-label">Instruments</div>
+      <div class="instr-list" id="instr-list">
+        <!-- filled by JS -->
+      </div>
+      <button class="add-instr">+ Ajouter un instrument</button>
+
+      <div class="progress-card">
+        <div class="progress-head">
+          <span class="progress-title">Progression du découpage</span>
+          <span class="progress-pct">62%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+        <div class="progress-detail">
+          <span>14 zones • 4 instruments</span>
+          <span>p. 2 / 8</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Score info footer -->
+    <a class="score-info" href="/html/index.html" title="Changer de partition">
+      <div class="score-info-thumb"></div>
+      <div class="score-info-meta">
+        <div class="score-info-title">Quatuor n°14, op. 131</div>
+        <div class="score-info-sub">L. v. Beethoven · 8 pages</div>
+      </div>
+      <button class="score-info-action" title="Changer de partition">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M6 9l6-6 6 6M6 15l6 6 6-6"/></svg>
+      </button>
+    </a>
+  </aside>
+
+  <!-- ===================== STAGE ===================== -->
+  <section class="stage" id="stage" data-book-style="realistic">
+    <div class="stage-top">
+      <div class="crumbs">
+        <strong>Quatuor n°14, op. 131</strong>
+      </div>
+
+      <div class="mvt" id="mvt">
+        <span class="mvt-number" id="mvt-number">Mouvement I</span>
+        <span class="mvt-divider"></span>
+        <div class="mvt-name-wrap">
+          <input class="mvt-name" id="mvt-name" value="Adagio ma non troppo" />
+          <button class="mvt-edit" id="mvt-edit" title="Renommer le mouvement">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          </button>
+        </div>
+        <button class="mvt-dd" id="mvt-dd" title="Mouvements">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+
+        <div class="mvt-pop" id="mvt-pop">
+          <div class="mvt-pop-head">Mouvements</div>
+          <div id="mvt-list"></div>
+          <div class="mvt-add" id="mvt-add">
+            <div class="mvt-add-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+            <div class="mvt-add-text">
+              <div class="t">Créer un mouvement à partir d'ici</div>
+              <div class="s" id="mvt-add-sub">de la page courante jusqu'au mouvement suivant</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:12px;color:var(--violon1);border-color:var(--line);" title="Tout recommencer : supprime mouvements, instruments et zones" id="reset-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          Tout recommencer
+        </button>
+        <button class="btn" style="padding:6px 14px;font-size:12px;background:#5e8c61;color:white;border-color:#5e8c61;" title="Publier cette partition" id="publish-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          Publier
+        </button>
+        <div class="dl-split" id="dl-split">
+          <button class="btn btn-primary dl-main" style="padding:6px 14px;font-size:12px;" title="Télécharger la partition complète (PDF)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>
+            Télécharger
+          </button>
+          <button class="btn btn-primary dl-caret" id="dl-caret" title="Autres formats" aria-label="Plus d'options">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="dl-menu" id="dl-menu">
+            <button class="dl-item" data-fmt="pdf">
+              <span class="dl-icon pdf">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/></svg>
+              </span>
+              <div class="dl-text">
+                <div class="dl-title">Partition complète (PDF)</div>
+                <div class="dl-sub">un seul fichier, toutes les pages</div>
+              </div>
+              <span class="dl-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M5 12l5 5L20 7"/></svg>
+              </span>
+            </button>
+            <button class="dl-item" data-fmt="zip">
+              <span class="dl-icon zip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h14v16H5z"/><path d="M11 4v2M11 8v2M11 12v2M11 16h2v3h-2z"/></svg>
+              </span>
+              <div class="dl-text">
+                <div class="dl-title">Voix par instrument (.zip)</div>
+                <div class="dl-sub" id="dl-zip-sub">un PDF par instrument sélectionné</div>
+              </div>
+              <span class="dl-badge" id="dl-zip-count">3</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-body" id="stage-body">
+
+      <div class="pending-zone-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="12" rx="1" stroke-dasharray="3 2"/><path d="M19 14v6M16 17h6"/></svg>
+        Cliquez sur une page pour créer une zone
+        <button id="cancel-new-zone">Annuler</button>
+      </div>
+
+      <!-- ===================== BOOK (loaded state) ===================== -->
+      <div class="book" id="book">
+        <!-- Left page -->
+        <div class="page page-left">
+          <div class="sheet">
+            <div class="sheet-head">
+              <span>Op. 131 — Mvt I</span>
+              <span>p. 2</span>
+            </div>
+            <div class="sheet-title-row">
+              <h3 class="sheet-title">Adagio ma non troppo e molto espressivo</h3>
+              <div class="sheet-sub">Ludwig van Beethoven (1826)</div>
+            </div>
+
+            <div class="systems" id="systems-left">
+              <!-- 4 systems with notes drawn via JS -->
+            </div>
+
+            <div class="page-num">— 2 —</div>
+          </div>
+          <!-- zones overlay -->
+          <div class="zones" id="zones-left"></div>
+          <button class="clear-zones-btn" title="Effacer les zones de cette page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+
+        <!-- Right page -->
+        <div class="page page-right">
+          <div class="sheet">
+            <div class="sheet-head">
+              <span>p. 3</span>
+              <span>Op. 131 — Mvt I</span>
+            </div>
+            <div class="sheet-title-row" style="visibility:hidden">
+              <h3 class="sheet-title">.</h3>
+            </div>
+
+            <div class="systems" id="systems-right"></div>
+
+            <div class="page-num">— 3 —</div>
+          </div>
+          <div class="zones" id="zones-right"></div>
+          <button class="clear-zones-btn" title="Effacer les zones de cette page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+
+        <div class="spine"></div>
+      </div>
+
+      <!-- ===================== EMPTY STATE (closed book) ===================== -->
+      <div class="closed-book-wrap" id="closed-book-wrap" style="display:none">
+        <div class="closed-book">
+          <div class="cb-cover">
+            <div class="cb-spine"></div>
+            <div class="cb-frame"></div>
+            <div class="cb-emblem">
+              <div class="gclef">𝄞</div>
+              <div class="label">Partita</div>
+            </div>
+          </div>
+          <div class="cb-pages"></div>
+        </div>
+        <div class="empty-cta">
+          <button class="open-btn" id="open-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+            Ouvrir une partition
+          </button>
+          <span class="hint">ou glissez un PDF n'importe où sur la page</span>
+        </div>
+      </div>
+
+      <!-- Lateral arrows -->
+      <button class="nav-arrow prev" title="Page précédente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button class="nav-arrow next" title="Page suivante">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <!-- Bottom navigation -->
+    <div class="stage-bottom">
+      <button class="mini-btn" title="Première page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M19 5l-7 7 7 7M5 5v14"/></svg>
+      </button>
+      <button class="mini-btn" title="Précédente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="pages-input">
+        <span>Page</span>
+        <input value="3" />
+        <span class="total">/ 8</span>
+      </div>
+      <button class="mini-btn" title="Suivante">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button class="mini-btn" title="Dernière page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M5 5l7 7-7 7M19 5v14"/></svg>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<!-- Tweaks -->
+<button class="tweaks-pill" id="tweaks-pill" aria-label="Paramètres">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  Paramètres
+</button>
+<div class="tweaks-panel" id="tweaks-panel">
+  <h4>Paramètres</h4>
+
+  <div class="tweak-label">Hauteur du rectangle (px)</div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button class="mini-step" id="rect-minus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">−</button>
+    <input id="rect-h" type="number" min="10" max="200" step="1" value="40" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;text-align:center;" />
+    <button class="mini-step" id="rect-plus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">+</button>
+  </div>
+
+  <div class="tweak-label">Style du livre</div>
+  <div class="tweak-radio" id="tw-book-style">
+    <button data-val="realistic" class="active">Réaliste</button>
+    <button data-val="minimal">Minimaliste</button>
+    <button data-val="flat">Plat</button>
+  </div>
+
+  <div class="tweak-label">État</div>
+  <div class="tweak-row" id="tw-state">
+    <button data-val="loaded" class="active">Chargée</button>
+    <button data-val="empty">Aucune partition</button>
+  </div>
+</div>
+
+<script src="/js/partitions.js"></script>
+</body>
+</html>
