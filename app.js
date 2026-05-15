@@ -20,9 +20,10 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true  }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
