@@ -6,6 +6,6 @@ Composant en bas à gauche pour choisir une partition :
 Ce style avec des dossiers correspondants à des genres musicaux de partitions de concerts puis des sous dossiers liés à des artistes en enfin une partition avec la note de musique correspondante au lancement d'une partition.
 la deuxieme partie de la fenetre peut permettre d'importer une partition en drag and drop ou avec un bouton parcourir. Puis cela relance la page principale avec la nouvelle partition sur le mouvement n°1.
 
-Cette partie intègre les fonctionalitées d'import PDF le changement de partition que l'on décorèle totalement du mouvement qui lui est gérée dans le lecteur de partitions avec le mouvement 1 lancée par défaut qu'il soit déjà crée ou non. Par défaut il est crée sans nom.
+Cette partie intègre les fonctionalitées d'import PDF le changement de partition que l'on décorèle totalement du mouvement qui lui est gérée dans le lecteur de partitions avec le mouvement 1 lancée par défaut qu'il soit déjà crée ou non. Lorsque l'on est dans une nouvelle partition et que le mouvement 1 est lancé forcer l'utilisateur à inscrire un nom pour le mouvement 1.
 
 

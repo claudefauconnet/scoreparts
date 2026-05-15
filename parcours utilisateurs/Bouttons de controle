@@ -1,7 +1,7 @@
 # Boutons de controles de base
 - hauteur zone et debordement auto passe dans paramètres
 - On delete effacer measures, save zone, load zone : effacer measures ne fait rien , save zone sauvegarde automatique à chaque ajout/modification de zone à peaufiner pas besoin de garder le bouton.pareil pour load zone automatique à chaque page ouverte. 
-- check zone: à quoi ca sert ?
+- check zone: à quoi ca sert ? --> vérifier que le nombre de zones est le meme dans toutes les pages 
 - dupliquer detect = autodetect zones ?
 - Dupliquer simple zone à garder dans les controles
 - autodetect zones dans les bouttons de controles
