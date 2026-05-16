@@ -26,7 +26,7 @@ export function readScoreInfos(pdfName) {
 
 export function writeScoreInfos(pdfName, totalPages) {
   fs.mkdirSync(SCORE_INFOS_DIR, { recursive: true });
-  const scoreInfos = { pdfName, totalPages, category: null, composer: null };
+  const scoreInfos = { pdfName, totalPages, category: null, composer: null, published: false };
   fs.writeFileSync(getScoreInfosPath(pdfName), JSON.stringify(scoreInfos, null, 2), 'utf8');
   return scoreInfos;
 }

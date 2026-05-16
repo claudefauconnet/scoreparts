@@ -44,16 +44,23 @@ var scoreSplitter = {
   },
 
   listScores: function (callback) {
-    var pdfs = [];
+    var scores = [];
     var pdfsDir = path.resolve(__dirname, scoreSplitter.sourcePdfsDir);
     var files = fs.readdirSync(pdfsDir, 'utf8');
     for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
       var pdfExtIndex = files[fileIndex].toLowerCase().lastIndexOf('.pdf');
-      if (pdfExtIndex > -1) {
-        pdfs.push(files[fileIndex].substring(0, pdfExtIndex));
+      if (pdfExtIndex === -1) continue;
+      var pdfName = files[fileIndex].substring(0, pdfExtIndex);
+      var infoPath = path.join(pdfsDir, pdfName + '.json');
+      var info = null;
+      try {
+        info = JSON.parse(fs.readFileSync(infoPath, 'utf8'));
+      } catch (e) {
+        info = { pdfName, totalPages: null, category: null, composer: null, published: false };
       }
+      scores.push(info);
     }
-    return callback(null, pdfs);
+    return callback(null, scores);
   },
 
   pdfToImages: function (pdfPath, quality, options, callback) {

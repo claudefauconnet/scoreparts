@@ -12,91 +12,41 @@ export function emit(eventName, detail) {
   bus.dispatchEvent(new CustomEvent(eventName, { detail }));
 }
 
-// Library datasets (shared so selector and any future consumer agree).
-export const MY_LIB = [
-  {
-    name: 'Musique de chambre', type: 'folder',
-    children: [
-      {
-        name: 'Beethoven', type: 'folder',
-        children: [
-          { name: 'Quatuor n°14, op. 131', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 7, pages: 38, key: 'Do# mineur', published: true, hearts: 2841, views: 18420 }, tags: ['Quatuor à cordes', '1826'] },
-          { name: 'Quatuor n°16, op. 135', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 4, pages: 22, key: 'Fa majeur', published: true, hearts: 1207, views: 9842 }, tags: ['Quatuor à cordes', '1826'] },
-          { name: 'Trio op. 97 « À l\'Archiduc »', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 4, pages: 31, key: 'Si♭ majeur', published: false }, tags: ['Trio', '1811'] },
-        ]
-      },
-      {
-        name: 'Schubert', type: 'folder',
-        children: [
-          { name: 'Quatuor n°14 « La Jeune Fille et la Mort »', type: 'score', author: 'F. Schubert', meta: { mvts: 4, pages: 28, key: 'Ré mineur', published: true, hearts: 1893, views: 12047 }, tags: ['Quatuor à cordes', '1824'] },
-          { name: 'Quintette à deux violoncelles, op. 163', type: 'score', author: 'F. Schubert', meta: { mvts: 4, pages: 42, key: 'Do majeur', published: false }, tags: ['Quintette', '1828'] },
-        ]
-      },
-      {
-        name: 'Brahms', type: 'folder',
-        children: [
-          { name: 'Sextuor n°1, op. 18', type: 'score', author: 'J. Brahms', meta: { mvts: 4, pages: 36, key: 'Si♭ majeur', published: true, hearts: 612, views: 4203 }, tags: ['Sextuor', '1860'] },
-        ]
-      },
-    ]
-  },
-  {
-    name: 'Symphonies', type: 'folder',
-    children: [
-      {
-        name: 'Beethoven', type: 'folder',
-        children: [
-          { name: 'Symphonie n°9, op. 125', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 4, pages: 124, key: 'Ré mineur', published: true, hearts: 8924, views: 64320 }, tags: ['Symphonie', '1824', '« Choral »'] },
-          { name: 'Symphonie n°5, op. 67', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 4, pages: 78, key: 'Do mineur', published: true, hearts: 7142, views: 51208 }, tags: ['Symphonie', '1808'] },
-        ]
-      },
-      {
-        name: 'Mahler', type: 'folder',
-        children: [
-          { name: 'Symphonie n°2 « Résurrection »', type: 'score', author: 'G. Mahler', meta: { mvts: 5, pages: 196, key: 'Do mineur', published: false }, tags: ['Symphonie', '1894'] },
-        ]
-      },
-    ]
-  },
-  {
-    name: 'Concertos', type: 'folder',
-    children: [
-      {
-        name: 'Mozart', type: 'folder',
-        children: [
-          { name: 'Concerto pour piano n°23, K. 488', type: 'score', author: 'W. A. Mozart', meta: { mvts: 3, pages: 64, key: 'La majeur', published: true, hearts: 3204, views: 22417 }, tags: ['Concerto', 'Piano', '1786'] },
-          { name: 'Concerto pour clarinette, K. 622', type: 'score', author: 'W. A. Mozart', meta: { mvts: 3, pages: 48, key: 'La majeur', published: false }, tags: ['Concerto', 'Clarinette', '1791'] },
-        ]
-      },
-      {
-        name: 'Tchaïkovski', type: 'folder',
-        children: [
-          { name: 'Concerto pour violon, op. 35', type: 'score', author: 'P. I. Tchaïkovski', meta: { mvts: 3, pages: 72, key: 'Ré majeur', published: true, hearts: 4571, views: 31082 }, tags: ['Concerto', 'Violon', '1878'] },
-        ]
-      },
-    ]
-  },
-  {
-    name: 'Sonates', type: 'folder',
-    children: [
-      {
-        name: 'Beethoven', type: 'folder',
-        children: [
-          { name: 'Sonate n°14 « Clair de lune »', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 3, pages: 18, key: 'Do# mineur', published: true, hearts: 12407, views: 92531 }, tags: ['Sonate', 'Piano', '1801'] },
-          { name: 'Sonate n°8 « Pathétique »', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 3, pages: 22, key: 'Do mineur', published: true, hearts: 5821, views: 38104 }, tags: ['Sonate', 'Piano', '1798'] },
-        ]
-      },
-    ]
-  },
-  {
-    name: 'Récents', type: 'folder',
-    children: [
-      { name: 'Quatuor n°14, op. 131', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 7, pages: 38, key: 'Do# mineur', published: true, hearts: 2841, views: 18420 }, tags: ['Quatuor à cordes', '1826'] },
-      { name: 'Sonate « Clair de lune »', type: 'score', author: 'L. v. Beethoven', meta: { mvts: 3, pages: 18, key: 'Do# mineur', published: false }, tags: ['Sonate', 'Piano'] },
-    ]
-  },
-];
+export function buildTreeFromScores(scores) {
+  const categoryMap = new Map();
+  for (const score of scores) {
+    const categoryName = score.category || 'Autres';
+    const composerName = score.composer || 'Inconnu';
+    if (!categoryMap.has(categoryName)) categoryMap.set(categoryName, new Map());
+    const composerMap = categoryMap.get(categoryName);
+    if (!composerMap.has(composerName)) composerMap.set(composerName, []);
+    composerMap.get(composerName).push({
+      name: score.pdfName,
+      type: 'score',
+      author: composerName,
+      meta: { pages: score.totalPages, published: score.published },
+      tags: [],
+    });
+  }
+  return Array.from(categoryMap.entries()).map(([categoryName, composerMap]) => ({
+    name: categoryName,
+    type: 'folder',
+    children: Array.from(composerMap.entries()).map(([composerName, scoreNodes]) => ({
+      name: composerName,
+      type: 'folder',
+      children: scoreNodes,
+    })),
+  }));
+}
 
+fetch('/api/score/list', { method: 'POST' })
+  .then(r => r.json())
+  .then(scores => {
+    LIB_DATA.mine = buildTreeFromScores(Array.isArray(scores) ? scores : []);
+    emit('lib-loaded', 'mine');
+  })
+  .catch(() => {});
+/*
 export const PUBLIC_LIB = [
   {
     name: 'Populaires cette semaine', type: 'folder',
@@ -179,6 +129,6 @@ export const PUBLIC_LIB = [
       { name: 'La Reine de la Nuit — Air', type: 'score', author: 'W. A. Mozart', uploader: '@diva', meta: { mvts: 1, pages: 8, key: 'Ré mineur', published: true, hearts: 9817, views: 72084 }, tags: ['Opéra', '1791'] },
     ]
   },
-];
+]; */
 
-export const LIB_DATA = { mine: MY_LIB, public: PUBLIC_LIB };
+export const LIB_DATA = { mine: [], public: [] };
