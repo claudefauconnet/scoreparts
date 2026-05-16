@@ -48,9 +48,13 @@ router.delete('/delete/:pdfName', function (req, res) {
   const imagesDir = path.join(root, 'public/data/images', pdfName);
 
   for (const filePath of targets) {
-    try { fs.unlinkSync(filePath); } catch (e) {}
+    try {
+      fs.unlinkSync(filePath);
+    } catch (e) {}
   }
-  try { fs.rmSync(imagesDir, { recursive: true, force: true }); } catch (e) {}
+  try {
+    fs.rmSync(imagesDir, { recursive: true, force: true });
+  } catch (e) {}
 
   processResponse(res, null, { deleted: pdfName });
 });

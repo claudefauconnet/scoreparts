@@ -26,7 +26,7 @@ import { saveScoreInfos } from '../proxy.js';
 
   function updateFooterPending(message) {
     $launchBtn.prop('disabled', true);
-    $footInfo.html(message || '<i>Renseignez la catégorie et l\'artiste pour valider l\'import</i>');
+    $footInfo.html(message || "<i>Renseignez la catégorie et l'artiste pour valider l'import</i>");
   }
 
   // ============== Launch
@@ -35,7 +35,9 @@ import { saveScoreInfos } from '../proxy.js';
     $launchName.text(state.selected.name);
     $launchAuthor.text(state.selected.author);
     $launch.addClass('on');
-    setTimeout(function () { window.location.href = '/html/partitions.html'; }, 1800);
+    setTimeout(function () {
+      window.location.href = '/html/partitions.html';
+    }, 1800);
   }
 
   function openScore() {
@@ -53,10 +55,18 @@ import { saveScoreInfos } from '../proxy.js';
 
   // ============== Events
 
-  on('selection-changed', function (e) { updateFooterSelection(e.detail); });
-  on('selection-pending', function (e) { updateFooterPending(e.detail); });
+  on('selection-changed', function (e) {
+    updateFooterSelection(e.detail);
+  });
+  on('selection-pending', function (e) {
+    updateFooterPending(e.detail);
+  });
 
   $launchBtn.on('click', openScore);
-  $('.close-btn').on('click', function () { window.location.href = '/html/partitions.html'; });
-  $('.btn-ghost').on('click', function () { window.location.href = '/html/partitions.html'; });
+  $('.close-btn').on('click', function () {
+    window.location.href = '/html/partitions.html';
+  });
+  $('.btn-ghost').on('click', function () {
+    window.location.href = '/html/partitions.html';
+  });
 })();

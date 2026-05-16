@@ -114,7 +114,9 @@ var scoreSplitter = {
         var existing = fs.readdirSync(outputDir);
         existing.forEach(function (f) {
           if (scoreSplitter.isPageImage(f)) {
-            try { fs.unlinkSync(path.join(outputDir, f)); } catch (e) {}
+            try {
+              fs.unlinkSync(path.join(outputDir, f));
+            } catch (e) {}
           }
         });
       } catch (e) {}

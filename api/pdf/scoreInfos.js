@@ -85,7 +85,11 @@ router.put('/scoreInfos/:pdfName', function (req, res) {
   if (req.body.category !== undefined) scoreInfos.category = req.body.category;
   if (req.body.composer !== undefined) scoreInfos.composer = req.body.composer;
 
-  fs.writeFileSync(getScoreInfosPath(req.params.pdfName), JSON.stringify(scoreInfos, null, 2), 'utf8');
+  fs.writeFileSync(
+    getScoreInfosPath(req.params.pdfName),
+    JSON.stringify(scoreInfos, null, 2),
+    'utf8'
+  );
   processResponse(res, null, scoreInfos);
 });
 

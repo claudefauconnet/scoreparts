@@ -20,12 +20,21 @@ import { uploadPdf } from '../proxy.js';
   ];
 
   const KNOWN_ARTISTS = [
-    'L. v. Beethoven', 'W. A. Mozart', 'J. S. Bach', 'F. Schubert',
-    'J. Brahms', 'G. Mahler', 'P. I. Tchaïkovski', 'F. Chopin',
-    'C. Debussy', 'M. Ravel', 'F. Liszt', 'R. Schumann',
+    'L. v. Beethoven',
+    'W. A. Mozart',
+    'J. S. Bach',
+    'F. Schubert',
+    'J. Brahms',
+    'G. Mahler',
+    'P. I. Tchaïkovski',
+    'F. Chopin',
+    'C. Debussy',
+    'M. Ravel',
+    'F. Liszt',
+    'R. Schumann',
   ];
 
-  const socket = (typeof io === 'function') ? io() : null;
+  const socket = typeof io === 'function' ? io() : null;
 
   // ============== Score preview card (shown on score-picked event)
 
@@ -68,7 +77,11 @@ import { uploadPdf } from '../proxy.js';
               <span>${node.meta.key}</span>
             </div>
             <div class="sc-tags">
-              ${node.tags.map(function (tag) { return `<span class="sc-tag">${tag}</span>`; }).join('')}
+              ${node.tags
+                .map(function (tag) {
+                  return `<span class="sc-tag">${tag}</span>`;
+                })
+                .join('')}
             </div>
             ${buildScorePrivacyHTML(node)}
           </div>
@@ -104,10 +117,12 @@ import { uploadPdf } from '../proxy.js';
     if (!socket) return function () {};
 
     function onConversionProgress({ percent, current, total }) {
-      const mappedPercent = 1 + (percent * 0.99);
+      const mappedPercent = 1 + percent * 0.99;
       setProgressPercent($card, mappedPercent);
       if (total > 0) {
-        $card.find('.importing-size').text(`${(file.size / 1024).toFixed(1)} Ko · Conversion ${current}/${total} pages`);
+        $card
+          .find('.importing-size')
+          .text(`${(file.size / 1024).toFixed(1)} Ko · Conversion ${current}/${total} pages`);
       }
     }
 
@@ -126,7 +141,9 @@ import { uploadPdf } from '../proxy.js';
 
   function handleUploadComplete($card, file, data) {
     if (data.bigFile) {
-      $card.find('.importing-size').text(`Fichier trop gros (${Math.round(data.bigFile / 1000000)} Mo, max 10 Mo)`);
+      $card
+        .find('.importing-size')
+        .text(`Fichier trop gros (${Math.round(data.bigFile / 1000000)} Mo, max 10 Mo)`);
       return;
     }
     setProgressPercent($card, 100);
@@ -141,17 +158,22 @@ import { uploadPdf } from '../proxy.js';
     formData.append('imageQuality', 'medium');
     if (socket && socket.id) formData.append('socketId', socket.id);
 
-    uploadPdf({
-      formData,
-      onUploadProgress: function (ratio) { setProgressPercent($card, ratio * 1); },
-    }, function (err, data) {
-      cleanupSocketListeners();
-      if (err) {
-        $card.find('.importing-size').text('Erreur upload (' + err.message + ')');
-        return;
+    uploadPdf(
+      {
+        formData,
+        onUploadProgress: function (ratio) {
+          setProgressPercent($card, ratio * 1);
+        },
+      },
+      function (err, data) {
+        cleanupSocketListeners();
+        if (err) {
+          $card.find('.importing-size').text('Erreur upload (' + err.message + ')');
+          return;
+        }
+        handleUploadComplete($card, file, data);
       }
-      handleUploadComplete($card, file, data);
-    });
+    );
   }
 
   function handleImport(file) {
@@ -174,9 +196,11 @@ import { uploadPdf } from '../proxy.js';
   }
 
   function buildArtistChipsHTML() {
-    return KNOWN_ARTISTS.slice(0, 6).map(function (artistName) {
-      return `<button data-artist="${artistName}">${artistName}</button>`;
-    }).join('');
+    return KNOWN_ARTISTS.slice(0, 6)
+      .map(function (artistName) {
+        return `<button data-artist="${artistName}">${artistName}</button>`;
+      })
+      .join('');
   }
 
   function buildClassifyFormHTML(file) {
@@ -229,7 +253,9 @@ import { uploadPdf } from '../proxy.js';
 
     if (isFormValid) {
       $form.find('#cf-warn').removeClass('show');
-      const matchedCategory = CATEGORIES.find(function (category) { return category.id === selectedCategoryId; });
+      const matchedCategory = CATEGORIES.find(function (category) {
+        return category.id === selectedCategoryId;
+      });
       const selectedNode = {
         name: file.name.replace(/\.[^.]+$/, ''),
         author: artistName,
@@ -255,8 +281,12 @@ import { uploadPdf } from '../proxy.js';
       validateClassifyForm($form, file);
     });
 
-    $form.find('#cf-cat').on('change', function () { validateClassifyForm($form, file); });
-    $form.find('#cf-artist').on('input', function () { validateClassifyForm($form, file); });
+    $form.find('#cf-cat').on('change', function () {
+      validateClassifyForm($form, file);
+    });
+    $form.find('#cf-artist').on('input', function () {
+      validateClassifyForm($form, file);
+    });
 
     validateClassifyForm($form, file);
   }
@@ -294,12 +324,15 @@ import { uploadPdf } from '../proxy.js';
 
   // ============== Events from selector
 
-  on('score-picked', function (e) { renderScoreCard(e.detail); });
+  on('score-picked', function (e) {
+    renderScoreCard(e.detail);
+  });
 
   on('library-changed', function (e) {
-    const message = e.detail === 'public'
-      ? 'Parcourez les partitions publiées par la communauté.<br>Cliquez une partition pour la prévisualiser.'
-      : 'Sélectionnez une partition dans la liste<br>ou importez-en une nouvelle ci-dessous.';
+    const message =
+      e.detail === 'public'
+        ? 'Parcourez les partitions publiées par la communauté.<br>Cliquez une partition pour la prévisualiser.'
+        : 'Sélectionnez une partition dans la liste<br>ou importez-en une nouvelle ci-dessous.';
     $preview.html(`<div class="preview-empty">${message}</div>`);
   });
 })();
