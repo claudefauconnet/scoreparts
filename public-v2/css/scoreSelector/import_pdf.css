@@ -195,6 +195,24 @@
   letter-spacing: 0.2px;
 }
 
+.drop-wrapper {
+  padding: 0 20px 16px;
+}
+
+.sc-stat-published {
+  margin-left: auto;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.sc-private-note {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
 /* Drop zone */
 .drop {
   position: relative;

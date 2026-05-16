@@ -1,58 +1,62 @@
 import { state, on } from './state.js';
+import { saveScoreInfos } from '../proxy.js';
 
 (function dialogModule() {
-  const launchBtn = document.getElementById('launch-btn');
-  const footInfo = document.getElementById('foot-info');
-  const launch = document.getElementById('launch');
-  const launchName = document.getElementById('launch-name');
-  const launchAuthor = document.getElementById('launch-author');
+  const $launchBtn = $('#launch-btn');
+  const $footInfo = $('#foot-info');
+  const $launch = $('#launch');
+  const $launchName = $('#launch-name');
+  const $launchAuthor = $('#launch-author');
 
-  // Reflect selection state in footer + launch button.
-  on('selection-changed', (e) => {
-    const node = e.detail;
+  // ============== Footer state
+
+  function updateFooterSelection(node) {
     if (!node) {
-      launchBtn.disabled = true;
-      footInfo.textContent = 'Aucune partition sélectionnée';
+      $launchBtn.prop('disabled', true);
+      $footInfo.text('Aucune partition sélectionnée');
       return;
     }
-    launchBtn.disabled = false;
+    $launchBtn.prop('disabled', false);
     if (node.category) {
-      footInfo.innerHTML = `Import : <b>${node.name}</b> · ${node.author} · ${node.category}`;
+      $footInfo.html(`Import : <b>${node.name}</b> · ${node.author} · ${node.category}`);
     } else {
-      footInfo.innerHTML = `Sélection : <b>${node.name}</b> · ${node.author}`;
+      $footInfo.html(`Sélection : <b>${node.name}</b> · ${node.author}`);
     }
-  });
-
-  on('selection-pending', (e) => {
-    launchBtn.disabled = true;
-    footInfo.innerHTML = e.detail || '<i>Renseignez la catégorie et l\'artiste pour valider l\'import</i>';
-  });
-
-  async function openScore() {
-    if (!state.selected) return;
-    if (state.selected._isNewImport) {
-      await fetch('/api/pdf/scoreInfos/' + encodeURIComponent(state.selected.name), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: state.selected.category, composer: state.selected.author }),
-      });
-    }
-    launchName.textContent = state.selected.name;
-    launchAuthor.textContent = state.selected.author;
-    launch.classList.add('on');
-    setTimeout(() => {
-      window.location.href = '/html/partitions.html';
-    }, 1800);
   }
 
-  // Launch
-  launchBtn.addEventListener('click', openScore);
+  function updateFooterPending(message) {
+    $launchBtn.prop('disabled', true);
+    $footInfo.html(message || '<i>Renseignez la catégorie et l\'artiste pour valider l\'import</i>');
+  }
 
-  // Close + cancel
-  document.querySelector('.close-btn').addEventListener('click', () => {
-    window.location.href = '/html/partitions.html';
-  });
-  document.querySelector('.btn-ghost').addEventListener('click', () => {
-    window.location.href = '/html/partitions.html';
-  });
+  // ============== Launch
+
+  function showLaunchAndRedirect() {
+    $launchName.text(state.selected.name);
+    $launchAuthor.text(state.selected.author);
+    $launch.addClass('on');
+    setTimeout(function () { window.location.href = '/html/partitions.html'; }, 1800);
+  }
+
+  function openScore() {
+    if (!state.selected) return;
+    if (state.selected._isNewImport) {
+      const infos = { category: state.selected.category, composer: state.selected.author };
+      saveScoreInfos(state.selected.name, infos, function (err) {
+        if (err) console.error('Erreur saveScoreInfos', err);
+        showLaunchAndRedirect();
+      });
+    } else {
+      showLaunchAndRedirect();
+    }
+  }
+
+  // ============== Events
+
+  on('selection-changed', function (e) { updateFooterSelection(e.detail); });
+  on('selection-pending', function (e) { updateFooterPending(e.detail); });
+
+  $launchBtn.on('click', openScore);
+  $('.close-btn').on('click', function () { window.location.href = '/html/partitions.html'; });
+  $('.btn-ghost').on('click', function () { window.location.href = '/html/partitions.html'; });
 })();

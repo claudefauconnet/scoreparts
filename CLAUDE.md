@@ -32,3 +32,6 @@ Match existing structure:
 - Group functions by responsibility within each file. Keep the same ordering/grouping style already present in the file being edited.
 
 - Avoid functions defined on function for lisibility define functions outside in the same file and call them. 
+
+### No unreadable or non maintenable functions, html or css
+- Factorise, improve readability ...
