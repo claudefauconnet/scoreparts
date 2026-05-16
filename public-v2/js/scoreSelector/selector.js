@@ -2,6 +2,34 @@ import { state, emit, LIB_DATA } from './state.js';
 
 (function selectorModule() {
   const tree = document.getElementById('tree');
+  const searchInput = document.querySelector('.pane-head .search input');
+  let searchQuery = '';
+
+  function nodeMatchesQuery(node, q) {
+    const hay = [
+      node.name,
+      node.author,
+      node.uploader,
+      ...(Array.isArray(node.tags) ? node.tags : []),
+    ].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  }
+
+  function filterNodes(nodes, q) {
+    if (!q) return nodes;
+    const out = [];
+    for (const n of nodes) {
+      if (n.type === 'folder' && n.children) {
+        const kids = filterNodes(n.children, q);
+        if (kids.length || nodeMatchesQuery(n, q)) {
+          out.push({ ...n, children: kids.length ? kids : n.children });
+        }
+      } else if (nodeMatchesQuery(n, q)) {
+        out.push(n);
+      }
+    }
+    return out;
+  }
 
   const ICONS = {
     chev: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
@@ -65,15 +93,31 @@ import { state, emit, LIB_DATA } from './state.js';
 
   function renderTree() {
     tree.innerHTML = '';
-    LIB_DATA[state.activeLib].forEach(n => tree.appendChild(buildNode(n)));
-    const firstFolder = tree.querySelector('.node.folder');
-    if (firstFolder) {
-      firstFolder.classList.add('open');
-      const ic = firstFolder.querySelector('.node-row .node-icon');
-      if (ic) ic.innerHTML = ICONS.folderOpen;
+    const data = filterNodes(LIB_DATA[state.activeLib], searchQuery);
+    data.forEach(n => tree.appendChild(buildNode(n)));
+    if (searchQuery) {
+      tree.querySelectorAll('.node.folder').forEach(f => {
+        f.classList.add('open');
+        const ic = f.querySelector(':scope > .node-row .node-icon');
+        if (ic) ic.innerHTML = ICONS.folderOpen;
+      });
+    } else {
+      const firstFolder = tree.querySelector('.node.folder');
+      if (firstFolder) {
+        firstFolder.classList.add('open');
+        const ic = firstFolder.querySelector('.node-row .node-icon');
+        if (ic) ic.innerHTML = ICONS.folderOpen;
+      }
     }
   }
   renderTree();
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim().toLowerCase();
+      renderTree();
+    });
+  }
 
   document.querySelectorAll('.lib-tab').forEach(t => {
     t.addEventListener('click', () => {
