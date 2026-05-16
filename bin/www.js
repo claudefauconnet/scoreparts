@@ -3,6 +3,8 @@
 import app from '../app.js';
 import debug from 'debug';
 import http from 'http';
+import { Server as SocketIoServer } from 'socket.io';
+import { setIo } from './socketHub.js';
 
 var serverDebug = debug('scoreparts:server');
 
@@ -10,6 +12,12 @@ var port = normalizePort(process.env.PORT || '3006');
 app.set('port', port);
 
 var server = http.createServer(app);
+
+var io = new SocketIoServer(server, { cors: { origin: '*' } });
+setIo(io);
+io.on('connection', function (socket) {
+  serverDebug('socket connected: ' + socket.id);
+});
 
 server.listen(port);
 server.on('error', onError);

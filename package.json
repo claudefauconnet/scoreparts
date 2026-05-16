@@ -22,8 +22,10 @@
     "morgan": "~1.9.0",
     "multer": "latest",
     "pdf-image": "latest",
+    "pdf-lib": "^1.17.1",
     "pdfkit": "^0.12.1",
     "serve-favicon": "~2.4.5",
+    "socket.io": "^4.8.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "zip-dir": "^2.0.0"

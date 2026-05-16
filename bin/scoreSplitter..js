@@ -3,11 +3,13 @@ import fs from 'fs';
 import * as JimpProxy from './jimpProxy.js';
 import async from 'async';
 import PDFDocument from 'pdfkit';
+import { PDFDocument as PDFLibDocument } from 'pdf-lib';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import zipdir from 'zip-dir';
+import { emitTo } from './socketHub.js';
 
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = dirname(__filename);
@@ -33,6 +35,14 @@ var scoreSplitter = {
 
   coefHV: 0.95,
 
+  isPageImage: function (filename) {
+    return /^\d+\.png$/i.test(filename);
+  },
+
+  getImagesDir: function (pdfName) {
+    return path.resolve(__dirname, scoreSplitter.extractedImagesDir + pdfName);
+  },
+
   listScores: function (callback) {
     var pdfs = [];
     var pdfsDir = path.resolve(__dirname, scoreSplitter.sourcePdfsDir);
@@ -57,12 +67,19 @@ var scoreSplitter = {
     var pdfName = path.basename(pdfPath).replace(/\.[^.]+$/, '');
     var time = new Date();
     var time0 = time;
+    var socketId = options.socketId;
 
-    let outputPrefix = path.resolve(__dirname, scoreSplitter.extractedImagesDir + pdfName + '-');
+    let outputDir = scoreSplitter.getImagesDir(pdfName);
+    let outputPrefix = outputDir + path.sep;
 
     if (options.targetDir) {
       outputPrefix = options.targetDir;
+      outputDir = path.dirname(options.targetDir);
     }
+
+    try {
+      fs.mkdirSync(outputDir, { recursive: true });
+    } catch (e) {}
 
     var pages = '[0-500]';
     var GraphicsMagickExe = process.env.GM_EXE || 'gm';
@@ -82,17 +99,63 @@ var scoreSplitter = {
       outputPrefix +
       '%d.png';
 
-    console.log('EXECUTING ' + cmd);
-    exec(cmd, { env: execEnv }, function (err, stdout, stderr) {
-      if (err) {
-        console.log(stderr);
-        return callback(err);
-      }
-      var time2 = new Date();
-      console.log('extract images form pdf took : ' + (time2 - time));
-      console.log(stdout);
+    function cleanupOldPngs() {
+      try {
+        var existing = fs.readdirSync(outputDir);
+        existing.forEach(function (f) {
+          if (scoreSplitter.isPageImage(f)) {
+            try { fs.unlinkSync(path.join(outputDir, f)); } catch (e) {}
+          }
+        });
+      } catch (e) {}
+    }
 
-      callback(null, { pages: 0, pdfName: pdfName, duration: time2 - time0 });
+    function startConversion(totalPages) {
+      cleanupOldPngs();
+      emitTo(socketId, 'pdf-progress', { current: 0, total: totalPages, percent: 0 });
+
+      console.log('EXECUTING ' + cmd);
+      var done = false;
+      var pollInterval = setInterval(function () {
+        if (done) return;
+        try {
+          var files = fs.readdirSync(outputDir);
+          var count = 0;
+          files.forEach(function (f) {
+            if (scoreSplitter.isPageImage(f)) count++;
+          });
+          var percent = totalPages > 0 ? Math.min(99, Math.round((count / totalPages) * 100)) : 0;
+          emitTo(socketId, 'pdf-progress', { current: count, total: totalPages, percent: percent });
+        } catch (e) {}
+      }, 500);
+
+      exec(cmd, { env: execEnv }, function (err, stdout, stderr) {
+        done = true;
+        clearInterval(pollInterval);
+        if (err) {
+          console.log(stderr);
+          emitTo(socketId, 'pdf-error', { message: String(err) });
+          return callback(err);
+        }
+        var time2 = new Date();
+        console.log('extract images form pdf took : ' + (time2 - time));
+        console.log(stdout);
+        emitTo(socketId, 'pdf-progress', { current: totalPages, total: totalPages, percent: 100 });
+        callback(null, { pages: totalPages, pdfName: pdfName, duration: time2 - time0 });
+      });
+    }
+
+    fs.readFile(pdfPath, function (readErr, data) {
+      if (readErr) {
+        return startConversion(0);
+      }
+      PDFLibDocument.load(data, { ignoreEncryption: true })
+        .then(function (pdfDoc) {
+          startConversion(pdfDoc.getPageCount());
+        })
+        .catch(function () {
+          startConversion(0);
+        });
     });
   },
 

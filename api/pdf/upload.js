@@ -31,7 +31,8 @@ router.post('/upload', function (req, res) {
     if (error) return processResponse(res, error);
     if (file.size > 10000000) return processResponse(res, null, { bigFile: file.size });
     if (!file || !file.path) return processResponse(res, 'wrong file', null);
-    scoreSplitter.pdfToImages(file.path, reqBody.imageQuality, {}, function (error, result) {
+    var opts = { socketId: reqBody.socketId };
+    scoreSplitter.pdfToImages(file.path, reqBody.imageQuality, opts, function (error, result) {
       processResponse(res, error, result);
     });
   });
