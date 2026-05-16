@@ -2,6 +2,7 @@
 import scoreSplitter from '../../bin/scoreSplitter..js';
 import fileUpload from '../../bin/fileUpload.js';
 import processResponse from '../../bin/processResponse.js';
+import { writeScoreInfos } from './scoreInfos.js';
 
 var router = express.Router();
 
@@ -33,6 +34,7 @@ router.post('/upload', function (req, res) {
     if (!file || !file.path) return processResponse(res, 'wrong file', null);
     var opts = { socketId: reqBody.socketId };
     scoreSplitter.pdfToImages(file.path, reqBody.imageQuality, opts, function (error, result) {
+      if (!error && result) writeScoreInfos(result.pdfName, result.pages);
       processResponse(res, error, result);
     });
   });

@@ -88,9 +88,12 @@ var scoreSplitter = {
       var pathSep = path.sep === '\\' ? ';' : ':';
       execEnv.PATH = process.env.GS_BIN + pathSep + execEnv.PATH;
     }
+    var density = Math.round((imageWidth / scoreSplitter.pageWidth) * 72);
     var cmd =
       GraphicsMagickExe +
-      ' convert -density 600 ' +
+      ' convert -density ' +
+      density +
+      ' ' +
       pdfPath +
       pages +
       ' -resize ' +

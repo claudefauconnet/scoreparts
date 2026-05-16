@@ -28,16 +28,25 @@ import { state, on } from './state.js';
     footInfo.innerHTML = e.detail || '<i>Renseignez la catégorie et l\'artiste pour valider l\'import</i>';
   });
 
-  // Launch
-  launchBtn.addEventListener('click', () => {
+  async function openScore() {
     if (!state.selected) return;
+    if (state.selected._isNewImport) {
+      await fetch('/api/pdf/scoreInfos/' + encodeURIComponent(state.selected.name), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: state.selected.category, composer: state.selected.author }),
+      });
+    }
     launchName.textContent = state.selected.name;
     launchAuthor.textContent = state.selected.author;
     launch.classList.add('on');
     setTimeout(() => {
       window.location.href = '/html/partitions.html';
     }, 1800);
-  });
+  }
+
+  // Launch
+  launchBtn.addEventListener('click', openScore);
 
   // Close + cancel
   document.querySelector('.close-btn').addEventListener('click', () => {

@@ -178,6 +178,7 @@ import { state, on, emit } from './state.js';
           category: CATEGORIES.find(c => c.id === cat.value).label,
           meta: { mvts: 1, pages: '?', key: '—', published: false },
           tags: [CATEGORIES.find(c => c.id === cat.value).label, 'Importé'],
+          _isNewImport: true,
         };
         state.selected = node;
         emit('selection-changed', node);
@@ -190,7 +191,31 @@ import { state, on, emit } from './state.js';
     art.addEventListener('input', validate);
     validate();
   }
+   // ============== Drag and drop / browse
+  ['dragenter', 'dragover'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); });
+  });
+  drop.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file) handleImport(file);
+  });
+  drop.addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON') fileInput.click();
+  });
+  browseBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleImport(file);
+  });
 
+  
+  /* Theses function are not used for the moment, in original claude design proposition to see after if they are useful*/
   function statsHTML(node) {
     if (node.meta && node.meta.published) {
       return `
@@ -257,29 +282,8 @@ import { state, on, emit } from './state.js';
     preview.appendChild(empty);
     previewEmpty = empty;
   });
-
-  // ============== Drag and drop / browse
-  ['dragenter', 'dragover'].forEach(ev => {
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); });
-  });
-  ['dragleave', 'drop'].forEach(ev => {
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); });
-  });
-  drop.addEventListener('drop', e => {
-    const file = e.dataTransfer.files[0];
-    if (file) handleImport(file);
-  });
-  drop.addEventListener('click', e => {
-    if (e.target.tagName !== 'BUTTON') fileInput.click();
-  });
-  browseBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    fileInput.click();
-  });
-  fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (file) handleImport(file);
-  });
+  
+ 
 
   
   
