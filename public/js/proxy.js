@@ -86,7 +86,7 @@ var Proxy = (function () {
 
     ZonesChecker.checkZones(function(message) {
 if(message){
-  return alert (message)
+ // return alert (message)
 }
 
       if (!scoreParts.currentMovement) {

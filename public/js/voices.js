@@ -310,6 +310,7 @@ var Voices = (function () {
         var x = scoreParts.allPagesZones.pages;
         scoreParts.modified = true;
         Proxy.saveZones(function (err) {
+          return
           if (!err) {
             Paper.drawZones(scoreParts.currentZones);
           }
