@@ -29,7 +29,7 @@ app.use(express.static(path.join(__dirname, uiFolder)));
 
 app.get('/', function (req, res) {
   if (process.env.UI_VERSION === 'v2') {
-    return res.redirect('/html/index.html');
+    return res.redirect('/modules/import.html');
   }
   res.render('index', { title: 'Express' });
 });

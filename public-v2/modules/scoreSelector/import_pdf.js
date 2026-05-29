@@ -1,5 +1,5 @@
 import { state, on, emit } from './state.js';
-import { uploadPdf } from '../proxy.js';
+import { uploadPdf } from '../../common/proxy.js';
 
 (function importPdfModule() {
   const $preview = $('#preview');
@@ -39,20 +39,7 @@ import { uploadPdf } from '../proxy.js';
   // ============== Score preview card (shown on score-picked event)
 
   function buildScorePrivacyHTML(node) {
-    if (node.meta && node.meta.published) {
-      return `
-        <div class="sc-social">
-          <span class="sc-stat heart">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9C.5 8 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4 4.5 8C19 16.5 12 21 12 21z"/></svg>
-            <b>${node.meta.hearts.toLocaleString('fr-FR')}</b>
-          </span>
-          <span class="sc-stat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            <b>${node.meta.views.toLocaleString('fr-FR')}</b>
-          </span>
-          <span class="sc-stat-published">Publiée</span>
-        </div>`;
-    }
+    // Pas encore de gestion du public : seules les partitions privées existent.
     return `
       <div class="sc-social">
         <span class="sc-private">
@@ -72,16 +59,7 @@ import { uploadPdf } from '../proxy.js';
             <h3 class="sc-title">${node.name}</h3>
             <div class="sc-author">${node.author}</div>
             <div class="sc-row">
-              <span><b>${node.meta.mvts}</b> mouvements</span>
               <span><b>${node.meta.pages}</b> pages</span>
-              <span>${node.meta.key}</span>
-            </div>
-            <div class="sc-tags">
-              ${node.tags
-                .map(function (tag) {
-                  return `<span class="sc-tag">${tag}</span>`;
-                })
-                .join('')}
             </div>
             ${buildScorePrivacyHTML(node)}
           </div>

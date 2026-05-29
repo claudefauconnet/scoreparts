@@ -4,7 +4,7 @@
 
 - **Backend**: Node.js + Express, ESM modules (`type: "module"`), Jade templates (`views/`)
 - **Frontend v1**: `public/` — jQuery, vanilla JS
-- **Frontend v2**: `public-v2/` — jQuery, modular JS (`js/scoreSelector/`)
+- **Frontend v2**: `public-v2/` — jQuery, feature-grouped modules (`modules/scoreSelector/`), shared code in `common/`
 - **API routes**: `api/pdf/` and `api/score/`, mounted in `app.js`
 
 ## Rules
@@ -31,7 +31,7 @@ Always explicit. Never single-letter or cryptic shorthands.
 Match existing structure:
 
 - New API route → file in `api/pdf/` or `api/score/`
-- New frontend module → `public-v2/js/scoreSelector/` or `public/js/`
+- New frontend module → `public-v2/modules/<feature>/` (shared code → `public-v2/common/`) or `public/js/`
 - Ask before creating any new directory
 
 ### Function organisation

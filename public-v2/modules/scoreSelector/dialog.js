@@ -1,5 +1,5 @@
 import { state, on } from './state.js';
-import { saveScoreInfos } from '../proxy.js';
+import { saveScoreInfos } from '../../common/proxy.js';
 
 (function dialogModule() {
   const $launchBtn = $('#launch-btn');
@@ -36,7 +36,7 @@ import { saveScoreInfos } from '../proxy.js';
     $launchAuthor.text(state.selected.author);
     $launch.addClass('on');
     setTimeout(function () {
-      window.location.href = '/html/partitions.html';
+      window.location.href = '/modules/partitions.html';
     }, 1800);
   }
 
@@ -64,9 +64,9 @@ import { saveScoreInfos } from '../proxy.js';
 
   $launchBtn.on('click', openScore);
   $('.close-btn').on('click', function () {
-    window.location.href = '/html/partitions.html';
+    window.location.href = '/modules/partitions.html';
   });
   $('.btn-ghost').on('click', function () {
-    window.location.href = '/html/partitions.html';
+    window.location.href = '/modules/partitions.html';
   });
 })();

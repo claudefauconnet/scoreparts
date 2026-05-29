@@ -1,4 +1,4 @@
-import { loadMyScores } from '../proxy.js';
+import { loadMyScores } from '../../common/proxy.js';
 
 export const state = {
   selected: null,
