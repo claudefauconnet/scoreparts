@@ -1,5 +1,5 @@
-import { state, on, emit } from './state.js';
-import { uploadPdf } from '../../common/proxy.js';
+import { state, on, emit } from '../state.js';
+import { uploadPdf } from '../../../common/proxy.js';
 
 (function importPdfModule() {
   const $preview = $('#preview');

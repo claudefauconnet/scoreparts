@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/modules/scoreSelector/dialog.css">
-<link rel="stylesheet" href="/modules/scoreSelector/selector.css">
-<link rel="stylesheet" href="/modules/scoreSelector/import_pdf.css">
+<link rel="stylesheet" href="/modules/scoreSelector/dialog/dialog.css">
+<link rel="stylesheet" href="/modules/scoreSelector/selector/selector.css">
+<link rel="stylesheet" href="/modules/scoreSelector/import_pdf/import_pdf.css">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -19,16 +19,16 @@
 
 <script>
 $(function () {
-  $('#dialog-host').load('/modules/scoreSelector/dialog.html', function () {
+  $('#dialog-host').load('/modules/scoreSelector/dialog/dialog.html', function () {
     $.when(
-      $('#selector-slot').load('/modules/scoreSelector/selector.html'),
-      $('#import-slot').load('/modules/scoreSelector/import_pdf.html')
+      $('#selector-slot').load('/modules/scoreSelector/selector/selector.html'),
+      $('#import-slot').load('/modules/scoreSelector/import_pdf/import_pdf.html')
     ).done(function () {
       // Load JS modules now that all fragments exist in DOM.
       ['dialog', 'selector', 'import_pdf'].forEach(function (name) {
         var s = document.createElement('script');
         s.type = 'module';
-        s.src = '/modules/scoreSelector/' + name + '.js';
+        s.src = '/modules/scoreSelector/' + name + '/' + name + '.js';
         document.body.appendChild(s);
       });
     });

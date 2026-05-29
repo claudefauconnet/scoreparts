@@ -1,5 +1,5 @@
-import { state, on } from './state.js';
-import { saveScoreInfos } from '../../common/proxy.js';
+import { state, on } from '../state.js';
+import { saveScoreInfos } from '../../../common/proxy.js';
 
 (function dialogModule() {
   const $launchBtn = $('#launch-btn');

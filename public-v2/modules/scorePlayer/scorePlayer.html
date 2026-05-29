@@ -1,0 +1,86 @@
+<div class="pending-zone-banner">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="12" rx="1" stroke-dasharray="3 2"/><path d="M19 14v6M16 17h6"/></svg>
+  Cliquez sur une page pour créer une zone
+  <button id="cancel-new-zone">Annuler</button>
+</div>
+
+<!-- ===================== BOOK (loaded state) ===================== -->
+<div class="book" id="book">
+  <!-- Left page -->
+  <div class="page page-left">
+    <div class="sheet">
+      <div class="sheet-head">
+        <span>Op. 131 — Mvt I</span>
+        <span>p. 2</span>
+      </div>
+      <div class="sheet-title-row">
+        <h3 class="sheet-title">Adagio ma non troppo e molto espressivo</h3>
+        <div class="sheet-sub">Ludwig van Beethoven (1826)</div>
+      </div>
+
+      <div class="systems" id="systems-left">
+        <!-- 4 systems with notes drawn via JS -->
+      </div>
+
+      <div class="page-num">— 2 —</div>
+    </div>
+    <!-- zones overlay -->
+    <div class="zones" id="zones-left"></div>
+    <button class="clear-zones-btn" title="Effacer les zones de cette page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+    </button>
+  </div>
+
+  <!-- Right page -->
+  <div class="page page-right">
+    <div class="sheet">
+      <div class="sheet-head">
+        <span>p. 3</span>
+        <span>Op. 131 — Mvt I</span>
+      </div>
+      <div class="sheet-title-row" style="visibility:hidden">
+        <h3 class="sheet-title">.</h3>
+      </div>
+
+      <div class="systems" id="systems-right"></div>
+
+      <div class="page-num">— 3 —</div>
+    </div>
+    <div class="zones" id="zones-right"></div>
+    <button class="clear-zones-btn" title="Effacer les zones de cette page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+    </button>
+  </div>
+
+  <div class="spine"></div>
+</div>
+
+<!-- ===================== EMPTY STATE (closed book) ===================== -->
+<div class="closed-book-wrap" id="closed-book-wrap" style="display:none">
+  <div class="closed-book">
+    <div class="cb-cover">
+      <div class="cb-spine"></div>
+      <div class="cb-frame"></div>
+      <div class="cb-emblem">
+        <div class="gclef">𝄞</div>
+        <div class="label">Partita</div>
+      </div>
+    </div>
+    <div class="cb-pages"></div>
+  </div>
+  <div class="empty-cta">
+    <button class="open-btn" id="open-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+      Ouvrir une partition
+    </button>
+    <span class="hint">ou glissez un PDF n'importe où sur la page</span>
+  </div>
+</div>
+
+<!-- Lateral arrows -->
+<button class="nav-arrow prev" title="Page précédente">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+</button>
+<button class="nav-arrow next" title="Page suivante">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
+</button>

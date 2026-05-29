@@ -1,0 +1,707 @@
+/* scorePlayer — livre, pages, portées, zones, navigation, état vide */
+
+/* When in 'pending new zone' mode */
+.pending-zone .book .page { cursor: crosshair !important; }
+.pending-zone-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  z-index: 7;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+.pending-zone .pending-zone-banner { display: flex; }
+.pending-zone-banner svg { width: 14px; height: 14px; }
+.pending-zone-banner button {
+  background: transparent; border: 1px solid rgba(255,255,255,0.25);
+  color: var(--paper); padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; cursor: pointer;
+}
+.pending-zone-banner button:hover { background: rgba(255,255,255,0.1); }
+.stage-body {
+  flex: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 24px 80px 80px;
+  overflow: hidden;
+}
+/* ============== BOOK ============== */
+.book {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  max-width: 1600px;
+  perspective: 2400px;
+}
+
+/* Outer cover/shadow plate */
+.book::before {
+  content: '';
+  position: absolute;
+  inset: -22px -32px -10px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.01) 40%),
+    linear-gradient(135deg, #4a3526, #2c1f15);
+  border-radius: 6px;
+  box-shadow:
+    0 30px 60px -20px rgba(40,25,10,0.5),
+    0 12px 24px -8px rgba(40,25,10,0.3);
+  z-index: 0;
+  /* visible only in realistic style */
+  opacity: var(--cover-opacity, 1);
+  transition: opacity 0.3s, inset 0.3s;
+}
+/* Cover edge highlight */
+.book::after {
+  content: '';
+  position: absolute;
+  inset: -22px -32px -10px;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(0,0,0,0.4);
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--cover-opacity, 1);
+  transition: opacity 0.3s;
+}
+
+.page {
+  position: relative;
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 60px rgba(120,90,40,0.06),
+    inset 0 0 0 1px rgba(0,0,0,0.04);
+  overflow: hidden;
+  z-index: 2;
+}
+.page-left {
+  border-radius: 2px 0 0 2px;
+  transform-origin: right center;
+}
+.page-right {
+  border-radius: 0 2px 2px 0;
+  transform-origin: left center;
+}
+
+/* Page texture (subtle paper grain) */
+.page::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(180,140,80,0.05), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(180,140,80,0.04), transparent 40%);
+  pointer-events: none;
+}
+
+/* Spine shadow gradient on inner edges */
+.page-left::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; right: 0; width: 60px;
+  background: linear-gradient(90deg, transparent, rgba(80,55,20,0.18));
+  pointer-events: none;
+  opacity: var(--spine-opacity, 1);
+  transition: opacity 0.3s;
+}
+.page-right::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0; width: 60px;
+  background: linear-gradient(-90deg, transparent, rgba(80,55,20,0.18));
+  pointer-events: none;
+  opacity: var(--spine-opacity, 1);
+  transition: opacity 0.3s;
+}
+
+/* The actual binding stitching */
+.spine {
+  position: absolute;
+  top: -18px; bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,0.55) 0%,
+      rgba(0,0,0,0.25) 35%,
+      rgba(255,255,255,0.05) 50%,
+      rgba(0,0,0,0.25) 65%,
+      rgba(0,0,0,0.55) 100%);
+  z-index: 3;
+  pointer-events: none;
+  opacity: var(--spine-band-opacity, 1);
+  transition: opacity 0.3s;
+}
+
+/* Style variants */
+.stage[data-book-style="minimal"] {
+  --cover-opacity: 0;
+  --spine-opacity: 0.4;
+  --spine-band-opacity: 0;
+}
+.stage[data-book-style="minimal"] .page {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 8px 24px -8px rgba(0,0,0,0.08),
+    inset 0 0 0 1px var(--line);
+}
+.stage[data-book-style="minimal"] .spine {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08), transparent);
+  width: 2px;
+  top: 8px; bottom: 8px;
+}
+
+.stage[data-book-style="flat"] {
+  --cover-opacity: 0;
+  --spine-opacity: 0;
+  --spine-band-opacity: 0;
+}
+.stage[data-book-style="flat"] .book {
+  grid-template-columns: 1fr;
+}
+.stage[data-book-style="flat"] .page-left { display: none; }
+.stage[data-book-style="flat"] .page-right {
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px var(--line);
+}
+.stage[data-book-style="flat"] .spine { display: none; }
+
+/* ============== PAGE CONTENT (sheet music) ============== */
+.sheet {
+  height: 100%;
+  padding: 36px 40px 28px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+.page-left .sheet { padding-right: 30px; }
+.page-right .sheet { padding-left: 30px; }
+
+.sheet-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-2);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.sheet-title-row {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.sheet-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+.sheet-sub {
+  font-family: var(--serif);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.systems {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+}
+.system {
+  flex: 1;
+  position: relative;
+}
+/* The 5-line staff drawn with repeating-linear-gradient */
+.staff {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 10px,
+    var(--ink) 10px,
+    var(--ink) 11px
+  );
+  background-size: 100% 51px;
+  background-repeat: no-repeat;
+  background-position: 0 8px;
+  opacity: 0.85;
+}
+/* Bar lines + clef */
+.system::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: auto; height: 41px;
+  width: 2px; background: var(--ink);
+}
+.system::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 8px; height: 41px;
+  width: 2px; background: var(--ink);
+}
+
+/* Clef glyph (treble) — scaled SVG */
+.clef {
+  position: absolute;
+  left: 6px; top: -2px;
+  width: 22px; height: 60px;
+  color: var(--ink);
+}
+.clef svg { width: 100%; height: 100%; }
+
+/* Notes — abstract dots/stems for visual texture */
+.notes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.note {
+  position: absolute;
+  width: 9px; height: 6px;
+  background: var(--ink);
+  border-radius: 50% / 65%;
+  transform: rotate(-18deg);
+}
+.note.hollow { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.stem {
+  position: absolute;
+  width: 1.2px;
+  background: var(--ink);
+}
+.beam {
+  position: absolute;
+  height: 3px;
+  background: var(--ink);
+}
+
+/* Instrument zones (interactive) */
+.zones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.zone {
+  position: absolute;
+  border-radius: 4px;
+  border: 1.5px solid;
+  transition: box-shadow 0.15s;
+  pointer-events: auto;
+  cursor: grab;
+  z-index: 1;
+  min-height: 12px;
+  user-select: none;
+}
+.zone.dragging { cursor: grabbing; }
+.zone:hover, .zone.active {
+  z-index: 5;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 4px 12px rgba(40,25,10,0.18);
+}
+/* vertical resize handles only */
+.zone .rs {
+  position: absolute;
+  left: 12px; right: 12px;
+  height: 10px;
+  cursor: ns-resize;
+  z-index: 6;
+}
+.zone .rs.top { top: -5px; }
+.zone .rs.bot { bottom: -5px; }
+.zone .rs::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px; height: 3px;
+  border-radius: 2px;
+  background: rgba(0,0,0,0.18);
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.zone:hover .rs::after, .zone.active .rs::after { opacity: 1; }
+.zone .rs:hover::after { background: var(--ink); height: 4px; }
+/* delete cross */
+.zone .del {
+  position: absolute;
+  top: -10px; right: -10px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  display: grid; place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.15s, transform 0.15s, background 0.15s, color 0.15s;
+  z-index: 7;
+  padding: 0;
+}
+.zone:hover .del, .zone.active .del {
+  opacity: 1;
+  transform: scale(1);
+}
+.zone .del:hover { background: var(--violon1); color: white; border-color: var(--violon1); }
+.zone .del svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+/* tag (instrument switcher) */
+.zone .zone-tag {
+  position: absolute;
+  top: -10px; left: -1px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: white;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  z-index: 7;
+}
+.zone .zone-tag::after {
+  content: '▾';
+  font-size: 9px;
+  margin-left: 1px;
+  opacity: 0.85;
+}
+.zone .zone-tag:hover { filter: brightness(1.08); }
+
+/* per-instrument color */
+.zone.violon1 { border-color: var(--violon1); background: color-mix(in srgb, var(--violon1) 16%, transparent); }
+.zone.violon1 .zone-tag { background: var(--violon1); }
+.zone.violon2 { border-color: var(--violon2); background: color-mix(in srgb, var(--violon2) 16%, transparent); }
+.zone.violon2 .zone-tag { background: var(--violon2); }
+.zone.violoncelle { border-color: var(--violoncelle); background: color-mix(in srgb, var(--violoncelle) 16%, transparent); }
+.zone.violoncelle .zone-tag { background: var(--violoncelle); }
+.zone.piano { border-color: var(--piano); background: color-mix(in srgb, var(--piano) 16%, transparent); }
+.zone.piano .zone-tag { background: var(--piano); }
+
+/* instrument switch popover */
+.zone-pop {
+  position: absolute;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(40,25,10,0.18);
+  padding: 4px;
+  z-index: 200;
+  min-width: 160px;
+}
+.zone-pop button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+  text-align: left;
+}
+.zone-pop button:hover { background: #fbf7ec; }
+.zone-pop button.active { background: #f3eedc; font-weight: 500; }
+.zone-pop button .sw {
+  width: 12px; height: 12px; border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+
+.page-num {
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* ============== NAVIGATION (lateral arrows) ============== */
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--line);
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--ink-2);
+  box-shadow: 0 6px 14px rgba(40,25,10,0.12);
+  transition: background 0.15s, transform 0.15s;
+  z-index: 6;
+}
+.nav-arrow:hover { background: white; transform: translateY(-50%) scale(1.05); }
+.nav-arrow.prev { left: 16px; }
+.nav-arrow.next { right: 16px; }
+.nav-arrow svg { width: 18px; height: 18px; }
+
+/* ============== BOTTOM BAR (page indicator + go-to) ============== */
+.stage-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 6px;
+  box-shadow: 0 8px 24px rgba(40,25,10,0.1);
+  z-index: 6;
+}
+.stage-bottom .pages-input {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.stage-bottom .pages-input input {
+  width: 28px;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  outline: none;
+  border-bottom: 1px dashed var(--line-2);
+}
+.stage-bottom .pages-input span.total { color: var(--muted); }
+.stage-bottom .mini-btn {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.stage-bottom .mini-btn:hover { background: rgba(0,0,0,0.05); }
+
+/* ============== EMPTY STATE — closed book with CTA ============== */
+.closed-book-wrap {
+  display: grid; place-items: center;
+  width: 100%; height: 100%;
+  perspective: 1800px;
+}
+.closed-book {
+  position: relative;
+  width: 320px; height: 440px;
+  transform: rotateY(-18deg) rotateX(4deg);
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+}
+.closed-book:hover { transform: rotateY(-12deg) rotateX(2deg) translateY(-4px); }
+.cb-cover {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,220,180,0.15), transparent 60%),
+    linear-gradient(135deg, #5e2a20 0%, #3d1810 50%, #5e2a20 100%);
+  border-radius: 4px 8px 8px 4px;
+  box-shadow:
+    0 30px 60px -10px rgba(40,15,5,0.5),
+    0 18px 28px -8px rgba(40,15,5,0.3),
+    inset 0 0 0 1px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,200,150,0.08);
+  overflow: hidden;
+}
+.cb-spine {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; width: 16px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.1));
+  box-shadow: inset -1px 0 0 rgba(0,0,0,0.4);
+}
+.cb-frame {
+  position: absolute;
+  inset: 22px 22px 22px 32px;
+  border: 1px solid rgba(220,180,120,0.35);
+  border-radius: 2px;
+}
+.cb-frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(220,180,120,0.2);
+  border-radius: 1px;
+}
+.cb-emblem {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -65%);
+  text-align: center;
+  color: rgba(220,180,120,0.85);
+}
+.cb-emblem .gclef {
+  font-family: var(--serif);
+  font-size: 90px;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+.cb-emblem .label {
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 4px;
+  margin-top: 14px;
+  text-transform: uppercase;
+}
+.cb-pages {
+  position: absolute;
+  top: 4px; bottom: 4px; right: -3px; width: 6px;
+  background:
+    repeating-linear-gradient(0deg, #faf2dc 0, #faf2dc 1px, #d8c89a 1px, #d8c89a 2px);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 1px 0 2px rgba(0,0,0,0.2);
+}
+
+.empty-cta {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.empty-cta .open-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  display: flex; align-items: center; gap: 10px;
+  transition: background 0.15s;
+}
+.empty-cta .open-btn:hover { background: var(--accent); }
+.empty-cta .open-btn svg { width: 16px; height: 16px; }
+.empty-cta .hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+/* hide stage-bottom + arrows in empty state */
+.stage.empty .stage-bottom,
+.stage.empty .nav-arrow {
+  display: none;
+}
+.stage.empty .stage-body { padding-bottom: 120px; }
+
+/* Rubber-band marquee selection */
+.marquee {
+  position: absolute;
+  border: 1.5px dashed var(--ink);
+  background: rgba(26,24,20,0.08);
+  pointer-events: none;
+  z-index: 9;
+  border-radius: 3px;
+}
+/* Selected zone */
+.zone.selected {
+  box-shadow: 0 0 0 2px var(--ink), 0 4px 14px rgba(40,25,10,0.22) !important;
+  z-index: 4;
+}
+/* Floating multi-action bar */
+.multi-bar {
+  position: fixed;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 5px;
+  border-radius: 999px;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.15);
+  z-index: 9999;
+  pointer-events: auto;
+}
+.multi-bar.on { display: inline-flex; }
+.multi-bar .mb-count {
+  padding: 4px 12px 4px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border-right: 1px solid rgba(255,255,255,0.15);
+  margin-right: 4px;
+  font-family: var(--mono);
+}
+.multi-bar button {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  color: var(--paper);
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: background 0.15s;
+}
+.multi-bar button:hover { background: rgba(255,255,255,0.12); }
+.multi-bar button.danger:hover { background: var(--violon1); }
+.multi-bar button svg { width: 14px; height: 14px; }
+.multi-bar::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--ink);
+}
+
+/* Per-page clear-zones button */
+.clear-zones-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s;
+  z-index: 8;
+  opacity: 0.55;
+}
+.page:hover .clear-zones-btn { opacity: 1; }
+.clear-zones-btn:hover {
+  background: white;
+  color: var(--violon1);
+  border-color: var(--violon1);
+  transform: scale(1.05);
+}
+.clear-zones-btn svg { width: 14px; height: 14px; }

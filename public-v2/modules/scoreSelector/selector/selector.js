@@ -1,5 +1,5 @@
-import { state, emit, on, LIB_DATA, buildTreeFromScores } from './state.js';
-import { deleteScore, loadMyScores } from '../../common/proxy.js';
+import { state, emit, on, LIB_DATA, buildTreeFromScores } from '../state.js';
+import { deleteScore, loadMyScores } from '../../../common/proxy.js';
 
 (function selectorModule() {
   const $tree = $('#tree');
