@@ -66,7 +66,27 @@ Bugs trouvés & corrigés en cours de test :
 5. loadPdfPages éditeur faisait saveZones(modèle vide) AVANT loadZones → écrasait le
    backend à chaque ouverture. Pré-save destructif supprimé (save = à la navigation/édition).
 
+Itération UI (retour utilisateur) :
+- Zones re-stylées façon module : pastille "Instrument ▾" (placeholder, affectation
+  voices plus tard) toujours visible, fill translucide + bordure arrondie (radius 8).
+- Poignées resize HAUT + BAS + croix delete révélées au survol (comme le hover CSS).
+- "New zone" = mode activable/désactivable PERSISTANT → tracer plusieurs zones d'affilée.
+- Resize haut (bord haut bouge, bas fixe) et bas implémentés + testés.
+
+Itération UI 2 (retour utilisateur) :
+- Pastille sans flèche ▾ (pas encore changeable).
+- Couleur de base non affectée = #4a7a8c (teal).
+- Auto-save backend (scoreParts.saveZones) à CHAQUE create/move/resize/delete (vérifié
+  sur disque : zone tracée → écrite immédiatement dans le json).
+- Les DEUX pages du spread affichent leurs zones (renderPage par canvas, projet Paper
+  par page). Seule la page courante est éditable ; cliquer l'autre page la rend courante
+  (canvas non courant en pointer-events:none → le clic remonte et bascule la page).
+- Fix : l'<img> de la page de droite se charge en async → waitForPageImage
+  (MutationObserver) attend son injection avant de caler le canvas.
+
 Limites connues (phases suivantes, hors scope validé) :
+- La pastille deviendra le sélecteur d'instrument coloré dans la partie voices ;
+  la couleur de zone suivra l'instrument affecté.
 - Une seule page éditable à la fois (page courante = page cliquée) ; zones visibles
   uniquement sur la page courante.
 - Instruments/voix : couleur neutre, pas de pastille switch ni multi-sélection.

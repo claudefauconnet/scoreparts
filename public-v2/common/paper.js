@@ -8,52 +8,58 @@
 //   - coordonnées en pixels-canvas (espace mise en page, hors zoom CSS) : le
 //     zoom est une transform CSS sur le conteneur, Paper la neutralise via
 //     getBoundingClientRect → les coords persistées sont invariantes au zoom.
-//   - interactions sans touches modificatrices : bouton "New zone" (mode pending)
-//     pour créer, glisser le corps pour déplacer, glisser le bord bas pour
-//     redimensionner, cliquer la croix pour supprimer.
+//   - interactions sans touches modificatrices : bouton "New zone" (mode activable
+//     persistant → on peut tracer plusieurs zones), glisser le corps pour
+//     déplacer, glisser le bord HAUT ou BAS pour redimensionner, croix pour
+//     supprimer. Une pastille d'instrument (placeholder) est affichée par zone
+//     (l'affectation réelle se fera dans la partie voices).
 import { scoreParts } from './scoreParts.js';
 
 export const Paper = {};
 
-// ============== Constantes de style / interaction
-const ZONE_RADIUS = 4; // coins arrondis (look module)
-const EDGE_GRAB = 8; // px de proximité au bord bas → redimensionnement
-const BADGE_INSET = 12; // décalage de la croix de suppression depuis le coin haut-droit
-const BADGE_GRAB = 11; // px de proximité au centre de la croix → suppression
+// ============== Constantes de style / interaction (look module)
+const ZONE_RADIUS = 8; // coins arrondis
+const EDGE_GRAB = 9; // px de proximité d'un bord (haut/bas) → redimensionnement
+const BADGE_INSET = 12; // décalage de la croix depuis le coin haut-droit du rect
+const BADGE_GRAB = 12; // px de proximité au centre de la croix → suppression
 const MIN_ZONE_HEIGHT = 8;
 const HIT_OPTIONS = { fill: true, stroke: true, tolerance: 4 };
 
-// Centre de la croix de suppression d'après les bounds d'une zone.
-function deleteBadgeCenter(bounds) {
-  return bounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
+// Couleur de base d'une zone non affectée (l'affectation d'instrument viendra
+// dans la partie voices et recolorera la zone).
+const BASE_COLOR = '#4a7a8c';
+const ZONE_FILL = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.16);
+const ZONE_STROKE = new paper.Color(BASE_COLOR);
+const PILL_BG = new paper.Color(BASE_COLOR);
+
+// Centre de la croix de suppression d'après le rectangle (path) d'une zone.
+function deleteBadgeCenter(rectBounds) {
+  return rectBounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
 }
 
 // ============== État privé
 var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
 var toolInstalled = false;
+var hoverGroup = null; // zone actuellement survolée (poignées visibles)
 
-Paper.pendingNewZone = false; // mode "nouvelle zone" piloté par le bouton module
+Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
 Paper.activeCanvas = null; // <canvas> de la page courante
+Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
 Paper.currentZoneAction = null;
 Paper.currentPath = null;
 Paper.defaultZoneHeight = 50;
 Paper.margin = 10;
 Paper.onPendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
 
-// Largeur/hauteur de dessin = taille CSS du canvas actif. C'est l'espace de
-// coordonnées du projet Paper (la vue est dimensionnée sur le canvas).
+// Largeur de dessin = taille CSS du canvas actif (espace de coordonnées du projet).
 function canvasW() {
   return Paper.activeCanvas ? Paper.activeCanvas.clientWidth : 0;
 }
-function canvasH() {
-  return Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 0;
-}
 
-// ============== Setup d'un canvas de page
-// Appelé quand une page devient courante. Réutilise le projet existant (active)
-// ou en crée un. Aucun raster : le fond est l'<img> sous le canvas transparent.
-Paper.setupCanvas = function (canvas, imgEl) {
-  Paper.activeCanvas = canvas;
+// ============== Projets Paper (un par canvas / page)
+// Active (ou crée) le projet d'un canvas et cale sa vue sur sa taille CSS.
+// Aucun raster : le fond est l'<img> sous le canvas transparent.
+function ensureProject(canvas, imgEl) {
   if (scoreParts.margin == null) {
     scoreParts.margin = Paper.margin;
   }
@@ -63,16 +69,42 @@ Paper.setupCanvas = function (canvas, imgEl) {
     paper.setup(canvas);
     projectsByCanvasId[canvas.id] = paper.project;
   }
-  // Aligne la taille de vue sur la taille CSS courante du canvas.
   paper.view.viewSize = new paper.Size(canvas.clientWidth, canvas.clientHeight);
-
-  // Coefficients (utilisés par l'auto-détection — phase ultérieure).
   if (imgEl && imgEl.naturalWidth) {
     scoreParts.coefV = canvas.clientHeight / imgEl.naturalHeight;
     scoreParts.coefH = canvas.clientWidth / imgEl.naturalWidth;
   }
-
   installTool();
+}
+
+// Réactive le projet de la page COURANTE (le seul éditable / cible de l'outil).
+function activateCurrent() {
+  var project = projectsByCanvasId[Paper.currentCanvasId];
+  if (project) project.activate();
+}
+
+// Dessine les zones d'UNE page dans son canvas.
+//   - interactive (page courante) : poignées + croix + drag/resize/suppression,
+//     projet laissé ACTIF (cible de l'outil de création et de getPageZones).
+//   - non interactive (autre page du spread) : zones visibles mais figées ; le
+//     canvas a pointer-events:none (CSS), donc tout clic bascule la page courante.
+Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
+  ensureProject(canvas, imgEl);
+  paper.project.activeLayer.removeChildren();
+  if (interactive) {
+    Paper.activeCanvas = canvas;
+    Paper.currentCanvasId = canvas.id;
+    hoverGroup = null;
+  }
+  var zones = scoreParts.allPagesZones.pages[pageIndex];
+  if (zones && zones.length > 0) {
+    zones.forEach(function (zone) {
+      Paper.drawZone(zone, pageIndex, interactive);
+    });
+  }
+  if (paper.view) paper.view.update();
+  // Garde le projet de la page courante actif (rendu de l'autre page après).
+  if (!interactive) activateCurrent();
 };
 
 function installTool() {
@@ -83,7 +115,7 @@ function installTool() {
   tool.onMouseMove = onCanvasMouseMove;
 }
 
-// ============== Mode "nouvelle zone"
+// ============== Mode "nouvelle zone" (activable / désactivable)
 Paper.setPending = function (on) {
   Paper.pendingNewZone = on;
   if (Paper.onPendingChange) Paper.onPendingChange(on);
@@ -95,7 +127,7 @@ function onCanvasMouseDown(event) {
     Paper.currentZoneAction = null;
     return;
   }
-  if (!Paper.pendingNewZone) return; // création uniquement en mode pending
+  if (!Paper.pendingNewZone) return; // création uniquement en mode "New zone"
   if (!scoreParts.currentMovement) {
     alert('sélectionnez ou déclarez un mouvement');
     return;
@@ -114,23 +146,52 @@ function onCanvasMouseDown(event) {
     voice: '',
     movement: scoreParts.currentMovement,
   };
-  Paper.drawZone(zone);
-  Paper.setPending(false);
+  Paper.drawZone(zone, scoreParts.currentPage, true);
+  // Mode persistant : on NE désactive PAS — l'utilisateur peut enchaîner les zones.
   commit();
+  scoreParts.saveZones(function () {}); // enregistrement immédiat (chaque zone tracée)
 }
 
 function onCanvasMouseMove(event) {
   if (!Paper.activeCanvas) return;
   if (Paper.pendingNewZone) return; // curseur crosshair géré en CSS
   var group = zoneGroupAt(event.point);
+  setHoverGroup(group);
   var cursor = 'default';
   if (group) {
-    var bounds = group.bounds;
-    if (event.point.getDistance(deleteBadgeCenter(bounds)) < BADGE_GRAB) cursor = 'pointer';
-    else if (Math.abs(event.point.y - bounds.bottom) < EDGE_GRAB) cursor = 'ns-resize';
-    else cursor = 'move';
+    switch (hitRegion(group, event.point)) {
+      case 'delete':
+        cursor = 'pointer';
+        break;
+      case 'pill':
+        cursor = 'pointer';
+        break;
+      case 'resizeTop':
+      case 'resizeBot':
+        cursor = 'ns-resize';
+        break;
+      default:
+        cursor = 'move';
+    }
   }
   Paper.activeCanvas.style.cursor = cursor;
+}
+
+// Affiche les poignées de la zone survolée uniquement (comme le hover CSS module).
+function setHoverGroup(group) {
+  if (group === hoverGroup) return;
+  if (hoverGroup && hoverGroup.data && hoverGroup.data.handles) {
+    hoverGroup.data.handles.forEach(function (h) {
+      h.visible = false;
+    });
+  }
+  hoverGroup = group;
+  if (hoverGroup && hoverGroup.data && hoverGroup.data.handles) {
+    hoverGroup.data.handles.forEach(function (h) {
+      h.visible = true;
+    });
+  }
+  if (paper.view) paper.view.update();
 }
 
 // Retourne le groupe de zone sous un point (ou null).
@@ -148,26 +209,46 @@ function zoneGroupOf(item) {
   return null;
 }
 
+// Région cliquée d'une zone, calculée sur le RECTANGLE (pas le groupe, qui inclut
+// la pastille débordant en haut). Ordre de priorité : croix > pastille > bords.
+function hitRegion(group, point) {
+  var rect = group.data.rect.bounds;
+  if (point.getDistance(deleteBadgeCenter(rect)) < BADGE_GRAB) return 'delete';
+  if (group.data.pillBounds && group.data.pillBounds.contains(point)) return 'pill';
+  if (Math.abs(point.y - rect.top) < EDGE_GRAB) return 'resizeTop';
+  if (Math.abs(point.y - rect.bottom) < EDGE_GRAB) return 'resizeBot';
+  return 'move';
+}
+
 // ============== Interactions sur une zone
 function onZoneMouseDown(event) {
   Paper.currentZoneAction = null;
   var group = event.target;
-  var bounds = group.bounds;
-  var point = event.point;
+  var region = hitRegion(group, event.point);
 
-  if (point.getDistance(deleteBadgeCenter(bounds)) < BADGE_GRAB) {
+  if (region === 'delete') {
     Paper.currentZoneAction = 'removeZone';
     Paper.deleteZone(group);
-    // Écrit le modèle directement (sans passer par writeCurrentPageZones, qui
-    // ignore une page vidée) : indispensable pour supprimer la DERNIÈRE zone.
+    if (hoverGroup === group) hoverGroup = null;
+    // Écrit le modèle directement (writeCurrentPageZones ignore une page vidée) :
+    // indispensable pour supprimer la DERNIÈRE zone.
     scoreParts.allPagesZones.pages[scoreParts.currentPage] = Paper.getPageZones();
     scoreParts.currentZones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
+    scoreParts.saveZones(function () {}); // enregistrement immédiat
     if (event.stop) event.stop();
     return;
   }
-  if (Math.abs(point.y - bounds.bottom) < EDGE_GRAB) {
-    Paper.currentZoneAction = 'resizeZone';
-    Paper.currentPath = group.children[0];
+  if (region === 'pill') {
+    // Réservé à l'affectation d'instrument (phase voices). Aucun effet pour l'instant.
+    if (event.stop) event.stop();
+    return;
+  }
+  if (region === 'resizeTop' || region === 'resizeBot') {
+    Paper.currentZoneAction = region;
+    Paper.currentPath = group.data.rect;
+    // Masque les décorations pendant le redimensionnement (évite de déformer le
+    // texte de la pastille) — elles sont redessinées proprement au relâchement.
+    hideDecorations(group);
   } else {
     Paper.currentZoneAction = 'moveZone';
   }
@@ -176,30 +257,46 @@ function onZoneMouseDown(event) {
 function onZoneMouseDrag(event) {
   if (!scoreParts.currentMovement) return;
   var group = event.target;
-  if (Paper.currentZoneAction === 'resizeZone') {
-    // Redimensionnement vertical depuis le bord bas (haut fixe).
-    var newHeight = group.bounds.height + event.delta.y;
-    if (newHeight < MIN_ZONE_HEIGHT) return;
-    var scaleY = newHeight / group.bounds.height;
-    group.scale(1, scaleY, group.bounds.topLeft);
+  var rect = group.data.rect.bounds;
+  if (Paper.currentZoneAction === 'resizeBot') {
+    // Bord bas : le haut reste fixe.
+    var newHeightBot = rect.height + event.delta.y;
+    if (newHeightBot < MIN_ZONE_HEIGHT) return;
+    group.scale(1, newHeightBot / rect.height, rect.topLeft);
+  } else if (Paper.currentZoneAction === 'resizeTop') {
+    // Bord haut : le bas reste fixe.
+    var newHeightTop = rect.height - event.delta.y;
+    if (newHeightTop < MIN_ZONE_HEIGHT) return;
+    group.scale(1, newHeightTop / rect.height, rect.bottomLeft);
   } else if (Paper.currentZoneAction === 'moveZone') {
     group.position.y += event.delta.y;
   }
 }
 
 function onZoneMouseUp() {
-  if (Paper.currentZoneAction === 'moveZone' || Paper.currentZoneAction === 'resizeZone') {
+  var action = Paper.currentZoneAction;
+  if (action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot') {
     commit();
-    Paper.redrawCurrentPage(); // re-dessine propre (poignée/croix non déformées)
+    Paper.redrawCurrentPage(); // redessine propre (pastille/poignées non déformées)
+    scoreParts.saveZones(function () {}); // enregistrement immédiat
   }
   Paper.currentZoneAction = null;
 }
 
+function hideDecorations(group) {
+  if (group.data.pill) group.data.pill.visible = false;
+  if (group.data.handles) {
+    group.data.handles.forEach(function (h) {
+      h.visible = false;
+    });
+  }
+}
+
 // ============== Lecture du modèle depuis le canvas courant
-// Pas de selectAll (évite les poignées de sélection Paper) : on parcourt les
-// items et on ne garde que les chemins de zone (data.type === 'zone').
+// On ne garde que les chemins de zone (data.type === 'zone'), donc le rect.
 Paper.getPageZones = function () {
   if (!paper || !paper.project) return [];
+  activateCurrent(); // lit toujours le projet de la page courante
   var zones = [];
   paper.project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
@@ -234,28 +331,30 @@ Paper.getPageZones = function () {
 Paper.drawZones = function (zones) {
   if (!zones) return;
   zones.forEach(function (zone) {
-    Paper.drawZone(zone);
+    Paper.drawZone(zone, scoreParts.currentPage, true);
   });
 };
 
-Paper.drawZone = function (zone) {
+// pageIndex : page à laquelle appartient la zone (taggue path.data.page).
+// interactive : true → poignées + croix + drag/resize/suppression ; false →
+// zone figée (visible sur une page non courante).
+Paper.drawZone = function (zone, pageIndex, interactive) {
+  if (pageIndex == null) pageIndex = scoreParts.currentPage;
   var width = canvasW();
   var left = Math.round(zone.x);
   var right = Math.round(width); // pleine largeur (logique v1 conservée)
   var top = Math.round(zone.y);
   var bottom = Math.round(zone.y + zone.height);
-  var colors = zoneColors(zone);
+  var midX = (left + right) / 2;
 
-  var rectangle = new paper.Rectangle(
-    new paper.Point(left, top),
-    new paper.Point(right, bottom)
-  );
+  // Rectangle de la zone (corps).
+  var rectangle = new paper.Rectangle(new paper.Point(left, top), new paper.Point(right, bottom));
   var path = new paper.Path.Rectangle(rectangle, ZONE_RADIUS);
-  path.fillColor = colors.fill;
-  path.strokeColor = colors.stroke;
+  path.fillColor = ZONE_FILL;
+  path.strokeColor = ZONE_STROKE;
   path.strokeWidth = 1.5;
   path.data.type = 'zone';
-  path.data.page = scoreParts.currentPage;
+  path.data.page = pageIndex;
   if (zone.voice) path.data.voice = zone.voice;
   if (zone.movement) path.data.movement = zone.movement;
   if (zone.measure) path.data.measure = zone.measure;
@@ -263,38 +362,33 @@ Paper.drawZone = function (zone) {
 
   var group = new paper.Group([path]);
   group.data.role = 'zoneGroup';
+  group.data.rect = path;
 
-  // Poignée de redimensionnement (barre au centre du bord bas).
-  var midX = (left + right) / 2;
-  var grip = new paper.Path.Line(
-    new paper.Point(midX - 14, bottom - 3),
-    new paper.Point(midX + 14, bottom - 3)
-  );
-  grip.strokeColor = colors.stroke;
-  grip.strokeWidth = 3;
-  grip.strokeCap = 'round';
-  grip.opacity = 0.55;
-  group.addChild(grip);
+  // Pastille d'instrument (placeholder) — toujours visible, chevauche le bord haut.
+  var label = zone.instrLabel || zone.label || 'Instrument';
+  var pill = makePill(label, left + 1, top);
+  group.addChild(pill);
+  group.data.pill = pill;
+  group.data.pillBounds = pill.bounds;
 
-  // Croix de suppression (coin haut-droit).
-  var badgeX = right - 12;
-  var badgeY = top + 12;
-  var badge = new paper.Path.Circle(new paper.Point(badgeX, badgeY), 8);
-  badge.fillColor = 'white';
-  badge.strokeColor = colors.stroke;
-  badge.strokeWidth = 1;
-  var crossA = new paper.Path.Line(
-    new paper.Point(badgeX - 3, badgeY - 3),
-    new paper.Point(badgeX + 3, badgeY + 3)
-  );
-  var crossB = new paper.Path.Line(
-    new paper.Point(badgeX + 3, badgeY - 3),
-    new paper.Point(badgeX - 3, badgeY + 3)
-  );
-  crossA.strokeColor = crossB.strokeColor = colors.stroke;
-  crossA.strokeWidth = crossB.strokeWidth = 1.5;
-  crossA.strokeCap = crossB.strokeCap = 'round';
-  group.addChildren([badge, crossA, crossB]);
+  // Page non courante : zone figée et lisible, sans poignées ni interactions.
+  if (!interactive) {
+    Paper.currentPath = path;
+    return group;
+  }
+
+  // Poignées de redimensionnement (haut + bas) — visibles au survol.
+  var gripTop = makeGrip(midX, top);
+  var gripBot = makeGrip(midX, bottom);
+
+  // Croix de suppression (coin haut-droit) — visible au survol.
+  var deleteBadge = makeDeleteBadge(deleteBadgeCenter(path.bounds));
+
+  group.addChildren([gripTop, gripBot, deleteBadge]);
+  group.data.handles = [gripTop, gripBot, deleteBadge];
+  group.data.handles.forEach(function (h) {
+    h.visible = false; // révélées au survol (comme le hover CSS du module)
+  });
 
   group.onMouseDown = onZoneMouseDown;
   group.onMouseDrag = onZoneMouseDrag;
@@ -305,19 +399,60 @@ Paper.drawZone = function (zone) {
   return group;
 };
 
-// Couleur de zone. Instruments/voix = phase ultérieure : couleur neutre acajou
-// (translucide) pour l'instant, dans l'esprit du module.
-function zoneColors() {
-  return {
-    fill: new paper.Color(0.42, 0.23, 0.18, 0.16),
-    stroke: new paper.Color('#6b3a2e'),
-  };
+// Pastille arrondie (fond coloré + texte blanc), ancrée par son coin haut-gauche
+// sur (leftX, centerY) → centrée verticalement sur le bord haut de la zone.
+function makePill(text, leftX, centerY) {
+  var label = new paper.PointText(new paper.Point(0, 0));
+  label.content = text;
+  label.fontFamily = 'Inter, system-ui, sans-serif';
+  label.fontWeight = 'bold';
+  label.fontSize = 10;
+  label.fillColor = 'white';
+  var padX = 7;
+  var padY = 3;
+  var w = label.bounds.width + padX * 2;
+  var h = label.bounds.height + padY * 2;
+  var topLeft = new paper.Point(leftX, centerY - h / 2);
+  var bg = new paper.Path.Rectangle(new paper.Rectangle(topLeft, new paper.Size(w, h)), 3);
+  bg.fillColor = PILL_BG;
+  label.position = bg.bounds.center;
+  var pill = new paper.Group([bg, label]);
+  pill.data.role = 'pill';
+  return pill;
+}
+
+// Barre de préhension (poignée resize), centrée en (cx, cy).
+function makeGrip(cx, cy) {
+  var grip = new paper.Path.Line(
+    new paper.Point(cx - 14, cy),
+    new paper.Point(cx + 14, cy)
+  );
+  grip.strokeColor = ZONE_STROKE;
+  grip.strokeWidth = 3;
+  grip.strokeCap = 'round';
+  grip.opacity = 0.7;
+  return grip;
+}
+
+// Pastille croix (cercle blanc + ×) centrée sur `center`.
+function makeDeleteBadge(center) {
+  var circle = new paper.Path.Circle(center, 8);
+  circle.fillColor = 'white';
+  circle.strokeColor = ZONE_STROKE;
+  circle.strokeWidth = 1;
+  var a = new paper.Path.Line(center.add([-3, -3]), center.add([3, 3]));
+  var b = new paper.Path.Line(center.add([3, -3]), center.add([-3, 3]));
+  a.strokeColor = b.strokeColor = ZONE_STROKE;
+  a.strokeWidth = b.strokeWidth = 1.5;
+  a.strokeCap = b.strokeCap = 'round';
+  return new paper.Group([circle, a, b]);
 }
 
 // ============== Suppression
 Paper.deleteZones = function () {
   if (!paper || !paper.project) return;
   paper.project.activeLayer.removeChildren();
+  hoverGroup = null;
   if (paper.view) paper.view.update();
   scoreParts.modified = true;
 };
@@ -329,15 +464,18 @@ Paper.deleteZone = function (group) {
   scoreParts.modified = true;
 };
 
-// Re-dessine les zones de la page courante depuis le modèle (canvas actif).
+// Re-dessine les zones de la page COURANTE depuis le modèle (canvas courant).
 Paper.redrawCurrentPage = function () {
   if (!paper || !paper.project) return;
-  Paper.deleteZones();
+  activateCurrent();
+  paper.project.activeLayer.removeChildren();
+  hoverGroup = null;
   var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
   if (zones && zones.length > 0) {
     scoreParts.currentZones = zones;
     Paper.drawZones(zones);
   }
+  if (paper.view) paper.view.update();
 };
 
 // ============== Helpers

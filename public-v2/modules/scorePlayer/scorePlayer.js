@@ -45,6 +45,26 @@ function whenImageReady(img, callback) {
   }
 }
 
+// L'image d'une page peut être chargée de façon asynchrone (la page de droite du
+// spread n'a pas de callback). On attend qu'un <img> soit injecté ET chargé.
+function waitForPageImage(systemsId, callback) {
+  const systems = document.getElementById(systemsId);
+  if (!systems) return;
+  const existing = systems.querySelector('img');
+  if (existing) {
+    whenImageReady(existing, () => callback(existing));
+    return;
+  }
+  const observer = new MutationObserver(() => {
+    const img = systems.querySelector('img');
+    if (img) {
+      observer.disconnect();
+      whenImageReady(img, () => callback(img));
+    }
+  });
+  observer.observe(systems, { childList: true });
+}
+
 // Côté (0 = gauche, 1 = droite) affichant la page courante dans le spread.
 function currentSide() {
   if (scoreParts.singlePage) return 0;
@@ -57,44 +77,54 @@ function clearCanvasPixels(canvas) {
   if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// ============== (Re)configure l'éditeur sur la page courante
-// Seule la page courante reçoit un canvas Paper actif (.editing → pointer-events).
-// L'autre page n'affiche que son image (zones visibles uniquement sur la page
-// éditée — l'édition simultanée des deux pages est une phase ultérieure).
+// ============== (Re)configure l'éditeur sur le spread affiché
+// Les DEUX pages affichées montrent leurs zones. Seule la page COURANTE est
+// éditable (.editing → pointer-events) ; l'autre est figée. Un clic sur l'autre
+// page la rend courante (géré par le handler de clic de page).
 function setupEditorForCurrentPage() {
   const stage = document.getElementById('stage');
   if (stage) stage.classList.remove('empty');
 
   const side = currentSide();
+  const single = scoreParts.singlePage;
+  const origin = scoreParts.spreadOrigin();
   const leftPage = document.querySelector('.page-left');
   const rightPage = document.querySelector('.page-right');
   if (!leftPage || !rightPage) return;
 
   leftPage.classList.toggle('editing', side === 0);
-  rightPage.classList.toggle('editing', side === 1 && !scoreParts.singlePage);
+  rightPage.classList.toggle('editing', side === 1 && !single);
 
-  const canvasId = side === 0 ? 'canvas-left' : 'canvas-right';
-  const systemsId = side === 0 ? 'systems-left' : 'systems-right';
-  const pageEl = side === 0 ? leftPage : rightPage;
-  const otherCanvasId = side === 0 ? 'canvas-right' : 'canvas-left';
+  // Fixe le canvas courant tout de suite : les rendus asynchrones de l'autre page
+  // réactivent ce projet, et getPageZones/redraw le ciblent.
+  const currentCanvasId = side === 0 ? 'canvas-left' : 'canvas-right';
+  Paper.currentCanvasId = currentCanvasId;
+  Paper.activeCanvas = document.getElementById(currentCanvasId);
 
-  clearCanvasPixels(document.getElementById(otherCanvasId));
+  // Pages à rendre : page courante d'abord (projet actif), puis l'autre (figée).
+  const descriptors = [
+    { side: 0, pageIndex: origin, canvasId: 'canvas-left', systemsId: 'systems-left', pageEl: leftPage },
+  ];
+  if (!single) {
+    descriptors.push({ side: 1, pageIndex: origin + 1, canvasId: 'canvas-right', systemsId: 'systems-right', pageEl: rightPage });
+  } else {
+    clearCanvasPixels(document.getElementById('canvas-right'));
+  }
+  descriptors.sort((a, b) => (b.side === side) - (a.side === side)); // courante en premier
 
-  const canvas = document.getElementById(canvasId);
-  const systems = document.getElementById(systemsId);
-  if (!canvas || !systems) return;
-  const img = systems.querySelector('img');
-  if (!img) return;
-
-  whenImageReady(img, () => {
-    // setTimeout(0) : laisse les autres handlers synchrones (aspect-ratio
-    // mono-page, resetZoom) s'appliquer avant de mesurer la boîte de l'image.
-    // (Plus fiable que requestAnimationFrame, throttlé quand l'onglet est masqué.)
-    setTimeout(() => {
-      fitCanvasToImage(canvas, img, pageEl);
-      Paper.setupCanvas(canvas, img);
-      Paper.redrawCurrentPage();
-    }, 0);
+  descriptors.forEach((d) => {
+    const canvas = document.getElementById(d.canvasId);
+    if (!canvas) return;
+    const isCurrent = d.side === side;
+    // Attend l'<img> de la page (chargement async possible pour la page de droite).
+    waitForPageImage(d.systemsId, (img) => {
+      // setTimeout(0) : laisse les handlers synchrones (aspect-ratio mono-page,
+      // resetZoom) s'appliquer avant de mesurer la boîte de l'image.
+      setTimeout(() => {
+        fitCanvasToImage(canvas, img, d.pageEl);
+        Paper.renderPage(canvas, img, d.pageIndex, isCurrent);
+      }, 0);
+    });
   });
 }
 
