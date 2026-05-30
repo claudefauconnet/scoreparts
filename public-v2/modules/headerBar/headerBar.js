@@ -1,5 +1,6 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
+import { saveScoreInfos } from '../../common/proxy.js';
 
 // ============== Mouvements
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
@@ -10,43 +11,115 @@ function getCurrentPage() {
 
 function buildMovementsFromZones() {
   const pages = scoreParts.allPagesZones.pages;
-  const movementFirstPage = {};
+  // Plage réelle de chaque mouvement, calculée depuis ses zones : start = 1re page,
+  // end = dernière page. end est déduit des zones (pas du mvt suivant) car deux
+  // mouvements peuvent se recouvrir sur une page frontière (A finit p3, B commence p3).
+  const movementRange = {};
   const sortedPageKeys = Object.keys(pages).sort((a, b) => parseInt(a) - parseInt(b));
 
   for (const pageKey of sortedPageKeys) {
     const pageNumber = parseInt(pageKey) + 1;
     pages[pageKey].forEach((zone) => {
-      if (zone.movement && !(zone.movement in movementFirstPage)) {
-        movementFirstPage[zone.movement] = pageNumber;
+      if (!zone.movement) return;
+      const range = movementRange[zone.movement];
+      if (!range) {
+        movementRange[zone.movement] = { startPage: pageNumber, endPage: pageNumber };
+      } else if (pageNumber > range.endPage) {
+        range.endPage = pageNumber;
       }
     });
   }
 
-  return Object.entries(movementFirstPage).map(([name, startPage], idx) => ({
+  return Object.entries(movementRange).map(([name, range], idx) => ({
     id: idx + 1,
     name,
-    startPage,
+    startPage: range.startPage,
+    endPage: range.endPage,
   }));
 }
 
-function loadMovementsFromZones() {
-  const movements = buildMovementsFromZones();
+// La LISTE des mouvements (noms + ordre) vient de infos.movements (le JSON), pas
+// des zones. Les zones ne servent qu'à inférer les PAGES (maître) quand le
+// mouvement en a ; sinon endPage reste indéfini pour que mvtRange recalcule une
+// plage contiguë à jour. startPage stocké sert à localiser un mouvement sans zone.
+function mergeMovements() {
+  const inferred = buildMovementsFromZones();
+  const inferredByName = {};
+  inferred.forEach((mvt) => {
+    inferredByName[mvt.name] = mvt;
+  });
+
+  let stored = (scoreParts.infos && scoreParts.infos.movements) || [];
+  // Migration : ancienne partition sans liste persistée → on la dérive des zones
+  // une seule fois (au prochain enregistrement elle sera écrite dans le JSON).
+  if (stored.length === 0 && inferred.length > 0) {
+    stored = inferred;
+  }
+
+  return stored
+    .filter((mvt) => mvt.name)
+    .map((mvt, idx) => {
+      const range = inferredByName[mvt.name];
+      return {
+        id: idx + 1,
+        name: mvt.name,
+        startPage: range ? range.startPage : mvt.startPage,
+        endPage: range ? range.endPage : undefined,
+      };
+    });
+}
+
+function loadMovements() {
+  const movements = mergeMovements();
   if (movements.length === 0) {
     state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1 });
     state.activeMvt = 1;
     emit('movements-changed');
-    forceNameMovement();
+    // Ne force la saisie que si une partition est réellement ouverte (évite de
+    // verrouiller l'UI au tout premier chargement du module, sans partition).
+    if (scoreParts.pdfName) forceNameMovement();
     return;
   }
   state.MOVEMENTS.splice(0, state.MOVEMENTS.length, ...movements);
   if (!state.MOVEMENTS.find((m) => m.id === state.activeMvt)) {
     state.activeMvt = state.MOVEMENTS[0].id;
   }
+  // Indispensable : rafraîchit la header bar (numéro, nom, liste) avec les
+  // mouvements chargés. Sans ça l'UI garde l'état initial jusqu'à une interaction.
+  emit('movements-changed');
 }
 
-function mvtRange(idx) {
-  const movement = state.MOVEMENTS[idx];
-  const next = state.MOVEMENTS[idx + 1];
+// Persiste la liste des mouvements dans infos.movements (noms + ordre + pages
+// inférées). Un mouvement sans zone garde son startPage courant, sinon il serait
+// introuvable au rechargement.
+function persistMovements() {
+  if (!scoreParts.pdfName) return;
+  // Pages écrites = mêmes que l'affichage (mvtRange) sur une liste triée : zones
+  // maître si présentes, sinon plage contiguë. Garde le fichier cohérent avec les
+  // zones et évite des endPage=startPage incohérents pour les mouvements sans zone.
+  const sorted = [...state.MOVEMENTS].sort((a, b) => a.startPage - b.startPage);
+  const payload = [];
+  sorted.forEach((mvt, idx) => {
+    if (!mvt.name) return;
+    const range = mvtRange(sorted, idx);
+    payload.push({ name: mvt.name, startPage: range.start, endPage: range.end });
+  });
+  if (scoreParts.infos) scoreParts.infos.movements = payload;
+  saveScoreInfos(scoreParts.pdfName, { movements: payload }, function (err) {
+    if (err) console.error('Erreur saveScoreInfos (movements)', err);
+  });
+}
+
+// Plage de pages d'un mouvement dans une liste TRIÉE par startPage.
+// Maître = les zones : si le mouvement en a (endPage défini), on l'utilise (gère
+// aussi le recouvrement page frontière). Sinon (pas encore de zones) on déduit une
+// plage contiguë : jusqu'au mouvement suivant - 1, ou la fin de la partition.
+function mvtRange(sortedMovements, idx) {
+  const movement = sortedMovements[idx];
+  if (movement.endPage) {
+    return { start: movement.startPage, end: movement.endPage };
+  }
+  const next = sortedMovements[idx + 1];
   const end = next ? next.startPage - 1 : scoreParts.totalPages;
   return { start: movement.startPage, end };
 }
@@ -56,6 +129,9 @@ function renderMvt() {
   const idx = state.MOVEMENTS.findIndex((m) => m.id === state.activeMvt);
   const movement = state.MOVEMENTS[idx >= 0 ? idx : 0];
   if (idx < 0) state.activeMvt = movement.id;
+  // Sync léger : le mouvement actif devient le mouvement courant côté scoreParts
+  // pour que les zones dessinées soient taguées (paper.js). Un nom vide = pas de tag.
+  scoreParts.currentMovement = movement.name;
   const order = state.MOVEMENTS.findIndex((x) => x.id === state.activeMvt);
   document.getElementById('mvt-number').innerHTML =
     'Mouvement <span class="roman">' + (ROMAN[order] || order + 1) + '</span>';
@@ -64,7 +140,7 @@ function renderMvt() {
   const popList = document.getElementById('mvt-list');
   popList.innerHTML = '';
   state.MOVEMENTS.forEach((mv, i) => {
-    const range = mvtRange(i);
+    const range = mvtRange(state.MOVEMENTS, i);
     const item = document.createElement('div');
     item.className = 'mvt-item' + (mv.id === state.activeMvt ? ' active' : '');
     item.innerHTML = `
@@ -76,16 +152,30 @@ function renderMvt() {
         </button>
       `;
     item.addEventListener('click', () => {
+      // Sélection d'un mouvement (logique v1) : on sauve les zones de la page
+      // courante, on bascule le mouvement courant, on rend la header bar (nom),
+      // puis on navigue vers la première page du mouvement.
       state.activeMvt = mv.id;
+      scoreParts.fillMovement(mv.name);
       emit('movements-changed');
+      scoreParts.changePage(mv.startPage - 1);
       closeMvtPop();
     });
     item.querySelector('.del').addEventListener('click', (e) => {
       e.stopPropagation();
       if (state.MOVEMENTS.length <= 1) return;
+      const confirmed = window.confirm(
+        `Supprimer le mouvement « ${mv.name || 'Sans titre'} » ?\n` +
+          'Toutes les zones qui le constituent seront aussi supprimées.'
+      );
+      if (!confirmed) return;
+      // Supprime d'abord les zones du mouvement (modèle + canvas + sauvegarde),
+      // puis retire le mouvement de la liste et persiste infos.movements.
+      if (mv.name) scoreParts.deleteMovement(mv.name);
       const removeIdx = state.MOVEMENTS.findIndex((x) => x.id === mv.id);
       state.MOVEMENTS.splice(removeIdx, 1);
       if (state.activeMvt === mv.id) state.activeMvt = state.MOVEMENTS[0].id;
+      persistMovements();
       emit('movements-changed');
     });
     popList.appendChild(item);
@@ -108,42 +198,50 @@ function renderMvt() {
 }
 
 let isNamingRequired = false;
+let changePageBackup = null;
 
 function closeMvtPop() {
   if (isNamingRequired) return;
   document.getElementById('mvt-pop').classList.remove('open');
 }
 
+// Verrouille l'UI pendant la saisie obligatoire du nom : la navigation (changePage)
+// est neutralisée et ramène le focus sur le champ. Idempotent — un 2e appel ne
+// recapture PAS le changePage déjà neutralisé (sinon le déverrouillage le
+// restaurerait sur la version neutralisée → lock permanent).
+function lockForNaming() {
+  if (isNamingRequired) return;
+  isNamingRequired = true;
+  changePageBackup = scoreParts.changePage;
+  scoreParts.changePage = function () {
+    const nameInput = document.getElementById('mvt-name');
+    nameInput.classList.add('mvt-name--required');
+    nameInput.focus();
+  };
+}
+
+function unlockNaming() {
+  if (!isNamingRequired) return;
+  isNamingRequired = false;
+  if (changePageBackup) scoreParts.changePage = changePageBackup;
+  changePageBackup = null;
+  const nameInput = document.getElementById('mvt-name');
+  nameInput.classList.remove('mvt-name--required');
+  nameInput.placeholder = '';
+}
+
+// Ouvre le pop et force la saisie. La validation (nom non vide) et le
+// déverrouillage sont gérés par le handler blur unique de #mvt-name.
 function forceNameMovement() {
   const pop = document.getElementById('mvt-pop');
   const nameInput = document.getElementById('mvt-name');
   if (!pop || !nameInput) return;
-
-  isNamingRequired = true;
-  const originalChangePage = scoreParts.changePage;
-  scoreParts.changePage = function () {
-    nameInput.classList.add('mvt-name--required');
-    nameInput.focus();
-  };
-
+  lockForNaming();
   pop.classList.add('open');
   nameInput.classList.add('mvt-name--required');
   nameInput.placeholder = 'Nommez ce mouvement…';
   nameInput.focus();
   nameInput.select();
-
-  function onBlur() {
-    if (!nameInput.value.trim()) {
-      nameInput.focus();
-    } else {
-      isNamingRequired = false;
-      scoreParts.changePage = originalChangePage;
-      nameInput.classList.remove('mvt-name--required');
-      nameInput.placeholder = '';
-      nameInput.removeEventListener('blur', onBlur);
-    }
-  }
-  nameInput.addEventListener('blur', onBlur);
 }
 
 document.getElementById('mvt-dd').addEventListener('click', (e) => {
@@ -154,24 +252,70 @@ document.getElementById('mvt-edit').addEventListener('click', () => {
   document.getElementById('mvt-name').focus();
   document.getElementById('mvt-name').select();
 });
+// Nom au moment où l'édition commence : sert à retaguer les zones (ancien → nouveau).
+let nameBeforeEdit = '';
+document.getElementById('mvt-name').addEventListener('focus', () => {
+  const movement = state.MOVEMENTS.find((x) => x.id === state.activeMvt);
+  nameBeforeEdit = movement ? movement.name : '';
+});
 document.getElementById('mvt-name').addEventListener('input', (e) => {
   const movement = state.MOVEMENTS.find((x) => x.id === state.activeMvt);
   if (movement) movement.name = e.target.value;
 });
-document.getElementById('mvt-name').addEventListener('blur', renderMvt);
+// Entrée = valider le nom : on déclenche le blur (enregistrement + déverrouillage
+// via forceNameMovement). Sans ça, Entrée laisse les contrôles bloqués.
+document.getElementById('mvt-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    e.target.blur();
+  }
+});
+document.getElementById('mvt-name').addEventListener('blur', () => {
+  const movement = state.MOVEMENTS.find((x) => x.id === state.activeMvt);
+  if (!movement) return renderMvt();
+
+  const newName = movement.name.trim();
+  if (!newName) {
+    if (isNamingRequired) {
+      // Nom obligatoire (création en cours) : on garde le focus, reste verrouillé.
+      document.getElementById('mvt-name').focus();
+      return;
+    }
+    // Édition annulée à vide : on restaure l'ancien nom.
+    movement.name = nameBeforeEdit;
+    return renderMvt();
+  }
+  movement.name = newName;
+
+  if (nameBeforeEdit && newName !== nameBeforeEdit) {
+    // Renommage d'un mouvement existant : retag des zones + sauve les zones.
+    scoreParts.renameMovement(nameBeforeEdit, newName);
+  } else {
+    // Première nomination (création) : on fixe juste le mouvement courant.
+    scoreParts.fillMovement(newName);
+  }
+  persistMovements();
+  nameBeforeEdit = newName;
+  unlockNaming();
+  renderMvt();
+});
 document.getElementById('mvt-add').addEventListener('click', () => {
-  // Create a new movement starting at current page (if no conflict)
+  // Un mouvement commence déjà à cette page → on bascule dessus, pas de doublon.
   if (state.MOVEMENTS.some((m) => m.startPage === getCurrentPage())) {
-    // already a movement here — just switch to it
     const existing = state.MOVEMENTS.find((m) => m.startPage === getCurrentPage());
     state.activeMvt = existing.id;
-  } else {
-    const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
-    state.MOVEMENTS.push({ id: newId, name: 'Nouveau mouvement', startPage: getCurrentPage() });
-    state.activeMvt = newId;
+    emit('movements-changed');
+    closeMvtPop();
+    return;
   }
+  // Nouveau mouvement à la page courante. Nom vide → on force la saisie (comme
+  // loadMovements quand la partition n'a aucun mouvement) : focus verrouillé jusqu'à
+  // un nom non vide, puis forceNameMovement déverrouille et le blur enregistre.
+  const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
+  state.MOVEMENTS.push({ id: newId, name: '', startPage: getCurrentPage() });
+  state.activeMvt = newId;
   emit('movements-changed');
-  closeMvtPop();
+  forceNameMovement();
 });
 document.addEventListener('click', (e) => {
   const pop = document.getElementById('mvt-pop');
@@ -180,8 +324,11 @@ document.addEventListener('click', (e) => {
 });
 
 on('movements-changed', renderMvt);
-on('score-loaded', loadMovementsFromZones);
-loadMovementsFromZones();
+// La page courante a changé : on rafraîchit la header bar (sous-titre « créer
+// d'ici » et plages dépendent de la page courante).
+on('page-changed', renderMvt);
+on('score-loaded', loadMovements);
+loadMovements();
 renderMvt();
 
 // ============== Reset all

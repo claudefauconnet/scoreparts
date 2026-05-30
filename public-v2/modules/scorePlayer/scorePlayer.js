@@ -440,8 +440,13 @@ function setPending(on) {
 actNewZone.addEventListener('click', () => setPending(!pendingZone));
 document.getElementById('cancel-new-zone').addEventListener('click', () => setPending(false));
 
-function attachCreateOnPage(pageEl, zonesKey, containerId) {
+function attachCreateOnPage(pageEl, zonesKey, containerId, spreadSide) {
   pageEl.addEventListener('click', (e) => {
+    // Clic gauche sur une page = elle devient la page courante exacte (gauche =
+    // origine du spread, droite = origine + 1). Les mouvements démarrent ici.
+    const origin = scoreParts.spreadOrigin();
+    scoreParts.setCurrentPage(scoreParts.singlePage ? origin : origin + spreadSide);
+
     if (!pendingZone) return;
     // only react if click is inside the .zones overlay area
     const container = document.getElementById(containerId);
@@ -485,8 +490,8 @@ const pageLeft = document.querySelector('.page-left');
 const pageRight = document.querySelector('.page-right');
 setupMarquee(pageLeft);
 setupMarquee(pageRight);
-attachCreateOnPage(pageLeft, 'ZONES_LEFT', 'zones-left');
-attachCreateOnPage(pageRight, 'ZONES_RIGHT', 'zones-right');
+attachCreateOnPage(pageLeft, 'ZONES_LEFT', 'zones-left', 0);
+attachCreateOnPage(pageRight, 'ZONES_RIGHT', 'zones-right', 1);
 
 on('zones-changed', renderZones);
 
@@ -502,10 +507,8 @@ function applyResponsiveMode() {
   if (scoreParts.singlePage === single) return;
   scoreParts.singlePage = single;
   stageEl.classList.toggle('single-page', single);
-  // Spread expects an even left-page index; snap when leaving single mode.
-  if (!single && scoreParts.currentPage % 2 === 1) {
-    scoreParts.currentPage -= 1;
-  }
+  // Plus de snap de currentPage : il reste la page exacte. loadPageSpread aligne
+  // l'origine du spread (page de gauche paire) au rendu.
   // Re-render (not navigate) so the right page is dropped/added for the new mode.
   scoreParts.reloadCurrentPage();
   resetZoom();

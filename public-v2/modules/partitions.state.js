@@ -29,18 +29,8 @@ export const state = {
     { id: 'violoncelle', name: 'Violoncelle', color: 'var(--violoncelle)', count: 3, on: true },
     { id: 'piano', name: 'Piano', color: 'var(--piano)', count: 3, on: false },
   ],
-  ZONES_LEFT: [
-    makeZone('violon1', 0, 'Violon I'),
-    makeZone('violon2', 1, 'Violon II'),
-    makeZone('violoncelle', 2, 'Violoncelle'),
-    makeZone('piano', 3, 'Piano'),
-  ],
-  ZONES_RIGHT: [
-    makeZone('violon2', 0, 'Violon II'),
-    makeZone('violon1', 1, 'Violon I'),
-    makeZone('violoncelle', 2, 'Violoncelle'),
-    makeZone('piano', 3, 'Piano'),
-  ],
+  ZONES_LEFT: [],
+  ZONES_RIGHT: [],
   MOVEMENTS: [
     { id: 1, name: 'Adagio ma non troppo', startPage: 1 },
     { id: 2, name: 'Allegro molto vivace', startPage: 4 },

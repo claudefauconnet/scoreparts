@@ -51,15 +51,24 @@ function updatePageIndicators() {
   $('#page-input').val(displayPage);
 }
 
+// Origine du spread = page de gauche, toujours d'index pair. On l'aligne sur la
+// paire contenant pageIndex, SANS modifier scoreParts.currentPage qui reste la
+// page exacte sélectionnée (tapée / cliquée / page d'un mouvement).
+scoreParts.spreadOrigin = function (pageIndex) {
+  var page = pageIndex == null ? scoreParts.currentPage : pageIndex;
+  return scoreParts.singlePage ? page : page - (page % 2);
+};
+
 function loadPageSpread(pageIndex, callback) {
-  var leftSrc = imagesDir + scoreParts.pdfName + '/' + pageIndex + '.png';
+  var spreadOrigin = scoreParts.spreadOrigin(pageIndex);
+  var leftSrc = imagesDir + scoreParts.pdfName + '/' + spreadOrigin + '.png';
   scoreParts.loadImageIntoContainer(leftSrc, 'systems-left', callback);
   if (scoreParts.singlePage) {
     var rightContainer = document.getElementById('systems-right');
     if (rightContainer) rightContainer.innerHTML = '';
     return;
   }
-  var rightSrc = imagesDir + scoreParts.pdfName + '/' + (pageIndex + 1) + '.png';
+  var rightSrc = imagesDir + scoreParts.pdfName + '/' + (spreadOrigin + 1) + '.png';
   scoreParts.loadImageIntoContainer(rightSrc, 'systems-right', null);
 }
 
@@ -69,13 +78,22 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
   scoreParts.pdfName = pdfName;
   scoreParts.currentPage = 0;
 
+  // On charge les infos AVANT les pages/zones pour que scoreParts.infos (et la
+  // liste des mouvements persistée) soit disponible quand 'score-loaded' est émis.
   loadScoreInfos(pdfName, function (err, infos) {
-    if (!err && infos && infos.totalPages) {
-      scoreParts.totalPages = infos.totalPages;
-      $('#page-total').text('/ ' + infos.totalPages);
+    scoreParts.infos = !err && infos ? infos : { pdfName: pdfName };
+    if (!scoreParts.infos.movements) {
+      scoreParts.infos.movements = [];
     }
+    if (scoreParts.infos.totalPages) {
+      scoreParts.totalPages = scoreParts.infos.totalPages;
+      $('#page-total').text('/ ' + scoreParts.infos.totalPages);
+    }
+    loadPdfPages(pdfName, clearAll, onBothSettled);
   });
+};
 
+function loadPdfPages(pdfName, clearAll, onBothSettled) {
   // Editor (v1 canvas) is identified by the paper.js canvas; the v2 viewer has
   // none and renders zones via the DOM, so it uses the simple page-load path.
   var isEditorContext = !!document.getElementById('myCanvas');
@@ -119,7 +137,7 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
       emit('score-loaded');
     });
   });
-};
+}
 
 scoreParts.writeCurrentPageZones = function () {
   var zones = Paper.getPageZones();
@@ -159,6 +177,21 @@ scoreParts.changePage = function (newPage) {
     updatePageIndicators();
     emit('page-changed');
   }
+};
+
+// Définit la page courante exacte (page tapée / cliquée) sans recharger le spread :
+// la paire affichée ne change pas tant que la page reste dans le même spread.
+// Met à jour l'indicateur et notifie (les mouvements démarrent/finissent ici).
+scoreParts.setCurrentPage = function (pageIndex) {
+  if (pageIndex < 0) return;
+  if (scoreParts.totalPages !== null && pageIndex >= scoreParts.totalPages) return;
+  if (scoreParts.currentPage === pageIndex) return;
+  // Si la page cible n'est pas dans le spread affiché, on recharge le spread.
+  var sameSpread = scoreParts.spreadOrigin(pageIndex) === scoreParts.spreadOrigin();
+  scoreParts.currentPage = pageIndex;
+  if (!sameSpread) loadPageSpread(pageIndex, null);
+  updatePageIndicators();
+  emit('page-changed');
 };
 
 // Re-render the current page(s) without navigating — used when the layout mode
@@ -230,67 +263,92 @@ scoreParts.setMessage = function (message, color) {
   $('#message').html(message);
 };
 
-scoreParts.openMovementDialog = function () {
-  var html =
-    ' <div style=\'backgRound-color:#90d6e4\'> Mouvement: <select id="movementSelect"> </select></html>';
-  $('#mainDialogDiv').html(html);
-
-  $('#mainDialogDiv').dialog('open');
-  var movements = ['', 'Nouveau'];
-  for (var page in scoreParts.allPagesZones.pages) {
-    scoreParts.allPagesZones.pages[page].forEach(function (zone) {
-      if (zone.movement && movements.indexOf(zone.movement) < 0) {
-        movements.push(zone.movement);
-      }
-    });
-  }
-
-  Common.fillSelectOptions('movementSelect', movements, false);
-};
-
-scoreParts.onSelectMovement = function () {
-  var movement = $('#movementSelect').val();
-  if (!movement) {
+// Remplit le mouvement courant. Le nom est fourni par le composant headerBar
+// (champ mvt-edit) — plus de prompt ni de dialog. Les zones dessinées ensuite
+// sont taguées avec ce mouvement via paper.js (scoreParts.currentMovement).
+scoreParts.fillMovement = function (movementName) {
+  if (!movementName) {
     return;
   }
-  if (movement == 'Nouveau') {
-    // Un mouvement doit toujours avoir un nom : on force la saisie jusqu'à
-    // obtenir un nom non vide (force mode), sinon on annule la création.
-    var movementName = '';
-    while (!movementName) {
-      movementName = (prompt('nom du mouvement') || '').trim();
-      if (movementName === '' && !confirm('Le mouvement doit avoir un nom. Réessayer ?')) {
-        $('#movementSelect').val('');
-        return;
-      }
-    }
-    movement = movementName;
-    $('#movementSelect').append(
-      $('<option>', {
-        value: movement,
-        text: movement,
-      })
-    );
-    $('#movementSelect').val(movement);
-  }
+  scoreParts.currentMovement = movementName;
+  scoreParts.writeCurrentPageZones();
+  scoreParts.modified = true;
+};
 
-  scoreParts.currentMovement = movement;
-  var stop = false;
-  var movementPage = 0;
-  for (var page in scoreParts.allPagesZones.pages) {
-    scoreParts.allPagesZones.pages[page].forEach(function (zone) {
-      if (!stop && zone.movement == scoreParts.currentMovement) {
-        movementPage = zone.page;
-        return (stop = true);
+// Persiste les zones (wrapper exposé : saveZones est interne au module).
+scoreParts.saveZones = function (callback) {
+  scoreParts.modified = true;
+  saveZones(scoreParts, function (err) {
+    if (err) {
+      alert(err.responseText || err);
+    }
+    if (callback) callback(err);
+  });
+};
+
+// Renomme un mouvement : retague toutes les zones (toutes pages) de l'ancien nom
+// vers le nouveau, rafraîchit le canvas courant pour rester cohérent, puis sauve.
+scoreParts.renameMovement = function (oldName, newName) {
+  if (!oldName || !newName || oldName === newName) {
+    return;
+  }
+  // Capture l'état du canvas courant avant de muter le modèle.
+  scoreParts.writeCurrentPageZones();
+  retagZonesMovement(oldName, newName);
+  scoreParts.currentMovement = newName;
+  refreshCurrentPageCanvas();
+  scoreParts.saveZones();
+};
+
+// Supprime un mouvement : retire toutes ses zones (toutes pages), rafraîchit le
+// canvas courant, puis sauve.
+scoreParts.deleteMovement = function (movementName) {
+  if (!movementName) {
+    return;
+  }
+  scoreParts.writeCurrentPageZones();
+  removeZonesOfMovement(movementName);
+  if (scoreParts.currentMovement === movementName) {
+    scoreParts.currentMovement = '';
+  }
+  refreshCurrentPageCanvas();
+  scoreParts.saveZones();
+};
+
+function retagZonesMovement(oldName, newName) {
+  var pages = scoreParts.allPagesZones.pages;
+  for (var pageKey in pages) {
+    pages[pageKey].forEach(function (zone) {
+      if (zone.movement === oldName) {
+        zone.movement = newName;
       }
     });
   }
-  scoreParts.writeCurrentPageZones();
-  scoreParts.modified = true;
-  scoreParts.changePage(parseInt(movementPage));
-  $('#movementSpan').html(scoreParts.currentMovement);
-  $('#mainDialogDiv').dialog('close');
-};
+}
+
+function removeZonesOfMovement(movementName) {
+  var pages = scoreParts.allPagesZones.pages;
+  for (var pageKey in pages) {
+    pages[pageKey] = pages[pageKey].filter(function (zone) {
+      return zone.movement !== movementName;
+    });
+  }
+}
+
+// Redessine les zones de la page courante depuis allPagesZones (éditeur seulement).
+// Sans ça, le canvas garderait les anciennes zones et writeCurrentPageZones les
+// réécrirait par-dessus la mutation du modèle.
+function refreshCurrentPageCanvas() {
+  if (!document.getElementById('myCanvas')) {
+    return;
+  }
+  Paper.deleteZones();
+  var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
+  if (zones && zones.length > 0) {
+    scoreParts.currentZones = zones;
+    Paper.drawZones(zones);
+  }
+}
 
 scoreParts.getInfos = function () {
   scoreParts.setMessage(
@@ -315,8 +373,3 @@ scoreParts.clearMeasures = function () {
     }
   });
 };
-
-// Délégation jQuery — remplace onchange="scoreParts.onSelectMovement()" de la v1.
-$(document).on('change', '#movementSelect', function () {
-  scoreParts.onSelectMovement();
-});

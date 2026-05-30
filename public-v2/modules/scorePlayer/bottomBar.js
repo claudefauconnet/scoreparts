@@ -16,9 +16,8 @@ $('#next-page-btn').on('click', function () {
 
 $('#last-page-btn').on('click', function () {
   if (scoreParts.totalPages) {
-    var step = scoreParts.pageStep();
-    var lastIndex = Math.floor((scoreParts.totalPages - 1) / step) * step;
-    scoreParts.changePage(lastIndex);
+    // Dernière page exacte ; le spread affiché est aligné au rendu.
+    scoreParts.changePage(scoreParts.totalPages - 1);
   }
 });
 
@@ -30,7 +29,7 @@ $pageInput.on('change', function () {
     $pageInput.val(scoreParts.currentPage + 1);
     return;
   }
-  var step = scoreParts.pageStep();
-  var pageIndex = Math.floor((pageNumber - 1) / step) * step;
-  scoreParts.changePage(pageIndex);
+  // La page tapée devient la page courante exacte (même si c'est la page de
+  // droite, paire, d'un spread). L'alignement du spread se fait au rendu.
+  scoreParts.changePage(pageNumber - 1);
 });
