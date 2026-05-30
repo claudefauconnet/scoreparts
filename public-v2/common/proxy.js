@@ -26,6 +26,20 @@ export function deleteScore(scoreName, callback) {
   });
 }
 
+export function loadScoreInfos(scoreName, callback) {
+  $.ajax({
+    type: 'GET',
+    url: '/api/pdf/scoreInfos/' + encodeURIComponent(scoreName),
+    dataType: 'json',
+    success: function (data) {
+      callback(null, data);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
 export function saveScoreInfos(scoreName, infos, callback) {
   $.ajax({
     type: 'PUT',
@@ -35,6 +49,47 @@ export function saveScoreInfos(scoreName, infos, callback) {
     dataType: 'json',
     success: function () {
       callback(null);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
+export function saveZones(scoreParts, callback) {
+  if (!scoreParts.pdfName || !scoreParts.modified) {
+    return callback(null);
+  }
+  $.ajax({
+    type: 'POST',
+    url: '/api/score/saveZones',
+    data: {
+      saveZones: 1,
+      fileName: scoreParts.pdfName + '_zones.json',
+      zonesStr: JSON.stringify(scoreParts.allPagesZones),
+    },
+    dataType: 'json',
+    success: function () {
+      scoreParts.modified = false;
+      callback(null);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
+export function loadZones(scoreParts, callback) {
+  $.ajax({
+    type: 'POST',
+    url: '/api/score/loadZones',
+    data: {
+      loadZones: 1,
+      fileName: scoreParts.pdfName + '_zones.json',
+    },
+    dataType: 'json',
+    success: function (data) {
+      callback(null, JSON.parse(data.result));
     },
     error: function (err) {
       callback(err);

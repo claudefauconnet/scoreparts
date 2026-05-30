@@ -1,5 +1,6 @@
 import { state, on } from '../state.js';
 import { saveScoreInfos } from '../../../common/proxy.js';
+import { scoreParts } from '../../../common/scoreParts.js';
 
 (function dialogModule() {
   const $launchBtn = $('#launch-btn');
@@ -31,13 +32,15 @@ import { saveScoreInfos } from '../../../common/proxy.js';
 
   // ============== Launch
 
-  function showLaunchAndRedirect() {
+  function showLaunchAndOpen() {
     $launchName.text(state.selected.name);
     $launchAuthor.text(state.selected.author);
     $launch.addClass('on');
-    setTimeout(function () {
-      window.location.href = '/modules/partitions.html';
-    }, 1800);
+    scoreParts.openFirstPdfPage(state.selected.name, false, function () {
+      $launch.removeClass('on');
+      $('#dialog-overlay').hide();
+      $('.crumbs strong').text(state.selected.name);
+    });
   }
 
   function openScore() {
@@ -46,10 +49,10 @@ import { saveScoreInfos } from '../../../common/proxy.js';
       const infos = { category: state.selected.category, composer: state.selected.author };
       saveScoreInfos(state.selected.name, infos, function (err) {
         if (err) console.error('Erreur saveScoreInfos', err);
-        showLaunchAndRedirect();
+        showLaunchAndOpen();
       });
     } else {
-      showLaunchAndRedirect();
+      showLaunchAndOpen();
     }
   }
 
@@ -64,9 +67,9 @@ import { saveScoreInfos } from '../../../common/proxy.js';
 
   $launchBtn.on('click', openScore);
   $('.close-btn').on('click', function () {
-    window.location.href = '/modules/partitions.html';
+    $('#dialog-overlay').hide();
   });
   $('.btn-ghost').on('click', function () {
-    window.location.href = '/modules/partitions.html';
+    $('#dialog-overlay').hide();
   });
 })();

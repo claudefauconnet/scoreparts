@@ -1,14 +1,53 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
+import { scoreParts } from '../../common/scoreParts.js';
 
 // ============== Mouvements
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
-const TOTAL_PAGES = 8;
-let currentPage = 3;
+
+function getCurrentPage() {
+  return scoreParts.currentPage + 1;
+}
+
+function buildMovementsFromZones() {
+  const pages = scoreParts.allPagesZones.pages;
+  const movementFirstPage = {};
+  const sortedPageKeys = Object.keys(pages).sort((a, b) => parseInt(a) - parseInt(b));
+
+  for (const pageKey of sortedPageKeys) {
+    const pageNumber = parseInt(pageKey) + 1;
+    pages[pageKey].forEach((zone) => {
+      if (zone.movement && !(zone.movement in movementFirstPage)) {
+        movementFirstPage[zone.movement] = pageNumber;
+      }
+    });
+  }
+
+  return Object.entries(movementFirstPage).map(([name, startPage], idx) => ({
+    id: idx + 1,
+    name,
+    startPage,
+  }));
+}
+
+function loadMovementsFromZones() {
+  const movements = buildMovementsFromZones();
+  if (movements.length === 0) {
+    state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1 });
+    state.activeMvt = 1;
+    emit('movements-changed');
+    forceNameMovement();
+    return;
+  }
+  state.MOVEMENTS.splice(0, state.MOVEMENTS.length, ...movements);
+  if (!state.MOVEMENTS.find((m) => m.id === state.activeMvt)) {
+    state.activeMvt = state.MOVEMENTS[0].id;
+  }
+}
 
 function mvtRange(idx) {
   const movement = state.MOVEMENTS[idx];
   const next = state.MOVEMENTS[idx + 1];
-  const end = next ? next.startPage - 1 : TOTAL_PAGES;
+  const end = next ? next.startPage - 1 : scoreParts.totalPages;
   return { start: movement.startPage, end };
 }
 
@@ -55,21 +94,56 @@ function renderMvt() {
   // Update "Créer un mouvement ici" subtitle
   const sub = document.getElementById('mvt-add-sub');
   if (sub) {
-    const exists = state.MOVEMENTS.find((mv) => mv.startPage === currentPage);
+    const exists = state.MOVEMENTS.find((mv) => mv.startPage === getCurrentPage());
     if (exists) {
-      sub.textContent = `un mouvement commence déjà à la page ${currentPage}`;
+      sub.textContent = `un mouvement commence déjà à la page ${getCurrentPage()}`;
     } else {
       const sorted = [...state.MOVEMENTS].sort((a, b) => a.startPage - b.startPage);
-      const nextMvt = sorted.find((mv) => mv.startPage > currentPage);
-      const endPage = nextMvt ? nextMvt.startPage - 1 : TOTAL_PAGES;
+      const nextMvt = sorted.find((mv) => mv.startPage > getCurrentPage());
+      const endPage = nextMvt ? nextMvt.startPage - 1 : scoreParts.totalPages;
       const target = nextMvt ? `avant « ${nextMvt.name} »` : `jusqu'à la fin de la partition`;
-      sub.innerHTML = `pages <b>${currentPage}–${endPage}</b> — ${target}`;
+      sub.innerHTML = `pages <b>${getCurrentPage()}–${endPage}</b> — ${target}`;
     }
   }
 }
 
+let isNamingRequired = false;
+
 function closeMvtPop() {
+  if (isNamingRequired) return;
   document.getElementById('mvt-pop').classList.remove('open');
+}
+
+function forceNameMovement() {
+  const pop = document.getElementById('mvt-pop');
+  const nameInput = document.getElementById('mvt-name');
+  if (!pop || !nameInput) return;
+
+  isNamingRequired = true;
+  const originalChangePage = scoreParts.changePage;
+  scoreParts.changePage = function () {
+    nameInput.classList.add('mvt-name--required');
+    nameInput.focus();
+  };
+
+  pop.classList.add('open');
+  nameInput.classList.add('mvt-name--required');
+  nameInput.placeholder = 'Nommez ce mouvement…';
+  nameInput.focus();
+  nameInput.select();
+
+  function onBlur() {
+    if (!nameInput.value.trim()) {
+      nameInput.focus();
+    } else {
+      isNamingRequired = false;
+      scoreParts.changePage = originalChangePage;
+      nameInput.classList.remove('mvt-name--required');
+      nameInput.placeholder = '';
+      nameInput.removeEventListener('blur', onBlur);
+    }
+  }
+  nameInput.addEventListener('blur', onBlur);
 }
 
 document.getElementById('mvt-dd').addEventListener('click', (e) => {
@@ -86,14 +160,14 @@ document.getElementById('mvt-name').addEventListener('input', (e) => {
 });
 document.getElementById('mvt-name').addEventListener('blur', renderMvt);
 document.getElementById('mvt-add').addEventListener('click', () => {
-  // Create a new movement starting at currentPage (if no conflict)
-  if (state.MOVEMENTS.some((m) => m.startPage === currentPage)) {
+  // Create a new movement starting at current page (if no conflict)
+  if (state.MOVEMENTS.some((m) => m.startPage === getCurrentPage())) {
     // already a movement here — just switch to it
-    const existing = state.MOVEMENTS.find((m) => m.startPage === currentPage);
+    const existing = state.MOVEMENTS.find((m) => m.startPage === getCurrentPage());
     state.activeMvt = existing.id;
   } else {
     const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
-    state.MOVEMENTS.push({ id: newId, name: 'Nouveau mouvement', startPage: currentPage });
+    state.MOVEMENTS.push({ id: newId, name: 'Nouveau mouvement', startPage: getCurrentPage() });
     state.activeMvt = newId;
   }
   emit('movements-changed');
@@ -106,6 +180,8 @@ document.addEventListener('click', (e) => {
 });
 
 on('movements-changed', renderMvt);
+on('score-loaded', loadMovementsFromZones);
+loadMovementsFromZones();
 renderMvt();
 
 // ============== Reset all

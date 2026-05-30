@@ -9,14 +9,14 @@ var Proxy = (function () {
       url: './api/score/list',
       data: payload,
       dataType: 'json',
-      success: function (data, textStatus, jqXHR) {
-        data.splice(0, 0, '');
-        for (var i = 0; i < data.length; i++) {
-          item = data[i].replace('.pdf', '');
+      success: function (data) {
+        $('#scoresSelect').append($('<option>', { text: '', value: '' }));
+        for (var scoreIndex = 0; scoreIndex < data.length; scoreIndex++) {
+          var pdfName = data[scoreIndex].pdfName;
           $('#scoresSelect').append(
             $('<option>', {
-              text: item,
-              value: item,
+              text: pdfName,
+              value: pdfName,
             })
           );
         }

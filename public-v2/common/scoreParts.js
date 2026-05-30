@@ -1,8 +1,8 @@
-// Globals externes attendus : `$` (jQuery), `Proxy` (proxy v1 fournissant
-// saveZones / loadZones / autoDetectPageZones — pas encore porté dans common/proxy.js).
 import { Paper } from './paper.js';
 import { Voices } from './voices.js';
 import { Common } from './common.js';
+import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
+import { emit } from '../modules/partitions.state.js';
 
 export const scoreParts = {};
 
@@ -10,27 +10,96 @@ scoreParts.allPagesZones = { pages: {}, title: '' };
 scoreParts.currentZones = [];
 scoreParts.modified = false;
 
+scoreParts.totalPages = null;
+
+// When true, the viewer shows one page at a time (small screens) instead of a
+// 2-page spread. Editor (Paper) context never sets this, so it stays a spread.
+scoreParts.singlePage = false;
+
+scoreParts.getTotalPages = function () {
+  return scoreParts.totalPages;
+};
+
+// Pages advanced per navigation step: 1 in single-page mode, 2 for a spread.
+scoreParts.pageStep = function () {
+  return scoreParts.singlePage ? 1 : 2;
+};
+
 var imagesDir = './data/images/';
 
-scoreParts.openFirstPdfPage = function (clearAll) {
+scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
+  var container = document.getElementById(containerId);
+  if (!container) {
+    if (callback) callback();
+    return;
+  }
+  var img = new Image();
+  img.onload = function () {
+    container.innerHTML = '';
+    container.appendChild(img);
+    if (callback) callback();
+  };
+  img.onerror = function () {
+    if (callback) callback();
+  };
+  img.src = src;
+};
+
+function updatePageIndicators() {
+  var displayPage = scoreParts.currentPage + 1;
+  $('#page').html(' ' + displayPage);
+  $('#page-input').val(displayPage);
+}
+
+function loadPageSpread(pageIndex, callback) {
+  var leftSrc = imagesDir + scoreParts.pdfName + '/' + pageIndex + '.png';
+  scoreParts.loadImageIntoContainer(leftSrc, 'systems-left', callback);
+  if (scoreParts.singlePage) {
+    var rightContainer = document.getElementById('systems-right');
+    if (rightContainer) rightContainer.innerHTML = '';
+    return;
+  }
+  var rightSrc = imagesDir + scoreParts.pdfName + '/' + (pageIndex + 1) + '.png';
+  scoreParts.loadImageIntoContainer(rightSrc, 'systems-right', null);
+}
+
+scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
+  var pdfName = pdfname;
+  if (!pdfName) return;
+  scoreParts.pdfName = pdfName;
+  scoreParts.currentPage = 0;
+
+  loadScoreInfos(pdfName, function (err, infos) {
+    if (!err && infos && infos.totalPages) {
+      scoreParts.totalPages = infos.totalPages;
+      $('#page-total').text('/ ' + infos.totalPages);
+    }
+  });
+
+  // Editor (v1 canvas) is identified by the paper.js canvas; the v2 viewer has
+  // none and renders zones via the DOM, so it uses the simple page-load path.
+  var isEditorContext = !!document.getElementById('myCanvas');
+
+  if (!isEditorContext) {
+    loadPageSpread(0, function () {
+      emit('score-loaded');
+      if (onBothSettled) onBothSettled();
+    });
+    return;
+  }
+
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
   scoreParts.writeCurrentPageZones();
 
-  Proxy.saveZones(function (err) {
+  saveZones(scoreParts, function (err) {
     if (err) {
       alert(err.responseText || err);
     }
 
-    var pdfName = $('#scoresSelect').val();
-    // $("#scoresSelect").val(pdfName);
-    if (pdfName == '') {
-      return;
-    }
-    scoreParts.pdfName = pdfName;
     Paper.deleteZones();
 
-    Proxy.loadZones(function (err, data) {
+    loadZones(scoreParts, function (err, data) {
       if (err || clearAll) {
         scoreParts.allPagesZones = {
           pages: {},
@@ -43,27 +112,11 @@ scoreParts.openFirstPdfPage = function (clearAll) {
         scoreParts.allPagesZones = data;
       }
 
-      var pageImage = imagesDir + pdfName + '-0.png';
-      //  Paper.drawImage(pageImage)
-
       scoreParts.voices = [];
       scoreParts.currentPage = 0;
-      scoreParts.changePage(scoreParts.currentPage);
-      $('#page').html(' ' + (scoreParts.currentPage + 1));
-      //  $('#controlPanelDiv').css('visibility', 'visible');
-      var message = '';
-      message +=
-        "<ul> <li>pour créer une zone de découpage : clic sur le milieu d'une portée</li>";
-      message += '<li>pour effacer une zone : clic+Alt sur la zone</li>';
-      message += '<li>pour déplacer une zone : glisser sur la zone avec la souris</li>';
-      message += "<li>pour déplacer toutes les zones d'une page  : clic+Ctl sur une zone</li>";
-      message +=
-        '<li>Une fois le découpage terminé sur toutes les pages, cliquer sur le bouton "générer voix (pdf)"</li>';
-      message += '<ul> ';
-      scoreParts.setMessage(message, 'blue');
-      scoreParts.margin = parseInt($('#zoneMargin').val()) || 10;
-
-      scoreParts.openMovementDialog();
+      loadPageSpread(0, onBothSettled);
+      updatePageIndicators();
+      emit('score-loaded');
     });
   });
 };
@@ -78,40 +131,51 @@ scoreParts.writeCurrentPageZones = function () {
   Voices.copyAnnotationsOnAllVoices(scoreParts.currentPage);
 };
 
-scoreParts.changePage = function (newPage, forceSave) {
-  // to be done
-  scoreParts.writeCurrentPageZones();
+scoreParts.changePage = function (newPage) {
+  if (newPage < 0) return;
+  if (scoreParts.totalPages !== null && newPage >= scoreParts.totalPages) return;
 
-  Proxy.saveZones(function (err) {
-    if (err) {
-      alert(err.responseText || err);
-    }
+  // Editor (v1 canvas) is identified by the paper.js canvas; the v2 viewer has
+  // none and renders zones via the DOM, so it uses the simple page-load path.
+  var isEditorContext = !!document.getElementById('myCanvas');
 
+  if (isEditorContext) {
+    scoreParts.writeCurrentPageZones();
+    saveZones(scoreParts, function (err) {
+      if (err) alert(err.responseText || err);
+      scoreParts.currentPage = newPage;
+      Paper.drawImage(imagesDir + scoreParts.pdfName + '/' + scoreParts.currentPage + '.png');
+      var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
+      if (zones && zones.length > 0) {
+        scoreParts.currentZones = zones;
+        Paper.drawZones(zones);
+      }
+      loadPageSpread(newPage, null);
+      updatePageIndicators();
+    });
+  } else {
     scoreParts.currentPage = newPage;
-    var name = $('#scoresSelect').val() + '-' + scoreParts.currentPage;
+    loadPageSpread(newPage, null);
+    updatePageIndicators();
+    emit('page-changed');
+  }
+};
 
-    Paper.drawImage(imagesDir + name + '.png');
-    var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
-    if (zones && zones.length > 0) {
-      scoreParts.currentZones = zones;
-      Paper.drawZones(zones);
-    }
-
-    $('#page').html(' ' + (scoreParts.currentPage + 1));
-  });
+// Re-render the current page(s) without navigating — used when the layout mode
+// (spread <-> single page) changes on resize. Not gated like changePage.
+scoreParts.reloadCurrentPage = function () {
+  if (scoreParts.pdfName == null) return;
+  loadPageSpread(scoreParts.currentPage, null);
 };
 
 scoreParts.nextPage = function () {
-  scoreParts.changePage(scoreParts.currentPage + 1);
-
+  scoreParts.changePage(scoreParts.currentPage + scoreParts.pageStep());
   $('#duplicateZonesButton').css('visibility', 'visible');
 };
-scoreParts.previousPage = function () {
-  if (scoreParts.currentPage == 0) {
-    return;
-  }
 
-  scoreParts.changePage(scoreParts.currentPage - 1);
+scoreParts.previousPage = function () {
+  if (scoreParts.currentPage === 0) return;
+  scoreParts.changePage(Math.max(0, scoreParts.currentPage - scoreParts.pageStep()));
   $('#duplicateZonesButton').css('visibility', 'visible');
 };
 
@@ -129,7 +193,7 @@ scoreParts.restartAll = function () {
       scoreParts.deletePageZones(pageNum);
     }
 
-    scoreParts.openFirstPdfPage(true);
+    scoreParts.openFirstPdfPage(null, true, null);
   }
 };
 
@@ -190,10 +254,17 @@ scoreParts.onSelectMovement = function () {
     return;
   }
   if (movement == 'Nouveau') {
-    var movement = prompt('nom du mouvement');
-    if (!movement) {
-      return;
+    // Un mouvement doit toujours avoir un nom : on force la saisie jusqu'à
+    // obtenir un nom non vide (force mode), sinon on annule la création.
+    var movementName = '';
+    while (!movementName) {
+      movementName = (prompt('nom du mouvement') || '').trim();
+      if (movementName === '' && !confirm('Le mouvement doit avoir un nom. Réessayer ?')) {
+        $('#movementSelect').val('');
+        return;
+      }
     }
+    movement = movementName;
     $('#movementSelect').append(
       $('<option>', {
         value: movement,
@@ -238,7 +309,7 @@ scoreParts.clearMeasures = function () {
     });
   }
 
-  Proxy.saveZones(function (err) {
+  saveZones(scoreParts, function (err) {
     if (err) {
       alert(err.responseText || err);
     }

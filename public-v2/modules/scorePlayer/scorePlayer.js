@@ -1,4 +1,5 @@
 import { state, on, emit, instrLabel, SYS_H } from '../partitions.state.js';
+import { scoreParts } from '../../common/scoreParts.js';
 
 // ============== Render staves and notes
 function renderSystems(targetId, count) {
@@ -471,9 +472,14 @@ function attachCreateOnPage(pageEl, zonesKey, containerId) {
 }
 
 // ============== Init
-renderSystems('systems-left', 4);
-renderSystems('systems-right', 4);
 renderZones();
+
+document.querySelector('.nav-arrow.prev').addEventListener('click', function () {
+  scoreParts.previousPage();
+});
+document.querySelector('.nav-arrow.next').addEventListener('click', function () {
+  scoreParts.nextPage();
+});
 
 const pageLeft = document.querySelector('.page-left');
 const pageRight = document.querySelector('.page-right');
@@ -483,3 +489,156 @@ attachCreateOnPage(pageLeft, 'ZONES_LEFT', 'zones-left');
 attachCreateOnPage(pageRight, 'ZONES_RIGHT', 'zones-right');
 
 on('zones-changed', renderZones);
+
+// ============== Responsive single-page mode (small / short screens)
+// On small screens the 2-page spread is unreadable, so we show one page at a
+// time (full width). scoreParts drives the ±1 navigation; we just sync the flag
+// and the layout class, then reload the current page.
+const stageEl = document.getElementById('stage');
+const smallScreen = window.matchMedia('(max-width: 1100px), (max-height: 820px)');
+
+function applyResponsiveMode() {
+  const single = smallScreen.matches;
+  if (scoreParts.singlePage === single) return;
+  scoreParts.singlePage = single;
+  stageEl.classList.toggle('single-page', single);
+  // Spread expects an even left-page index; snap when leaving single mode.
+  if (!single && scoreParts.currentPage % 2 === 1) {
+    scoreParts.currentPage -= 1;
+  }
+  // Re-render (not navigate) so the right page is dropped/added for the new mode.
+  scoreParts.reloadCurrentPage();
+  resetZoom();
+  fitSinglePageToImage();
+}
+
+// In single-page mode, size the page box to the image's natural ratio so it
+// hugs the score (no wide empty paper). Cleared in spread mode.
+function fitSinglePageToImage() {
+  const page = document.querySelector('.page-left');
+  if (!page) return;
+  if (!scoreParts.singlePage) {
+    page.style.aspectRatio = '';
+    return;
+  }
+  const img = document.getElementById('systems-left').querySelector('img');
+  if (!img) return;
+  const apply = () => {
+    if (img.naturalWidth && img.naturalHeight) {
+      page.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
+    }
+  };
+  if (img.complete && img.naturalWidth) apply();
+  else img.addEventListener('load', apply, { once: true });
+}
+smallScreen.addEventListener('change', applyResponsiveMode);
+// Initialise the flag without reloading (no score loaded yet at boot).
+scoreParts.singlePage = smallScreen.matches;
+stageEl.classList.toggle('single-page', smallScreen.matches);
+
+// ============== Zoom & pan on the book
+// Transform model: book transform-origin is 0 0, transform = translate(pan) scale(zoom).
+// Cursor-anchored wheel zoom keeps the point under the pointer fixed.
+const bookEl = document.getElementById('book');
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 5;
+let zoom = 1;
+let panX = 0;
+let panY = 0;
+
+function applyTransform() {
+  bookEl.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  stageEl.classList.toggle('zoomed', zoom > 1);
+  const reset = document.getElementById('zoom-reset');
+  if (reset) reset.textContent = Math.round(zoom * 100) + '%';
+}
+
+function resetZoom() {
+  zoom = 1;
+  panX = 0;
+  panY = 0;
+  applyTransform();
+}
+
+// Zoom toward a screen point (clientX/clientY). Keeps that point stationary.
+function zoomAt(clientX, clientY, nextZoom) {
+  nextZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextZoom));
+  if (nextZoom === zoom) return;
+  // book's untransformed top-left origin: measured left minus current pan.
+  const rect = bookEl.getBoundingClientRect();
+  const originX = rect.left - panX;
+  const originY = rect.top - panY;
+  const localX = clientX - originX;
+  const localY = clientY - originY;
+  const ratio = nextZoom / zoom;
+  panX = localX - ratio * (localX - panX);
+  panY = localY - ratio * (localY - panY);
+  zoom = nextZoom;
+  if (zoom === ZOOM_MIN) {
+    panX = 0;
+    panY = 0;
+  }
+  applyTransform();
+}
+
+function zoomFromCenter(nextZoom) {
+  const rect = bookEl.getBoundingClientRect();
+  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, nextZoom);
+}
+
+// Wheel / trackpad pinch (ctrlKey) zoom
+document.getElementById('stage-body').addEventListener(
+  'wheel',
+  (e) => {
+    if (e.target.closest('.zoom-controls')) return;
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    zoomAt(e.clientX, e.clientY, zoom * factor);
+  },
+  { passive: false }
+);
+
+// Drag to pan (only while zoomed). Capture phase so it pre-empts marquee/zone drag.
+document.getElementById('stage-body').addEventListener(
+  'mousedown',
+  (e) => {
+    if (zoom <= 1) return;
+    if (pendingZone) return;
+    if (e.target.closest('.zone') || e.target.closest('[data-act]')) return;
+    if (e.target.closest('.zoom-controls') || e.target.closest('.nav-arrow')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    bookEl.classList.add('panning');
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPanX = panX;
+    const startPanY = panY;
+    function move(ev) {
+      panX = startPanX + (ev.clientX - startX);
+      panY = startPanY + (ev.clientY - startY);
+      applyTransform();
+    }
+    function up() {
+      bookEl.classList.remove('panning');
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    }
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  },
+  true
+);
+
+document.getElementById('zoom-in').addEventListener('click', () => zoomFromCenter(zoom * 1.25));
+document.getElementById('zoom-out').addEventListener('click', () => zoomFromCenter(zoom / 1.25));
+document.getElementById('zoom-reset').addEventListener('click', resetZoom);
+
+// Reset zoom whenever the page changes or a new score loads.
+on('page-changed', resetZoom);
+on('score-loaded', resetZoom);
+
+// Keep the single-page box hugging the current image.
+on('page-changed', fitSinglePageToImage);
+on('score-loaded', fitSinglePageToImage);
+
+applyTransform();

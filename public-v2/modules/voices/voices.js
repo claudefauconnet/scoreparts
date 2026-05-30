@@ -186,6 +186,12 @@ function openColorPopover(swatch, ins) {
 on('instruments-changed', renderInstruments);
 renderInstruments();
 
+// ============== Score info footer — ouvre le dialog de sélection
+document.querySelector('.score-info').addEventListener('click', function (e) {
+  e.preventDefault();
+  $('#dialog-overlay').css('display', 'grid');
+});
+
 // ============== Global tooltip (body-attached, escapes overflow clipping)
 (function setupGlobalTooltip() {
   let tip = null;

@@ -30,8 +30,10 @@
 .pending-zone-banner button:hover { background: rgba(255,255,255,0.1); }
 .stage-body {
   flex: 1;
+  min-height: 0;
   position: relative;
   display: grid;
+  grid-template-rows: 1fr;
   place-items: center;
   padding: 24px 80px 80px;
   overflow: hidden;
@@ -43,9 +45,15 @@
   grid-template-columns: 1fr 1fr;
   width: 100%;
   height: 100%;
+  min-height: 0;
   max-width: 1600px;
   perspective: 2400px;
+  /* zoom/pan: JS sets translate + scale; origin top-left for cursor anchoring */
+  transform-origin: 0 0;
+  will-change: transform;
 }
+.stage.zoomed .book { cursor: grab; }
+.stage.zoomed .book.panning { cursor: grabbing; }
 
 /* Outer cover/shadow plate */
 .book::before {
@@ -79,6 +87,7 @@
 
 .page {
   position: relative;
+  min-height: 0;
   background: var(--paper);
   box-shadow:
     inset 0 0 60px rgba(120,90,40,0.06),
@@ -128,7 +137,7 @@
 /* The actual binding stitching */
 .spine {
   position: absolute;
-  top: -18px; bottom: -8px;
+  top: 0; bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 14px;
@@ -178,9 +187,41 @@
 }
 .stage[data-book-style="flat"] .spine { display: none; }
 
+/* Single-page mode (small screens) — show only the current page, sized to hug
+   the score image (no wide empty paper). The page aspect-ratio is set by JS to
+   the image's natural ratio so width follows height with no letterboxing. */
+.stage.single-page .book {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  /* shrink to the single page so the cover plate hugs the image */
+  width: auto;
+  max-width: 100%;
+}
+.stage.single-page .page-right { display: none; }
+.stage.single-page .page-left {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  transform-origin: center;
+}
+.stage.single-page .page-left::after { display: none; }
+.stage.single-page .spine { display: none; }
+/* Minimal padding so the page box matches the image closely */
+.stage.single-page .page-left .sheet { padding: 8px; }
+.stage.single-page .systems { align-items: stretch; }
+.stage.single-page .systems img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* ============== PAGE CONTENT (sheet music) ============== */
 .sheet {
   height: 100%;
+  min-height: 0;
   padding: 36px 40px 28px;
   display: flex;
   flex-direction: column;
@@ -220,10 +261,22 @@
 
 .systems {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   gap: 18px;
   position: relative;
+}
+/* Loaded score page image — fit inside page without overflowing height */
+.systems img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 .system {
   flex: 1;
@@ -705,3 +758,56 @@
   transform: scale(1.05);
 }
 .clear-zones-btn svg { width: 14px; height: 14px; }
+
+/* ============== ZOOM CONTROLS ============== */
+.zoom-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(40,25,10,0.1);
+  z-index: 6;
+}
+.zoom-controls .zoom-btn,
+.zoom-controls .zoom-reset {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-2);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.zoom-controls .zoom-btn {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+}
+.zoom-controls .zoom-btn svg { width: 18px; height: 18px; }
+.zoom-controls .zoom-reset {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 0;
+  color: var(--muted);
+}
+.zoom-controls .zoom-btn:hover,
+.zoom-controls .zoom-reset:hover { background: rgba(0,0,0,0.05); color: var(--ink); }
+
+/* ============== SMALL / SHORT SCREENS ============== */
+/* Collapse decorative padding so the score image fills the book and stays
+   the priority. Nav arrows + page bar float over the spread (absolute),
+   so they don't need reserved gutters here. */
+@media (max-width: 1100px), (max-height: 820px) {
+  .stage-body { padding: 12px 20px 58px; }
+  .sheet { padding: 12px; }
+  .page-left .sheet { padding-right: 8px; }
+  .page-right .sheet { padding-left: 8px; }
+  .nav-arrow.prev { left: 6px; }
+  .nav-arrow.next { right: 6px; }
+}

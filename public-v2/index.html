@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>ScoreParts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/modules/scoreSelector/dialog/dialog.css">
+<style>
+  body {
+    display: block;
+    overflow: auto;
+    background: none;
+  }
+  #dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(1200px 800px at 30% 20%, #faf6ea 0%, #f5f1e8 60%, #ebe5d6 100%);
+  }
+  .launch.on {
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+</style>
+<link rel="stylesheet" href="/modules/scoreSelector/selector/selector.css">
+<link rel="stylesheet" href="/modules/scoreSelector/import_pdf/import_pdf.css">
+<link rel="stylesheet" href="/modules/partitions.css">
+<link rel="stylesheet" href="/modules/voices/voices.css">
+<link rel="stylesheet" href="/modules/headerBar/headerBar.css">
+<link rel="stylesheet" href="/modules/scorePlayer/scorePlayer.css">
+<link rel="stylesheet" href="/modules/parameters/parameters.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<!-- Dialog overlay — visible au démarrage -->
+<div id="dialog-overlay">
+  <div id="dialog-host"></div>
+</div>
+
+<!-- App principale — toujours dans le DOM -->
+<div class="app">
+  <aside class="sidebar" id="voices-host"></aside>
+  <section class="stage" id="stage" data-book-style="realistic">
+    <div class="stage-top" id="headerbar-host"></div>
+    <div class="stage-body" id="stage-body"></div>
+    <div class="stage-bottom" id="scoreplayer-bottom"></div>
+  </section>
+</div>
+<div id="parameters-host"></div>
+
+<script>
+$(function () {
+  var appFragments = $.when(
+    $('#voices-host').load('/modules/voices/voices.html'),
+    $('#headerbar-host').load('/modules/headerBar/headerBar.html'),
+    $('#stage-body').load('/modules/scorePlayer/scorePlayer.html'),
+    $('#scoreplayer-bottom').load('/modules/scorePlayer/bottomBar.html'),
+    $('#parameters-host').load('/modules/parameters/parameters.html')
+  );
+
+  var dialogFragment = $('#dialog-host').load('/modules/scoreSelector/dialog/dialog.html', function () {
+    $.when(
+      $('#selector-slot').load('/modules/scoreSelector/selector/selector.html'),
+      $('#import-slot').load('/modules/scoreSelector/import_pdf/import_pdf.html')
+    ).done(function () {
+      ['scoreSelector/dialog/dialog', 'scoreSelector/selector/selector', 'scoreSelector/import_pdf/import_pdf'].forEach(function (path) {
+        var s = document.createElement('script');
+        s.type = 'module';
+        s.src = '/modules/' + path + '.js';
+        document.body.appendChild(s);
+      });
+    });
+  });
+
+  appFragments.done(function () {
+    ['voices/voices', 'headerBar/headerBar', 'scorePlayer/scorePlayer', 'scorePlayer/bottomBar', 'parameters/parameters'].forEach(function (modulePath) {
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = '/modules/' + modulePath + '.js';
+      document.body.appendChild(s);
+    });
+  });
+});
+</script>
+</body>
+</html>

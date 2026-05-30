@@ -191,9 +191,15 @@ body {
 }
 .launch.on { display: flex; }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-.launch .clef {
+.launch-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.launch-clef {
   font-family: var(--serif);
-  font-size: 120px;
+  font-size: 80px;
   color: var(--gold);
   line-height: 1;
   animation: clefIn 0.6s ease;
@@ -202,6 +208,7 @@ body {
   from { transform: scale(0.6) rotate(-30deg); opacity: 0; }
   to   { transform: scale(1) rotate(0); opacity: 1; }
 }
+
 .launch .name {
   font-family: var(--serif);
   font-size: 28px;
@@ -212,7 +219,6 @@ body {
   font-style: italic;
   font-size: 16px;
   color: rgba(250,242,220,0.6);
-  margin-top: -16px;
 }
 .launch .ld {
   font-family: var(--script);
