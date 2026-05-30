@@ -346,6 +346,22 @@
   background: var(--ink);
 }
 
+/* Transparent Paper.js overlay — Paper dessine les zones par-dessus l'image.
+   Positionné/dimensionné par JS pour coller exactement à l'<img> de la page.
+   pointer-events activé seulement sur la page courante (.page.editing). */
+.zone-canvas {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  touch-action: none;
+}
+.page.editing .zone-canvas {
+  pointer-events: auto;
+}
+.pending-zone .page.editing .zone-canvas {
+  cursor: crosshair;
+}
+
 /* Instrument zones (interactive) */
 .zones {
   position: absolute;

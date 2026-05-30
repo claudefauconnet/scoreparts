@@ -20,6 +20,12 @@ scoreParts.getTotalPages = function () {
   return scoreParts.totalPages;
 };
 
+// Contexte éditeur : v1 = canvas #myCanvas, v2 = canvas transparent .zone-canvas
+// (un par page). Dans les deux cas Paper.js pilote les zones et la persistance.
+scoreParts.isEditorContext = function () {
+  return !!document.getElementById('myCanvas') || !!document.querySelector('.zone-canvas');
+};
+
 // Pages advanced per navigation step: 1 in single-page mode, 2 for a spread.
 scoreParts.pageStep = function () {
   return scoreParts.singlePage ? 1 : 2;
@@ -94,9 +100,7 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
 };
 
 function loadPdfPages(pdfName, clearAll, onBothSettled) {
-  // Editor (v1 canvas) is identified by the paper.js canvas; the v2 viewer has
-  // none and renders zones via the DOM, so it uses the simple page-load path.
-  var isEditorContext = !!document.getElementById('myCanvas');
+  var isEditorContext = scoreParts.isEditorContext();
 
   if (!isEditorContext) {
     loadPageSpread(0, function () {
@@ -108,33 +112,33 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
 
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  scoreParts.writeCurrentPageZones();
+  // À l'ouverture, on CHARGE les zones persistées (pas de save préalable : le
+  // modèle en mémoire est encore vide à ce stade, le sauver écraserait le backend).
+  // La persistance se fait ensuite à la navigation / aux gestes d'édition.
+  Paper.deleteZones();
 
-  saveZones(scoreParts, function (err) {
-    if (err) {
-      alert(err.responseText || err);
+  loadZones(scoreParts, function (err, data) {
+    if (err || clearAll) {
+      scoreParts.allPagesZones = {
+        pages: {},
+        title: '',
+        pdfName: scoreParts.pdfName,
+        date: new Date(),
+        author: 'cf',
+      };
+    } else {
+      scoreParts.allPagesZones = data;
     }
 
-    Paper.deleteZones();
-
-    loadZones(scoreParts, function (err, data) {
-      if (err || clearAll) {
-        scoreParts.allPagesZones = {
-          pages: {},
-          title: '',
-          pdfName: scoreParts.pdfName,
-          date: new Date(),
-          author: 'cf',
-        };
-      } else {
-        scoreParts.allPagesZones = data;
-      }
-
-      scoreParts.voices = [];
-      scoreParts.currentPage = 0;
-      loadPageSpread(0, onBothSettled);
+    scoreParts.voices = [];
+    scoreParts.currentPage = 0;
+    // 'score-loaded' DOIT être émis une fois l'image présente dans le DOM
+    // (l'éditeur y attache le canvas Paper). On émet donc dans le callback de
+    // chargement d'image, pas de façon synchrone.
+    loadPageSpread(0, function () {
       updatePageIndicators();
       emit('score-loaded');
+      if (onBothSettled) onBothSettled();
     });
   });
 }
@@ -153,23 +157,18 @@ scoreParts.changePage = function (newPage) {
   if (newPage < 0) return;
   if (scoreParts.totalPages !== null && newPage >= scoreParts.totalPages) return;
 
-  // Editor (v1 canvas) is identified by the paper.js canvas; the v2 viewer has
-  // none and renders zones via the DOM, so it uses the simple page-load path.
-  var isEditorContext = !!document.getElementById('myCanvas');
-
-  if (isEditorContext) {
+  if (scoreParts.isEditorContext()) {
+    // Capture les zones de la page courante (canvas actif) puis persiste avant de
+    // changer de page. Le (re)dessin du canvas de la nouvelle page courante est
+    // assuré par scorePlayer (écoute 'page-changed'), pas par un raster Paper.
     scoreParts.writeCurrentPageZones();
     saveZones(scoreParts, function (err) {
       if (err) alert(err.responseText || err);
       scoreParts.currentPage = newPage;
-      Paper.drawImage(imagesDir + scoreParts.pdfName + '/' + scoreParts.currentPage + '.png');
-      var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
-      if (zones && zones.length > 0) {
-        scoreParts.currentZones = zones;
-        Paper.drawZones(zones);
-      }
-      loadPageSpread(newPage, null);
-      updatePageIndicators();
+      loadPageSpread(newPage, function () {
+        updatePageIndicators();
+        emit('page-changed');
+      });
     });
   } else {
     scoreParts.currentPage = newPage;
@@ -186,6 +185,12 @@ scoreParts.setCurrentPage = function (pageIndex) {
   if (pageIndex < 0) return;
   if (scoreParts.totalPages !== null && pageIndex >= scoreParts.totalPages) return;
   if (scoreParts.currentPage === pageIndex) return;
+  // En édition : sauve les zones de la page courante avant de basculer la page
+  // courante (Paper lit le canvas actif, qui va changer).
+  if (scoreParts.isEditorContext()) {
+    scoreParts.writeCurrentPageZones();
+    scoreParts.saveZones(function () {});
+  }
   // Si la page cible n'est pas dans le spread affiché, on recharge le spread.
   var sameSpread = scoreParts.spreadOrigin(pageIndex) === scoreParts.spreadOrigin();
   scoreParts.currentPage = pageIndex;
@@ -339,15 +344,10 @@ function removeZonesOfMovement(movementName) {
 // Sans ça, le canvas garderait les anciennes zones et writeCurrentPageZones les
 // réécrirait par-dessus la mutation du modèle.
 function refreshCurrentPageCanvas() {
-  if (!document.getElementById('myCanvas')) {
+  if (!scoreParts.isEditorContext()) {
     return;
   }
-  Paper.deleteZones();
-  var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
-  if (zones && zones.length > 0) {
-    scoreParts.currentZones = zones;
-    Paper.drawZones(zones);
-  }
+  Paper.redrawCurrentPage();
 }
 
 scoreParts.getInfos = function () {

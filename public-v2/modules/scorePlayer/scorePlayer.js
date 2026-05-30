@@ -1,484 +1,149 @@
-import { state, on, emit, instrLabel, SYS_H } from '../partitions.state.js';
+import { on } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
+import { Paper } from '../../common/paper.js';
 
-// ============== Render staves and notes
-function renderSystems(targetId, count) {
-  const el = document.getElementById(targetId);
-  el.innerHTML = '';
-  for (let systemIndex = 0; systemIndex < count; systemIndex++) {
-    const sys = document.createElement('div');
-    sys.className = 'system';
-    const staff = document.createElement('div');
-    staff.className = 'staff';
-    sys.appendChild(staff);
+// scorePlayer v2 = éditeur de zones. Paper.js (commun) est maître de la logique :
+// modèle de zones, coordonnées, lecture (getPageZones) et persistance (via
+// scoreParts). Ce module ne fait que :
+//   - poser un <canvas> transparent par-dessus l'image de la PAGE COURANTE et y
+//     activer Paper (une seule page éditée à la fois, celle cliquée) ;
+//   - câbler les contrôles UI (bouton "New zone", clic page, effacer page) ;
+//   - garder la navigation, le zoom/pan et le mode mono-page existants.
 
-    // Treble clef
-    const clef = document.createElement('div');
-    clef.className = 'clef';
-    clef.innerHTML = `
-        <svg viewBox="0 0 22 60" fill="currentColor">
-          <path d="M11 2c-1.5 0-3 1.2-3.2 2.8C7.5 6.8 8 8.5 9 10.4c.5 1 1 2 1.4 3.1.4 1 .6 2.1.7 3.3 0 1-.1 2-.4 2.9-.3 1-.7 1.9-1.2 2.8-1.2 2.1-3 4-3 6.5 0 2.4 1.7 4.5 4 5 .4.1.9.1 1.3.1 1.4 0 2.7-.6 3.7-1.6 1-1 1.6-2.4 1.6-3.9 0-1.4-.5-2.7-1.4-3.7-.9-1-2.2-1.6-3.6-1.7v1.6c.9.1 1.7.5 2.3 1.1.6.6 1 1.5 1 2.4 0 .9-.4 1.8-1 2.4-.6.6-1.5 1-2.4 1-1.4 0-2.6-.8-3.2-2C9.4 25.7 11 23.6 12.2 21c.6-1.3 1-2.6 1.3-4 .3-1.4.4-2.8.3-4.2 0-1.4-.3-2.8-.8-4.1-.5-1.3-1.2-2.5-2-3.5-.6-.7-1-1.3-1-2 0-.6.5-1.2 1.1-1.2.6 0 1.1.5 1.1 1.1 0 .3-.1.6-.3.8 0 0-.2.2-.2.4 0 .4.4.6.7.6.5 0 1-.5 1-1.1C13.4 3 12.4 2 11 2zM10.4 36c-.4 0-.8.1-1.1.3-.3.2-.5.5-.5.9 0 .5.4.9.9.9.2 0 .4-.1.5-.2.1-.1.1-.2.1-.3 0-.1 0-.1-.1-.2-.1-.1-.2-.1-.3-.1-.1 0-.3 0-.3-.2 0-.2.2-.3.4-.3.4 0 .8.3.8.7 0 .5-.4 1-1 1-.7 0-1.2-.6-1.2-1.3 0-.9.7-1.6 1.7-1.6.5 0 1 .2 1.4.5l.6.5-.4.4-.5-.5c-.3-.2-.7-.4-1-.4z"/>
-        </svg>`;
-    sys.appendChild(clef);
+// ============== Canvas overlay : géométrie
+// Le <canvas> est enfant de .page (transformée CSS pour le zoom). On le
+// positionne/dimensionne sur la boîte de mise en page de l'<img> via la chaîne
+// offsetParent (valeurs de layout, insensibles à la transform de zoom) → le zoom
+// reste purement visuel et les coordonnées Paper restent invariantes au zoom.
+function offsetWithinPage(el, pageEl) {
+  let x = 0;
+  let y = 0;
+  let node = el;
+  while (node && node !== pageEl) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+}
 
-    // Notes layer
-    const notes = document.createElement('div');
-    notes.className = 'notes';
-    // Generate procedural notes
-    const seed = (targetId.charCodeAt(targetId.length - 1) + systemIndex) * 7;
-    const beats = 8 + (seed % 4);
-    for (let noteIndex = 0; noteIndex < beats; noteIndex++) {
-      const noteX = 14 + (noteIndex + 0.5) * (86 / beats); // % horizontal, leaving room for clef + bar
-      const lineY = 6 + ((seed + noteIndex * 3) % 6) * 5; // px vertical jitter inside staff (~33px range)
-      const note = document.createElement('span');
-      note.className = 'note' + ((seed + noteIndex) % 5 === 0 ? ' hollow' : '');
-      note.style.left = noteX + '%';
-      note.style.top = 8 + lineY + 'px';
-      notes.appendChild(note);
+function fitCanvasToImage(canvas, img, pageEl) {
+  const box = offsetWithinPage(img, pageEl);
+  canvas.style.left = box.x + 'px';
+  canvas.style.top = box.y + 'px';
+  canvas.style.width = box.w + 'px';
+  canvas.style.height = box.h + 'px';
+  canvas.width = box.w;
+  canvas.height = box.h;
+}
 
-      const stem = document.createElement('span');
-      stem.className = 'stem';
-      const stemUp = (seed + noteIndex) % 2 === 0;
-      stem.style.left = noteX + 0.7 + '%';
-      if (stemUp) {
-        stem.style.top = 8 + lineY - 22 + 'px';
-        stem.style.height = '22px';
-      } else {
-        stem.style.top = 8 + lineY + 4 + 'px';
-        stem.style.height = '22px';
-      }
-      notes.appendChild(stem);
-    }
-    // Beam pairs
-    for (let beamIndex = 0; beamIndex < beats - 1; beamIndex += 3) {
-      const beam = document.createElement('span');
-      beam.className = 'beam';
-      const x1 = 14 + (beamIndex + 0.5) * (86 / beats);
-      const x2 = 14 + (beamIndex + 1.5) * (86 / beats);
-      beam.style.left = x1 + '%';
-      beam.style.width = x2 - x1 + '%';
-      beam.style.top = '4px';
-      notes.appendChild(beam);
-    }
-    sys.appendChild(notes);
-
-    el.appendChild(sys);
+function whenImageReady(img, callback) {
+  if (img.complete && img.naturalWidth) {
+    callback();
+  } else {
+    img.addEventListener('load', callback, { once: true });
   }
 }
 
-// ============== Zones (interactive)
-// top / height stored in % relative to .zones container so we can freely move/resize.
-function renderZones() {
-  [
-    ['zones-left', state.ZONES_LEFT],
-    ['zones-right', state.ZONES_RIGHT],
-  ].forEach(([containerId, zones]) => {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = '';
-    zones.forEach((zone) => {
-      const ins = state.INSTRUMENTS.find((i) => i.id === zone.instr);
-      if (!ins || !ins.on) return;
-      const div = document.createElement('div');
-      div.className = 'zone ' + zone.instr;
-      div.dataset.zoneId = zone.id;
-      div.style.top = zone.top + '%';
-      div.style.height = zone.height + '%';
-      div.style.left = zone.x + '%';
-      div.style.width = zone.w + '%';
-      div.innerHTML = `
-          <span class="zone-tag" data-act="switch">${instrLabel(zone.instr)}</span>
-          <button class="del" data-act="delete" title="Supprimer la zone">
-            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
-          </button>
-          <div class="rs top" data-act="resize-top"></div>
-          <div class="rs bot" data-act="resize-bot"></div>
-        `;
-      attachZoneEvents(div, zone, zones, containerId);
-      el.appendChild(div);
-    });
+// Côté (0 = gauche, 1 = droite) affichant la page courante dans le spread.
+function currentSide() {
+  if (scoreParts.singlePage) return 0;
+  return scoreParts.currentPage === scoreParts.spreadOrigin() ? 0 : 1;
+}
+
+function clearCanvasPixels(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ============== (Re)configure l'éditeur sur la page courante
+// Seule la page courante reçoit un canvas Paper actif (.editing → pointer-events).
+// L'autre page n'affiche que son image (zones visibles uniquement sur la page
+// éditée — l'édition simultanée des deux pages est une phase ultérieure).
+function setupEditorForCurrentPage() {
+  const stage = document.getElementById('stage');
+  if (stage) stage.classList.remove('empty');
+
+  const side = currentSide();
+  const leftPage = document.querySelector('.page-left');
+  const rightPage = document.querySelector('.page-right');
+  if (!leftPage || !rightPage) return;
+
+  leftPage.classList.toggle('editing', side === 0);
+  rightPage.classList.toggle('editing', side === 1 && !scoreParts.singlePage);
+
+  const canvasId = side === 0 ? 'canvas-left' : 'canvas-right';
+  const systemsId = side === 0 ? 'systems-left' : 'systems-right';
+  const pageEl = side === 0 ? leftPage : rightPage;
+  const otherCanvasId = side === 0 ? 'canvas-right' : 'canvas-left';
+
+  clearCanvasPixels(document.getElementById(otherCanvasId));
+
+  const canvas = document.getElementById(canvasId);
+  const systems = document.getElementById(systemsId);
+  if (!canvas || !systems) return;
+  const img = systems.querySelector('img');
+  if (!img) return;
+
+  whenImageReady(img, () => {
+    // setTimeout(0) : laisse les autres handlers synchrones (aspect-ratio
+    // mono-page, resetZoom) s'appliquer avant de mesurer la boîte de l'image.
+    // (Plus fiable que requestAnimationFrame, throttlé quand l'onglet est masqué.)
+    setTimeout(() => {
+      fitCanvasToImage(canvas, img, pageEl);
+      Paper.setupCanvas(canvas, img);
+      Paper.redrawCurrentPage();
+    }, 0);
   });
 }
 
-function attachZoneEvents(div, zone, zones, containerId) {
-  const container = document.getElementById(containerId);
+// ============== Contrôles UI
+function wireControls() {
+  const stage = document.getElementById('stage');
+  const actNewZone = document.getElementById('act-new-zone');
+  const cancelNewZone = document.getElementById('cancel-new-zone');
 
-  div.querySelector('[data-act="delete"]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const idx = zones.indexOf(zone);
-    if (idx >= 0) zones.splice(idx, 1);
-    emit('zones-changed');
-  });
+  // Reflète le mode "pending new zone" dans l'UI (bannière + bouton actif).
+  Paper.onPendingChange = (isPending) => {
+    if (stage) stage.classList.toggle('pending-zone', isPending);
+    if (actNewZone) actNewZone.classList.toggle('active', isPending);
+  };
 
-  div
-    .querySelector('[data-act="switch"]')
-    .addEventListener('mousedown', (e) => e.stopPropagation());
-  div.querySelector('[data-act="switch"]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('.zone-pop').forEach((p) => p.remove());
-    const pop = document.createElement('div');
-    pop.className = 'zone-pop';
-    state.INSTRUMENTS.forEach((ins) => {
-      const button = document.createElement('button');
-      button.className = ins.id === zone.instr ? 'active' : '';
-      button.innerHTML = `<span class="sw" style="background:${ins.color}"></span> ${ins.name}`;
-      button.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        zone.instr = ins.id;
-        zone.label = ins.name;
-        if (!ins.on) ins.on = true;
-        pop.remove();
-        emit('instruments-changed');
-        emit('zones-changed');
-      });
-      pop.appendChild(button);
+  if (actNewZone) {
+    actNewZone.addEventListener('click', () => Paper.setPending(!Paper.pendingNewZone));
+  }
+  if (cancelNewZone) {
+    cancelNewZone.addEventListener('click', () => Paper.setPending(false));
+  }
+
+  // Clic sur une page → elle devient la page courante (gauche = origine du
+  // spread, droite = origine + 1). scoreParts sauve les zones de l'ancienne page.
+  document.querySelectorAll('.page').forEach((pageEl) => {
+    const side = pageEl.classList.contains('page-left') ? 0 : 1;
+    pageEl.addEventListener('mousedown', () => {
+      const origin = scoreParts.spreadOrigin();
+      const targetPage = scoreParts.singlePage ? origin : origin + side;
+      scoreParts.setCurrentPage(targetPage);
     });
-    const rect = e.target.getBoundingClientRect();
-    pop.style.left = rect.left + 'px';
-    pop.style.top = rect.bottom + 4 + 'px';
-    document.body.appendChild(pop);
-    setTimeout(() => {
-      const closer = (ev) => {
-        if (!pop.contains(ev.target)) {
-          pop.remove();
-          document.removeEventListener('click', closer);
-        }
-      };
-      document.addEventListener('click', closer);
-    }, 0);
   });
 
-  // Resize handles (vertical only)
-  div.querySelectorAll('.rs').forEach((handle) => {
-    handle.addEventListener('mousedown', (e) => {
-      e.preventDefault();
+  // Effacer les zones d'une page.
+  document.querySelectorAll('.clear-zones-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      startResize(e, zone, handle.dataset.act === 'resize-top', container);
+      const pageEl = btn.closest('.page');
+      const side = pageEl.classList.contains('page-left') ? 0 : 1;
+      const origin = scoreParts.spreadOrigin();
+      const pageIndex = scoreParts.singlePage ? origin : origin + side;
+      scoreParts.deletePageZones(pageIndex);
+      if (pageIndex === scoreParts.currentPage) Paper.redrawCurrentPage();
+      scoreParts.saveZones(function () {});
     });
   });
-
-  // Delete button shouldn't start drag
-  div
-    .querySelector('[data-act="delete"]')
-    .addEventListener('mousedown', (e) => e.stopPropagation());
-
-  // Drag to move
-  div.addEventListener('mousedown', (e) => {
-    if (e.target.closest('[data-act]')) return;
-    startDrag(e, zone, container, div);
-  });
 }
 
-function startDrag(e, zone, container, div) {
-  e.preventDefault();
-  const rect = container.getBoundingClientRect();
-  const startY = e.clientY;
-  const startX = e.clientX;
-  const startTop = zone.top;
-  const startLeft = zone.x;
-  div.classList.add('dragging', 'active');
-  function move(ev) {
-    const dy = ((ev.clientY - startY) / rect.height) * 100;
-    const dx = ((ev.clientX - startX) / rect.width) * 100;
-    zone.top = Math.max(0, Math.min(100 - zone.height, startTop + dy));
-    zone.x = Math.max(0, Math.min(100 - zone.w, startLeft + dx));
-    div.style.top = zone.top + '%';
-    div.style.left = zone.x + '%';
-  }
-  function up() {
-    div.classList.remove('dragging', 'active');
-    window.removeEventListener('mousemove', move);
-    window.removeEventListener('mouseup', up);
-  }
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', up);
-}
-
-function startResize(e, zone, fromTop, container) {
-  const rect = container.getBoundingClientRect();
-  const startY = e.clientY;
-  const startTop = zone.top;
-  const startHeight = zone.height;
-  const minHeight = 2;
-  const div = container.querySelector('[data-zone-id="' + zone.id + '"]');
-  div && div.classList.add('active');
-  function move(ev) {
-    const dy = ((ev.clientY - startY) / rect.height) * 100;
-    if (fromTop) {
-      const newTop = Math.max(0, Math.min(startTop + startHeight - minHeight, startTop + dy));
-      const delta = newTop - startTop;
-      zone.top = newTop;
-      zone.height = Math.max(minHeight, startHeight - delta);
-    } else {
-      zone.height = Math.max(minHeight, Math.min(100 - zone.top, startHeight + dy));
-    }
-    if (div) {
-      div.style.top = zone.top + '%';
-      div.style.height = zone.height + '%';
-    }
-  }
-  function up() {
-    div && div.classList.remove('active');
-    window.removeEventListener('mousemove', move);
-    window.removeEventListener('mouseup', up);
-  }
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', up);
-}
-
-// ============== Multi-selection (rubber-band marquee)
-// Drag on empty area of a page → select all intersecting zones → toolbar appears
-function setupMarquee(pageEl) {
-  pageEl.addEventListener('mousedown', (e) => {
-    // ignore if on a zone, a clear button, or in 'new zone' mode
-    if (pendingZone) return;
-    if (e.target.closest('.zone') || e.target.closest('.clear-zones-btn')) return;
-    e.preventDefault();
-
-    // clear previous selection across pages
-    document.querySelectorAll('.zone.selected').forEach((z) => z.classList.remove('selected'));
-    document.querySelectorAll('.multi-bar').forEach((b) => b.remove());
-
-    const stageBody = document.getElementById('stage-body');
-    const sbRect = stageBody.getBoundingClientRect();
-    const marquee = document.createElement('div');
-    marquee.className = 'marquee';
-    stageBody.appendChild(marquee);
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    function move(ev) {
-      const x = Math.min(startX, ev.clientX);
-      const y = Math.min(startY, ev.clientY);
-      const w = Math.abs(ev.clientX - startX);
-      const h = Math.abs(ev.clientY - startY);
-      marquee.style.left = x - sbRect.left + 'px';
-      marquee.style.top = y - sbRect.top + 'px';
-      marquee.style.width = w + 'px';
-      marquee.style.height = h + 'px';
-    }
-    function up() {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-      const mRect = marquee.getBoundingClientRect();
-      marquee.remove();
-      if (mRect.width < 4 || mRect.height < 4) return;
-
-      // Find intersecting zones across BOTH pages
-      const selected = [];
-      document.querySelectorAll('.zone').forEach((zoneEl) => {
-        const r = zoneEl.getBoundingClientRect();
-        const intersects = !(
-          r.right < mRect.left ||
-          r.left > mRect.right ||
-          r.bottom < mRect.top ||
-          r.top > mRect.bottom
-        );
-        if (intersects) {
-          zoneEl.classList.add('selected');
-          selected.push(zoneEl);
-        }
-      });
-      if (selected.length === 0) return;
-
-      showMultiBar(selected, mRect);
-    }
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-  });
-}
-
-function findZoneObj(zoneEl) {
-  const id = zoneEl.dataset.zoneId;
-  let zone = state.ZONES_LEFT.find((x) => x.id === id);
-  if (zone) return { zone, arr: state.ZONES_LEFT };
-  zone = state.ZONES_RIGHT.find((x) => x.id === id);
-  if (zone) return { zone, arr: state.ZONES_RIGHT };
-  return null;
-}
-
-function showMultiBar(selectedEls, mRect) {
-  const bar = document.createElement('div');
-  bar.className = 'multi-bar on';
-  // position fixed in viewport coordinates, above the marquee
-  const margin = 10;
-  let left = mRect.left + mRect.width / 2;
-  let top = mRect.top - 50;
-  if (top < margin) top = mRect.bottom + 10;
-  bar.style.left = left + 'px';
-  bar.style.top = top + 'px';
-  bar.style.transform = 'translateX(-50%)';
-  bar.innerHTML = `
-      <span class="mb-count">${selectedEls.length} zones</span>
-      <button data-act="move" title="Déplacer toutes les zones">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3M12 2v20M2 12h20"/></svg>
-      </button>
-      <button data-act="instrument" title="Changer l'instrument">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M14 18h7M18 14v8"/></svg>
-      </button>
-      <button data-act="delete" class="danger" title="Supprimer toutes les zones">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-      </button>
-    `;
-  document.body.appendChild(bar);
-
-  // clamp horizontal to viewport
-  requestAnimationFrame(() => {
-    const r = bar.getBoundingClientRect();
-    let dx = 0;
-    if (r.left < 8) dx = 8 - r.left;
-    else if (r.right > window.innerWidth - 8) dx = window.innerWidth - 8 - r.right;
-    if (dx) bar.style.left = parseFloat(bar.style.left) + dx + 'px';
-  });
-
-  // Move all
-  bar.querySelector('[data-act="move"]').addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startStates = selectedEls.map((zoneEl) => {
-      const info = findZoneObj(zoneEl);
-      const container = zoneEl.parentElement;
-      const cRect = container.getBoundingClientRect();
-      return { zoneEl, info, cRect, startTop: info.zone.top, startX: info.zone.x };
-    });
-    function move(ev) {
-      startStates.forEach((s) => {
-        const dy = ((ev.clientY - startY) / s.cRect.height) * 100;
-        const dx = ((ev.clientX - startX) / s.cRect.width) * 100;
-        s.info.zone.top = Math.max(0, Math.min(100 - s.info.zone.height, s.startTop + dy));
-        s.info.zone.x = Math.max(0, Math.min(100 - s.info.zone.w, s.startX + dx));
-        s.zoneEl.style.top = s.info.zone.top + '%';
-        s.zoneEl.style.left = s.info.zone.x + '%';
-      });
-    }
-    function up() {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-    }
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-  });
-
-  // Delete all
-  bar.querySelector('[data-act="delete"]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    selectedEls.forEach((zoneEl) => {
-      const info = findZoneObj(zoneEl);
-      if (!info) return;
-      const idx = info.arr.indexOf(info.zone);
-      if (idx >= 0) info.arr.splice(idx, 1);
-    });
-    bar.remove();
-    emit('zones-changed');
-  });
-
-  // Change instrument for all
-  bar.querySelector('[data-act="instrument"]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('.zone-pop').forEach((p) => p.remove());
-    const pop = document.createElement('div');
-    pop.className = 'zone-pop';
-    state.INSTRUMENTS.forEach((ins) => {
-      const button = document.createElement('button');
-      button.innerHTML = `<span class="sw" style="background:${ins.color}"></span> ${ins.name}`;
-      button.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        if (!ins.on) ins.on = true;
-        selectedEls.forEach((zoneEl) => {
-          const info = findZoneObj(zoneEl);
-          if (info) {
-            info.zone.instr = ins.id;
-            info.zone.label = ins.name;
-          }
-        });
-        pop.remove();
-        emit('instruments-changed');
-        emit('zones-changed');
-      });
-      pop.appendChild(button);
-    });
-    const rect = e.currentTarget.getBoundingClientRect();
-    pop.style.left = rect.left + 'px';
-    pop.style.top = rect.bottom + 4 + 'px';
-    document.body.appendChild(pop);
-    setTimeout(() => {
-      const closer = (ev) => {
-        if (!pop.contains(ev.target)) {
-          pop.remove();
-          document.removeEventListener('click', closer);
-        }
-      };
-      document.addEventListener('click', closer);
-    }, 0);
-  });
-}
-
-// Click outside any selected zone or the bar deselects
-document.addEventListener('mousedown', (e) => {
-  if (
-    e.target.closest('.multi-bar') ||
-    e.target.closest('.zone.selected') ||
-    e.target.closest('.marquee') ||
-    e.target.closest('.zone-pop')
-  )
-    return;
-  document.querySelectorAll('.zone.selected').forEach((z) => z.classList.remove('selected'));
-  document.querySelectorAll('.multi-bar').forEach((b) => b.remove());
-});
-
-// ============== New zone (action)
-const stage = document.getElementById('stage');
-const actNewZone = document.getElementById('act-new-zone');
-let pendingZone = false;
-function setPending(on) {
-  pendingZone = on;
-  stage.classList.toggle('pending-zone', on);
-  actNewZone.classList.toggle('active', on);
-}
-actNewZone.addEventListener('click', () => setPending(!pendingZone));
-document.getElementById('cancel-new-zone').addEventListener('click', () => setPending(false));
-
-function attachCreateOnPage(pageEl, zonesKey, containerId, spreadSide) {
-  pageEl.addEventListener('click', (e) => {
-    // Clic gauche sur une page = elle devient la page courante exacte (gauche =
-    // origine du spread, droite = origine + 1). Les mouvements démarrent ici.
-    const origin = scoreParts.spreadOrigin();
-    scoreParts.setCurrentPage(scoreParts.singlePage ? origin : origin + spreadSide);
-
-    if (!pendingZone) return;
-    // only react if click is inside the .zones overlay area
-    const container = document.getElementById(containerId);
-    const rect = container.getBoundingClientRect();
-    const clickX = e.clientX;
-    const clickY = e.clientY;
-    if (clickX < rect.left || clickX > rect.right || clickY < rect.top || clickY > rect.bottom)
-      return;
-    const xPct = ((clickX - rect.left) / rect.width) * 100;
-    const yPct = ((clickY - rect.top) / rect.height) * 100;
-    const width = 80;
-    const height = SYS_H - 4;
-    const ins = state.INSTRUMENTS.find((i) => i.id === state.activeInstr) || state.INSTRUMENTS[0];
-    if (!ins.on) ins.on = true;
-    state[zonesKey].push({
-      id: 'z' + Math.random().toString(36).slice(2, 7),
-      instr: ins.id,
-      label: ins.name,
-      x: Math.max(0, Math.min(100 - width, xPct - width / 2)),
-      w: width,
-      top: Math.max(0, Math.min(100 - height, yPct - height / 2)),
-      height,
-    });
-    setPending(false);
-    emit('instruments-changed');
-    emit('zones-changed');
-  });
-}
-
-// ============== Init
-renderZones();
-
+// ============== Navigation (flèches latérales)
 document.querySelector('.nav-arrow.prev').addEventListener('click', function () {
   scoreParts.previousPage();
 });
@@ -486,14 +151,10 @@ document.querySelector('.nav-arrow.next').addEventListener('click', function () 
   scoreParts.nextPage();
 });
 
-const pageLeft = document.querySelector('.page-left');
-const pageRight = document.querySelector('.page-right');
-setupMarquee(pageLeft);
-setupMarquee(pageRight);
-attachCreateOnPage(pageLeft, 'ZONES_LEFT', 'zones-left', 0);
-attachCreateOnPage(pageRight, 'ZONES_RIGHT', 'zones-right', 1);
-
-on('zones-changed', renderZones);
+// ============== Init
+wireControls();
+on('score-loaded', setupEditorForCurrentPage);
+on('page-changed', setupEditorForCurrentPage);
 
 // ============== Responsive single-page mode (small / short screens)
 // On small screens the 2-page spread is unreadable, so we show one page at a
@@ -535,7 +196,7 @@ function fitSinglePageToImage() {
   else img.addEventListener('load', apply, { once: true });
 }
 smallScreen.addEventListener('change', applyResponsiveMode);
-// Initialise the flag without reloading (no score loaded yet at boot).
+// Initialise le flag sans recharger (aucune partition chargée au boot).
 scoreParts.singlePage = smallScreen.matches;
 stageEl.classList.toggle('single-page', smallScreen.matches);
 
@@ -601,13 +262,14 @@ document.getElementById('stage-body').addEventListener(
   { passive: false }
 );
 
-// Drag to pan (only while zoomed). Capture phase so it pre-empts marquee/zone drag.
+// Drag to pan (only while zoomed). Capture phase so it pre-empts zone drag.
 document.getElementById('stage-body').addEventListener(
   'mousedown',
   (e) => {
     if (zoom <= 1) return;
-    if (pendingZone) return;
-    if (e.target.closest('.zone') || e.target.closest('[data-act]')) return;
+    if (Paper.pendingNewZone) return;
+    if (e.target.closest('.zone-canvas.editing') || e.target.closest('[data-act]')) return;
+    if (e.target.closest('.page.editing .zone-canvas')) return;
     if (e.target.closest('.zoom-controls') || e.target.closest('.nav-arrow')) return;
     e.preventDefault();
     e.stopPropagation();

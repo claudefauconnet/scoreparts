@@ -7,22 +7,23 @@
 <!-- ===================== BOOK (loaded state) ===================== -->
 <div class="book" id="book">
   <!-- Left page -->
-  <div class="page page-left">
+  <div class="page page-left" data-side="0">
     <div class="sheet">
       <div class="systems" id="systems-left"></div>
     </div>
-    <div class="zones" id="zones-left"></div>
+    <!-- Transparent overlay : Paper.js dessine les zones de cette page ici -->
+    <canvas class="zone-canvas" id="canvas-left"></canvas>
     <button class="clear-zones-btn" title="Effacer les zones de cette page">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
     </button>
   </div>
 
   <!-- Right page -->
-  <div class="page page-right">
+  <div class="page page-right" data-side="1">
     <div class="sheet">
       <div class="systems" id="systems-right"></div>
     </div>
-    <div class="zones" id="zones-right"></div>
+    <canvas class="zone-canvas" id="canvas-right"></canvas>
     <button class="clear-zones-btn" title="Effacer les zones de cette page">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
     </button>
