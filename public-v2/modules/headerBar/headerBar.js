@@ -3,7 +3,13 @@ import { scoreParts } from '../../common/scoreParts.js';
 import { saveScoreInfos } from '../../common/proxy.js';
 
 // ============== Mouvements
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+function toRoman(n) {
+  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let result = '';
+  vals.forEach((val, i) => { while (n >= val) { result += syms[i]; n -= val; } });
+  return result;
+}
 
 function getCurrentPage() {
   return scoreParts.currentPage + 1;
@@ -134,7 +140,7 @@ function renderMvt() {
   scoreParts.currentMovement = movement.name;
   const order = state.MOVEMENTS.findIndex((x) => x.id === state.activeMvt);
   document.getElementById('mvt-number').innerHTML =
-    'Mouvement <span class="roman">' + (ROMAN[order] || order + 1) + '</span>';
+    'Mouvement <span class="roman">' + toRoman(order + 1) + '</span>';
   document.getElementById('mvt-name').value = movement.name;
 
   const popList = document.getElementById('mvt-list');
@@ -144,7 +150,7 @@ function renderMvt() {
     const item = document.createElement('div');
     item.className = 'mvt-item' + (mv.id === state.activeMvt ? ' active' : '');
     item.innerHTML = `
-        <span class="num">${ROMAN[i] || i + 1}</span>
+        <span class="num">${toRoman(i + 1)}</span>
         <span class="name">${mv.name || 'Sans titre'}</span>
         <span class="range">p. ${range.start}–${range.end}</span>
         <button class="del" title="Supprimer ce mouvement">
