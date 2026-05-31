@@ -11,11 +11,33 @@
 //   - interactions sans touches modificatrices : bouton "New zone" (mode activable
 //     persistant → on peut tracer plusieurs zones), glisser le corps pour
 //     déplacer, glisser le bord HAUT ou BAS pour redimensionner, croix pour
-//     supprimer. Une pastille d'instrument (placeholder) est affichée par zone
+//     supprimer. Une pastille de voix (placeholder) est affichée par zone
 //     (l'affectation réelle se fera dans la partie voices).
 import { scoreParts } from './scoreParts.js';
+import { state } from '../modules/partitions.state.js';
 
 export const Paper = {};
+
+// Couleurs + libellé d'une zone selon la voix affectée (zone.voice = id de voix).
+// Voix inconnue / non affectée → couleur neutre de base et libellé générique.
+function zoneColors(zone) {
+  var voice = zone.voice
+    ? state.VOICES.find(function (v) {
+        return v.id === zone.voice;
+      })
+    : null;
+  if (!voice) {
+    return { fill: ZONE_FILL, stroke: ZONE_STROKE, pill: PILL_BG, label: zone.label || 'Voix' };
+  }
+  var fill = new paper.Color(voice.color);
+  fill.alpha = 0.16;
+  return {
+    fill: fill,
+    stroke: new paper.Color(voice.color),
+    pill: new paper.Color(voice.color),
+    label: voice.name,
+  };
+}
 
 // ============== Constantes de style / interaction (look module)
 const ZONE_RADIUS = 8; // coins arrondis
@@ -25,7 +47,7 @@ const BADGE_GRAB = 12; // px de proximité au centre de la croix → suppression
 const MIN_ZONE_HEIGHT = 8;
 const HIT_OPTIONS = { fill: true, stroke: true, tolerance: 4 };
 
-// Couleur de base d'une zone non affectée (l'affectation d'instrument viendra
+// Couleur de base d'une zone non affectée (l'affectation de voix viendra
 // dans la partie voices et recolorera la zone).
 const BASE_COLOR = '#4a7a8c';
 const ZONE_FILL = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.16);
@@ -239,7 +261,7 @@ function onZoneMouseDown(event) {
     return;
   }
   if (region === 'pill') {
-    // Réservé à l'affectation d'instrument (phase voices). Aucun effet pour l'instant.
+    // Réservé à l'affectation de voix (phase voices). Aucun effet pour l'instant.
     if (event.stop) event.stop();
     return;
   }
@@ -349,9 +371,10 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
 
   // Rectangle de la zone (corps).
   var rectangle = new paper.Rectangle(new paper.Point(left, top), new paper.Point(right, bottom));
+  var colors = zoneColors(zone);
   var path = new paper.Path.Rectangle(rectangle, ZONE_RADIUS);
-  path.fillColor = ZONE_FILL;
-  path.strokeColor = ZONE_STROKE;
+  path.fillColor = colors.fill;
+  path.strokeColor = colors.stroke;
   path.strokeWidth = 1.5;
   path.data.type = 'zone';
   path.data.page = pageIndex;
@@ -364,9 +387,9 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   group.data.role = 'zoneGroup';
   group.data.rect = path;
 
-  // Pastille d'instrument (placeholder) — toujours visible, chevauche le bord haut.
-  var label = zone.instrLabel || zone.label || 'Instrument';
-  var pill = makePill(label, left + 1, top);
+  // Pastille de voix — toujours visible, chevauche le bord haut. Couleur + nom
+  // de la voix affectée (zone.voice), sinon neutre.
+  var pill = makePill(colors.label, left + 1, top, colors.pill);
   group.addChild(pill);
   group.data.pill = pill;
   group.data.pillBounds = pill.bounds;
@@ -401,7 +424,7 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
 
 // Pastille arrondie (fond coloré + texte blanc), ancrée par son coin haut-gauche
 // sur (leftX, centerY) → centrée verticalement sur le bord haut de la zone.
-function makePill(text, leftX, centerY) {
+function makePill(text, leftX, centerY, pillColor) {
   var label = new paper.PointText(new paper.Point(0, 0));
   label.content = text;
   label.fontFamily = 'Inter, system-ui, sans-serif';
@@ -414,7 +437,7 @@ function makePill(text, leftX, centerY) {
   var h = label.bounds.height + padY * 2;
   var topLeft = new paper.Point(leftX, centerY - h / 2);
   var bg = new paper.Path.Rectangle(new paper.Rectangle(topLeft, new paper.Size(w, h)), 3);
-  bg.fillColor = PILL_BG;
+  bg.fillColor = pillColor || PILL_BG;
   label.position = bg.bounds.center;
   var pill = new paper.Group([bg, label]);
   pill.data.role = 'pill';

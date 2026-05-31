@@ -92,9 +92,8 @@ router.put('/scoreInfos/:pdfName', function (req, res) {
 
   if (req.body.category !== undefined) scoreInfos.category = req.body.category;
   if (req.body.composer !== undefined) scoreInfos.composer = req.body.composer;
-  // Liste autoritative des mouvements (noms + ordre + pages inférées des zones).
-  // Permet de persister un mouvement même s'il n'a pas encore de zones.
   if (req.body.movements !== undefined) scoreInfos.movements = req.body.movements;
+  if (req.body.voices !== undefined) scoreInfos.voices = req.body.voices;
 
   fs.writeFileSync(
     getScoreInfosPath(req.params.pdfName),

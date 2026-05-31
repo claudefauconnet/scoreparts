@@ -224,7 +224,7 @@ var Voices = (function () {
           $('#pdfLinkDiv_' + voice.id.replace(/ /, '_')).html('processing...');
 
           // $('#voicesTreeDiv').jstree().uncheck_node(voice.id)
-          Proxy.generateInstrumentScore(voice.label, voicePagesZones, function (err, result) {
+          Proxy.generateVoiceScore(voice.label, voicePagesZones, function (err, result) {
             if (err) {
               return callbackEachVoice(err);
             }

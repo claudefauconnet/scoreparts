@@ -94,6 +94,9 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
     if (!scoreParts.infos.movements) {
       scoreParts.infos.movements = [];
     }
+    if (!scoreParts.infos.voices) {
+      scoreParts.infos.voices = [];
+    }
     if (scoreParts.infos.totalPages) {
       scoreParts.totalPages = scoreParts.infos.totalPages;
       $('#page-total').text('/ ' + scoreParts.infos.totalPages);
@@ -321,6 +324,79 @@ scoreParts.deleteMovement = function (movementName) {
   }
   refreshCurrentPageCanvas();
   scoreParts.saveZones();
+};
+
+// Supprime toutes les zones affectées à une voix (toutes pages), rafraîchit le
+// canvas courant, puis sauve. La voix elle-même reste dans infos.voices.
+scoreParts.deleteVoiceZones = function (voiceId) {
+  if (!voiceId) {
+    return;
+  }
+  scoreParts.writeCurrentPageZones();
+  var pages = scoreParts.allPagesZones.pages;
+  for (var pageKey in pages) {
+    pages[pageKey] = pages[pageKey].filter(function (zone) {
+      return zone.voice !== voiceId;
+    });
+  }
+  refreshCurrentPageCanvas();
+  scoreParts.saveZones();
+};
+
+// Auto-attribution des voix aux zones (dérivé v1 : onSelectVoice/getDistinctVoices).
+// Sur chaque page, les zones du mouvement (triées haut→bas) sont taguées de façon
+// cyclique : zone[j] → voiceIds[j % n] (ordre voix-par-système, comme la v1).
+// movementName falsy → on tague toutes les zones quel que soit le mouvement.
+scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
+  if (!voiceIds || voiceIds.length === 0) {
+    return;
+  }
+  scoreParts.writeCurrentPageZones();
+  var voiceCount = voiceIds.length;
+  var pages = scoreParts.allPagesZones.pages;
+  for (var pageKey in pages) {
+    var movementZones = pages[pageKey]
+      .filter(function (zone) {
+        return !movementName || zone.movement === movementName;
+      })
+      .sort(function (a, b) {
+        return a.y - b.y;
+      });
+    movementZones.forEach(function (zone, zoneIndex) {
+      zone.voice = voiceIds[zoneIndex % voiceCount];
+    });
+  }
+  refreshCurrentPageCanvas();
+  scoreParts.saveZones();
+};
+
+// Nombre de zones affectées à une voix (toutes pages). Capture d'abord la page
+// courante (canvas) pour compter les zones non encore persistées.
+scoreParts.countVoiceZones = function (voiceId) {
+  scoreParts.writeCurrentPageZones();
+  var pages = scoreParts.allPagesZones.pages;
+  var total = 0;
+  for (var pageKey in pages) {
+    pages[pageKey].forEach(function (zone) {
+      if (zone.voice === voiceId) total += 1;
+    });
+  }
+  return total;
+};
+
+// Toutes les zones d'une voix, groupées par page : { pages: { <pageIndex>: [...] } }.
+// Format attendu par generateVoiceScore / le backend generatePart.
+scoreParts.voicePagesZones = function (voiceId) {
+  scoreParts.writeCurrentPageZones();
+  var pages = scoreParts.allPagesZones.pages;
+  var result = { pages: {} };
+  for (var pageKey in pages) {
+    var voiceZones = pages[pageKey].filter(function (zone) {
+      return zone.voice === voiceId;
+    });
+    if (voiceZones.length) result.pages[pageKey] = voiceZones;
+  }
+  return result;
 };
 
 function retagZonesMovement(oldName, newName) {

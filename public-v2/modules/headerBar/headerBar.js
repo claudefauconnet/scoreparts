@@ -1,6 +1,7 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
 import { saveScoreInfos } from '../../common/proxy.js';
+import { persistVoices } from '../voices/voices.js';
 
 // ============== Mouvements
 function toRoman(n) {
@@ -338,8 +339,25 @@ loadMovements();
 renderMvt();
 
 // ============== Reset all
+function confirmAndResetAll() {
+  if (!confirm('Tout recommencer ? Cette action supprime définitivement toutes les voix, zones et mouvements.')) return;
+  resetAll();
+  const pages = scoreParts.allPagesZones.pages;
+  Object.keys(pages).forEach((pageNum) => { pages[pageNum] = []; });
+  scoreParts.currentZones = [];
+  scoreParts.saveZones(function () {});
+  persistVoices();
+  if (scoreParts.pdfName) {
+    if (scoreParts.infos) scoreParts.infos.movements = [];
+    saveScoreInfos(scoreParts.pdfName, { movements: [] }, function (err) {
+      if (err) console.error('Erreur saveScoreInfos (reset movements)', err);
+    });
+  }
+  emit('page-changed');
+}
+
 const resetBtn = document.getElementById('reset-btn');
-if (resetBtn) resetBtn.addEventListener('click', resetAll);
+if (resetBtn) resetBtn.addEventListener('click', confirmAndResetAll);
 
 // ============== Download split button
 const dlSplit = document.getElementById('dl-split');
@@ -350,17 +368,17 @@ dlMenu.querySelector('[data-fmt="pdf"]').classList.add('default');
 dlCaret.addEventListener('click', (e) => {
   e.stopPropagation();
   dlMenu.classList.toggle('open');
-  // refresh zip count from active instruments
-  const activeCount = state.INSTRUMENTS.filter((i) => i.on).length;
+  // refresh zip count from active voices
+  const activeCount = state.VOICES.filter((voice) => voice.on).length;
   const badge = document.getElementById('dl-zip-count');
   const sub = document.getElementById('dl-zip-sub');
   badge.textContent = activeCount;
   sub.textContent =
     activeCount === 0
-      ? 'aucun instrument actif'
+      ? 'aucune voix active'
       : activeCount === 1
-        ? '1 PDF (instrument actif)'
-        : `${activeCount} PDF (un par instrument actif)`;
+        ? '1 PDF (voix active)'
+        : `${activeCount} PDF (une par voix active)`;
 });
 document.addEventListener('click', (e) => {
   if (!dlSplit.contains(e.target)) dlMenu.classList.remove('open');

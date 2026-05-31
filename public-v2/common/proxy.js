@@ -97,6 +97,38 @@ export function loadZones(scoreParts, callback) {
   });
 }
 
+// Génère le PDF d'UNE voix : le backend (POST /api/score/generatePart) découpe la
+// partition source selon les zones de la voix et renvoie le chemin du PDF.
+// Version v2 (sans DOM v1) : tous les paramètres sont passés explicitement.
+//   part         = libellé de la voix (nom affiché / nom de fichier)
+//   pagesZones   = { pages: { <pageIndex>: [zone, ...] } } limité à cette voix
+export function generateVoiceScore(
+  { sourcePdfName, targetPdfName, part, pagesZones, margin, coefV, coefH },
+  callback
+) {
+  $.ajax({
+    type: 'POST',
+    url: '/api/score/generatePart',
+    data: {
+      generatePart: 1,
+      part: part,
+      margin: margin,
+      sourcePdfName: sourcePdfName,
+      zonesStr: JSON.stringify(pagesZones),
+      imgScaleCoefV: coefV,
+      imgScaleCoefH: coefH,
+      targetPdfName: targetPdfName,
+    },
+    dataType: 'json',
+    success: function (data) {
+      callback(null, data.result);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
 export function uploadPdf({ formData, onUploadProgress }, callback) {
   $.ajax({
     type: 'POST',

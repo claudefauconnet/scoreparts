@@ -362,7 +362,7 @@
   cursor: crosshair;
 }
 
-/* Instrument zones (interactive) */
+/* Voice zones (interactive) */
 .zones {
   position: absolute;
   inset: 0;
@@ -430,7 +430,7 @@
 }
 .zone .del:hover { background: var(--violon1); color: white; border-color: var(--violon1); }
 .zone .del svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.4; }
-/* tag (instrument switcher) */
+/* tag (voice switcher) */
 .zone .zone-tag {
   position: absolute;
   top: -10px; left: -1px;
@@ -454,7 +454,7 @@
 }
 .zone .zone-tag:hover { filter: brightness(1.08); }
 
-/* per-instrument color */
+/* per-voice color */
 .zone.violon1 { border-color: var(--violon1); background: color-mix(in srgb, var(--violon1) 16%, transparent); }
 .zone.violon1 .zone-tag { background: var(--violon1); }
 .zone.violon2 { border-color: var(--violon2); background: color-mix(in srgb, var(--violon2) 16%, transparent); }
@@ -464,7 +464,7 @@
 .zone.piano { border-color: var(--piano); background: color-mix(in srgb, var(--piano) 16%, transparent); }
 .zone.piano .zone-tag { background: var(--piano); }
 
-/* instrument switch popover */
+/* voice switch popover */
 .zone-pop {
   position: absolute;
   background: white;

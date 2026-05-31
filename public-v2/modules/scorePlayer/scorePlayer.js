@@ -1,4 +1,4 @@
-import { on } from '../partitions.state.js';
+import { on, state } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
 import { Paper } from '../../common/paper.js';
 
@@ -149,7 +149,15 @@ function wireControls() {
   };
 
   if (actNewZone) {
-    actNewZone.addEventListener('click', () => Paper.setPending(!Paper.pendingNewZone));
+    actNewZone.addEventListener('click', () => {
+      // Pas de zone sans voix : on ne peut tracer qu'une fois au moins une voix
+      // renseignée (l'auto-attribution les répartira ensuite).
+      if (state.VOICES.length === 0) {
+        alert('Renseignez au moins une voix avant de tracer des zones.');
+        return;
+      }
+      Paper.setPending(!Paper.pendingNewZone);
+    });
   }
   if (cancelNewZone) {
     cancelNewZone.addEventListener('click', () => Paper.setPending(false));

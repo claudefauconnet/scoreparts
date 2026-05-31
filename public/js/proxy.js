@@ -74,7 +74,7 @@ var Proxy = (function () {
     });
   };
 
-  self.generateInstrumentScore = function (part, selectedZones, callback) {
+  self.generateVoiceScore = function (part, selectedZones, callback) {
     if (!selectedZones) {
       var page = scoreParts.currentPage;
       var zones = Paper.getPageZones();
