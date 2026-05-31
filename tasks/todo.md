@@ -84,6 +84,15 @@ Itération UI 2 (retour utilisateur) :
 - Fix : l'<img> de la page de droite se charge en async → waitForPageImage
   (MutationObserver) attend son injection avant de caler le canvas.
 
+Itération UI 3 (changement de page mal géré) — corrigé :
+- loadImageIntoContainer insérait l'<img> seulement au onload → au page-changed,
+  l'ancienne image (page droite, sans callback) restait → canvas calé sur l'image
+  périmée, jamais re-rendu. Fix : insertion immédiate de l'<img> (avant load).
+- Navigations rapides → callbacks async périmés dessinaient la mauvaise page. Fix :
+  jeton renderToken, rendus périmés ignorés.
+- Vérifié : nav avant/arrière + nav rapide → canvas aligné sur l'image, pageTag==src,
+  zones correctes par page.
+
 Limites connues (phases suivantes, hors scope validé) :
 - La pastille deviendra le sélecteur d'instrument coloré dans la partie voices ;
   la couleur de zone suivra l'instrument affecté.

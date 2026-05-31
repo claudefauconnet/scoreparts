@@ -41,13 +41,16 @@ scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
   }
   var img = new Image();
   img.onload = function () {
-    container.innerHTML = '';
-    container.appendChild(img);
     if (callback) callback();
   };
   img.onerror = function () {
     if (callback) callback();
   };
+  // Vide + insère l'<img> TOUT DE SUITE (avant le chargement) : les observateurs
+  // de page (waitForPageImage) se lient à la NOUVELLE image, pas à l'ancienne
+  // restée affichée → plus de canvas calé sur l'image périmée au changement de page.
+  container.innerHTML = '';
+  container.appendChild(img);
   img.src = src;
 };
 

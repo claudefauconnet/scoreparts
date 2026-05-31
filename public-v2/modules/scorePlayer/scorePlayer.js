@@ -77,11 +77,17 @@ function clearCanvasPixels(canvas) {
   if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+// Jeton de rendu : invalide les rendus asynchrones en attente quand un nouveau
+// changement de page survient (navigations rapides, double-page) → évite qu'un
+// callback périmé dessine la mauvaise page sur un canvas.
+let renderToken = 0;
+
 // ============== (Re)configure l'éditeur sur le spread affiché
 // Les DEUX pages affichées montrent leurs zones. Seule la page COURANTE est
 // éditable (.editing → pointer-events) ; l'autre est figée. Un clic sur l'autre
 // page la rend courante (géré par le handler de clic de page).
 function setupEditorForCurrentPage() {
+  const token = ++renderToken;
   const stage = document.getElementById('stage');
   if (stage) stage.classList.remove('empty');
 
@@ -118,9 +124,11 @@ function setupEditorForCurrentPage() {
     const isCurrent = d.side === side;
     // Attend l'<img> de la page (chargement async possible pour la page de droite).
     waitForPageImage(d.systemsId, (img) => {
+      if (token !== renderToken) return; // changement de page survenu entre-temps
       // setTimeout(0) : laisse les handlers synchrones (aspect-ratio mono-page,
       // resetZoom) s'appliquer avant de mesurer la boîte de l'image.
       setTimeout(() => {
+        if (token !== renderToken) return;
         fitCanvasToImage(canvas, img, d.pageEl);
         Paper.renderPage(canvas, img, d.pageIndex, isCurrent);
       }, 0);
