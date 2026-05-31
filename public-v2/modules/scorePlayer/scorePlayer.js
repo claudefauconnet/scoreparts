@@ -197,10 +197,17 @@ document.querySelector('.nav-arrow.next').addEventListener('click', function () 
   scoreParts.nextPage();
 });
 
+// Redessine les deux pages du spread depuis le modèle (allPagesZones), sans
+// async waitForPageImage. Les images sont déjà dans le DOM après score-loaded.
+function redrawSpread() {
+  Paper.redrawSpread();
+}
+
 // ============== Init
 wireControls();
 on('score-loaded', setupEditorForCurrentPage);
 on('page-changed', setupEditorForCurrentPage);
+on('zones-changed', redrawSpread);
 
 // ============== Responsive single-page mode (small / short screens)
 // On small screens the 2-page spread is unreadable, so we show one page at a
@@ -245,6 +252,24 @@ smallScreen.addEventListener('change', applyResponsiveMode);
 // Initialise le flag sans recharger (aucune partition chargée au boot).
 scoreParts.singlePage = smallScreen.matches;
 stageEl.classList.toggle('single-page', smallScreen.matches);
+
+// ============== Resize → redraw zones
+// Quand une page change de taille (resize de fenêtre, layout), le canvas doit être
+// re-calé sur l'<img> et les zones re-dessinées avec les nouveaux coefs.
+// On observe les deux pages séparément car leur taille peut diverger (single-page, etc.).
+(function () {
+  let resizeTimer = null;
+  const observer = new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (scoreParts.pdfName) setupEditorForCurrentPage();
+    }, 80);
+  });
+  ['.page-left', '.page-right'].forEach((sel) => {
+    const el = document.querySelector(sel);
+    if (el) observer.observe(el);
+  });
+})();
 
 // ============== Zoom & pan on the book
 // Transform model: book transform-origin is 0 0, transform = translate(pan) scale(zoom).

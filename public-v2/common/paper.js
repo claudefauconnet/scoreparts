@@ -29,6 +29,12 @@ function zoneColors(zone) {
   if (!voice) {
     return { fill: ZONE_FILL, stroke: ZONE_STROKE, pill: PILL_BG, label: zone.label || 'Voix' };
   }
+  // Voix inactive (toggle off) → couleur grisée, pastille barrée ("/")
+  if (!voice.on) {
+    var grayFill = new paper.Color(0.6, 0.6, 0.6, 0.1);
+    var grayStroke = new paper.Color(0.6, 0.6, 0.6, 0.4);
+    return { fill: grayFill, stroke: grayStroke, pill: grayStroke, label: voice.name + ' (off)' };
+  }
   var fill = new paper.Color(voice.color);
   fill.alpha = 0.16;
   return {
@@ -93,6 +99,8 @@ function ensureProject(canvas, imgEl) {
   }
   paper.view.viewSize = new paper.Size(canvas.clientWidth, canvas.clientHeight);
   if (imgEl && imgEl.naturalWidth) {
+    scoreParts.naturalW = imgEl.naturalWidth;
+    scoreParts.naturalH = imgEl.naturalHeight;
     scoreParts.coefV = canvas.clientHeight / imgEl.naturalHeight;
     scoreParts.coefH = canvas.clientWidth / imgEl.naturalWidth;
   }
@@ -120,6 +128,30 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
   }
   var zones = scoreParts.allPagesZones.pages[pageIndex];
   if (zones && zones.length > 0) {
+    // Migration best-effort : zones en anciens pixels canvas (y > 1) → fractions.
+    // Exact seulement si le viewport courant est proche du viewport d'origine,
+    // mais meilleur que de laisser les coords incohérentes.
+    var needsMigration = zones.some(function (z) { return z.y > 1 || z.height > 1; });
+    if (needsMigration) {
+      // Ancien format : canvas pixels. Convertir en fractions 0→1 du canvas courant.
+      // Exact si dessiné avec le même viewport ; best-effort sinon (user peut rédessiner).
+      var canvasWm = (scoreParts.naturalW || 1) * (scoreParts.coefH || 1);
+      var canvasHm = (scoreParts.naturalH || 1) * (scoreParts.coefV || 1);
+      zones = zones.map(function (z) {
+        if (z.y > 1 || z.height > 1) {
+          return Object.assign({}, z, {
+            x: z.x / canvasWm,
+            y: z.y / canvasHm,
+            width: z.width / canvasWm,
+            height: z.height / canvasHm,
+          });
+        }
+        return z;
+      });
+      scoreParts.allPagesZones.pages[pageIndex] = zones;
+      scoreParts.modified = true;
+      scoreParts.saveZones(function () {}); // persistifier le nouveau format
+    }
     zones.forEach(function (zone) {
       Paper.drawZone(zone, pageIndex, interactive);
     });
@@ -158,11 +190,16 @@ function onCanvasMouseDown(event) {
   var hitResult = paper.project.hitTest(event.point, HIT_OPTIONS);
   if (hitResult && hitResult.item) return;
 
+  // Stocker en fractions 0→1 des dimensions naturelles de l'image (screen-indépendant).
+  var natW = scoreParts.naturalW || canvasW() || 1;
+  var natH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
+  var coefH = scoreParts.coefH || 1;
+  var coefV = scoreParts.coefV || 1;
   var zone = {
-    x: scoreParts.margin || Paper.margin,
-    y: event.point.y,
-    width: canvasW(),
-    height: Paper.defaultZoneHeight,
+    x: (scoreParts.margin || Paper.margin) / (natW * coefH),
+    y: event.point.y / (natH * coefV),
+    width: 1.0,
+    height: Paper.defaultZoneHeight / (natH * coefV),
     page: scoreParts.currentPage,
     type: 'zone',
     voice: '',
@@ -320,18 +357,30 @@ Paper.getPageZones = function () {
   if (!paper || !paper.project) return [];
   activateCurrent(); // lit toujours le projet de la page courante
   var zones = [];
+  // Normaliser en fractions 0→1 de la taille de canvas (= fraction de l'image).
+  // canvasW = natW * coefH, canvasH = natH * coefV.
+  // stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
+  // PDF backend: png_y = stored_y * natH (avec coefV=1/natH envoyé depuis voices.js).
+  var natW = scoreParts.naturalW || 1;
+  var natH = scoreParts.naturalH || 1;
+  var coefH = scoreParts.coefH || 1;
+  var coefV = scoreParts.coefV || 1;
+  var canvasH = natH * coefV;
+  var canvasWval = natW * coefH;
   paper.project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
+      var measure = item.data.measure;
+      var text = item.data.text;
       zones.push({
-        x: item.bounds.x,
-        y: item.bounds.y,
-        width: item.bounds.width,
-        height: item.bounds.height,
+        x: item.bounds.x / canvasWval,
+        y: item.bounds.y / canvasH,
+        width: item.bounds.width / canvasWval,
+        height: item.bounds.height / canvasH,
         page: item.data.page,
         voice: item.data.voice,
         movement: item.data.movement,
-        measure: item.data.measure,
-        text: item.data.text,
+        measure: measure ? { x: measure.x / canvasWval, y: measure.y / canvasH, number: measure.number } : undefined,
+        text: text ? { x: text.x / canvasWval, y: text.y / canvasH, text: text.text } : undefined,
       });
     }
   });
@@ -362,11 +411,16 @@ Paper.drawZones = function (zones) {
 // zone figée (visible sur une page non courante).
 Paper.drawZone = function (zone, pageIndex, interactive) {
   if (pageIndex == null) pageIndex = scoreParts.currentPage;
-  var width = canvasW();
-  var left = Math.round(zone.x);
-  var right = Math.round(width); // pleine largeur (logique v1 conservée)
-  var top = Math.round(zone.y);
-  var bottom = Math.round(zone.y + zone.height);
+  // Dénormaliser les fractions stockées vers des pixels canvas courants.
+  // natW * coefH = canvasW, natH * coefV = canvasH.
+  var natW = scoreParts.naturalW || 1;
+  var natH = scoreParts.naturalH || 1;
+  var coefH = scoreParts.coefH || 1;
+  var coefV = scoreParts.coefV || 1;
+  var left   = Math.round(zone.x * natW * coefH);
+  var right  = Math.round((zone.x + zone.width) * natW * coefH);
+  var top    = Math.round(zone.y * natH * coefV);
+  var bottom = Math.round((zone.y + zone.height) * natH * coefV);
   var midX = (left + right) / 2;
 
   // Rectangle de la zone (corps).
@@ -485,6 +539,23 @@ Paper.deleteZone = function (group) {
   group.remove();
   if (paper.view) paper.view.update();
   scoreParts.modified = true;
+};
+
+// Redessine les deux pages du spread depuis le modèle (allPagesZones) sans
+// recréer les projets ni recaler les canvas. Utilisé après effacer/auto-attribuer.
+Paper.redrawSpread = function () {
+  var ids = ['canvas-left', 'canvas-right'];
+  var sysIds = ['systems-left', 'systems-right'];
+  var origin = scoreParts.spreadOrigin();
+  ids.forEach(function (canvasId, sideIndex) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas || canvas.width === 0) return;
+    var imgEl = document.querySelector('#' + sysIds[sideIndex] + ' img');
+    if (!imgEl) return;
+    var pageIndex = scoreParts.singlePage ? origin : origin + sideIndex;
+    var isCurrent = canvasId === Paper.currentCanvasId;
+    Paper.renderPage(canvas, imgEl, pageIndex, isCurrent);
+  });
 };
 
 // Re-dessine les zones de la page COURANTE depuis le modèle (canvas courant).

@@ -178,8 +178,13 @@ function autoAssignVoices() {
     alert('Renseignez au moins une voix avant d’attribuer les zones.');
     return;
   }
+  const activeVoices = state.VOICES.filter((voice) => voice.on);
+  if (activeVoices.length === 0) {
+    alert('Aucune voix active. Activez au moins une voix avant d\'attribuer les zones.');
+    return;
+  }
   scoreParts.assignVoicesToZones(
-    state.VOICES.map((voice) => voice.id),
+    activeVoices.map((voice) => voice.id),
     scoreParts.currentMovement
   );
   emit('voices-changed');
@@ -202,8 +207,10 @@ function downloadVoice(voice) {
       part: voice.name,
       pagesZones,
       margin: scoreParts.margin,
-      coefV: scoreParts.coefV,
-      coefH: scoreParts.coefH,
+      // Les zones sont stockées en fractions 0→1 des dimensions naturelles.
+      // Backend : fraction / (1/natDim) = fraction * natDim = pixels naturels PNG.
+      coefV: scoreParts.naturalH ? 1 / scoreParts.naturalH : scoreParts.coefV,
+      coefH: scoreParts.naturalW ? 1 / scoreParts.naturalW : scoreParts.coefH,
     },
     (err, result) => {
       if (err) return alert(err.responseText || err);
@@ -318,8 +325,19 @@ function openColorPopover(swatch, voice) {
   }, 0);
 }
 
+function renderScoreInfo() {
+  const infos = scoreParts.infos || {};
+  const title = infos.pdfName || '';
+  const composer = infos.composer || '';
+  const totalPages = scoreParts.totalPages || 0;
+  const sub = [composer, totalPages ? totalPages + ' pages' : ''].filter(Boolean).join(' · ');
+  document.querySelector('.score-info-title').textContent = title;
+  document.querySelector('.score-info-sub').textContent = sub;
+}
+
 on('voices-changed', renderVoices);
 on('score-loaded', loadVoices);
+on('score-loaded', renderScoreInfo);
 const addVoiceBtn = document.querySelector('.add-voice');
 if (addVoiceBtn) addVoiceBtn.addEventListener('click', addVoice);
 const autoAssignBtn = document.getElementById('act-auto-assign');

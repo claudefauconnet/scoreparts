@@ -1,6 +1,6 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
-import { saveScoreInfos } from '../../common/proxy.js';
+import { saveScoreInfos, generateVoiceScore } from '../../common/proxy.js';
 import { persistVoices } from '../voices/voices.js';
 
 // ============== Mouvements
@@ -382,4 +382,53 @@ dlCaret.addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => {
   if (!dlSplit.contains(e.target)) dlMenu.classList.remove('open');
+});
+
+// ============== Download handlers
+// PDF complet = partition source (PDF original, pas de découpage par voix).
+dlMenu.querySelector('[data-fmt="pdf"]').addEventListener('click', () => {
+  if (!scoreParts.pdfName) return;
+  window.open('/data/pdf/' + encodeURIComponent(scoreParts.pdfName) + '.pdf', '_blank');
+  dlMenu.classList.remove('open');
+});
+
+// ZIP = un PDF par voix ACTIVE, généré en série puis téléchargé un par un.
+// (Pas de vraie archive ZIP côté backend pour l'instant → chaque PDF s'ouvre.)
+dlMenu.querySelector('[data-fmt="zip"]').addEventListener('click', () => {
+  if (!scoreParts.pdfName) return;
+  const activeVoices = state.VOICES.filter((voice) => voice.on);
+  if (activeVoices.length === 0) {
+    alert('Aucune voix active. Activez au moins une voix avant de télécharger.');
+    dlMenu.classList.remove('open');
+    return;
+  }
+  dlMenu.classList.remove('open');
+  let pendingCount = activeVoices.length;
+  activeVoices.forEach((voice) => {
+    const pagesZones = scoreParts.voicePagesZones(voice.id);
+    if (Object.keys(pagesZones.pages).length === 0) {
+      pendingCount -= 1;
+      return;
+    }
+    const targetPdfName = (scoreParts.pdfName + '_' + voice.name).replace(/[ .]/g, '-');
+    generateVoiceScore(
+      {
+        sourcePdfName: scoreParts.pdfName,
+        targetPdfName,
+        part: voice.name,
+        pagesZones,
+        margin: scoreParts.margin,
+        coefV: scoreParts.coefV,
+        coefH: scoreParts.coefH,
+      },
+      (err, result) => {
+        pendingCount -= 1;
+        if (err) {
+          console.error('Erreur génération voix ' + voice.name, err);
+          return;
+        }
+        window.open(result, '_blank');
+      }
+    );
+  });
 });

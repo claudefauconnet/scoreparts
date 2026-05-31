@@ -11,6 +11,8 @@ scoreParts.currentZones = [];
 scoreParts.modified = false;
 
 scoreParts.totalPages = null;
+scoreParts.naturalW = null; // largeur naturelle de l'image PNG courante (px)
+scoreParts.naturalH = null; // hauteur naturelle
 
 // When true, the viewer shows one page at a time (small screens) instead of a
 // 2-page spread. Editor (Paper) context never sets this, so it stays a spread.
@@ -326,8 +328,8 @@ scoreParts.deleteMovement = function (movementName) {
   scoreParts.saveZones();
 };
 
-// Supprime toutes les zones affectées à une voix (toutes pages), rafraîchit le
-// canvas courant, puis sauve. La voix elle-même reste dans infos.voices.
+// Supprime toutes les zones affectées à une voix (toutes pages) et sauve.
+// Le redraw visuel du spread est délégué à zones-changed (Paper.redrawSpread).
 scoreParts.deleteVoiceZones = function (voiceId) {
   if (!voiceId) {
     return;
@@ -339,7 +341,6 @@ scoreParts.deleteVoiceZones = function (voiceId) {
       return zone.voice !== voiceId;
     });
   }
-  refreshCurrentPageCanvas();
   scoreParts.saveZones();
 };
 
@@ -366,7 +367,7 @@ scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
       zone.voice = voiceIds[zoneIndex % voiceCount];
     });
   }
-  refreshCurrentPageCanvas();
+  // Le redraw visuel du spread est délégué à zones-changed (Paper.redrawSpread).
   scoreParts.saveZones();
 };
 
