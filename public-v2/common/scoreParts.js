@@ -356,7 +356,7 @@ scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
   var voiceCount = voiceIds.length;
   var pages = scoreParts.allPagesZones.pages;
   for (var pageKey in pages) {
-    var movementZones = pages[pageKey]
+    var movementZones = (pages[pageKey] || [])
       .filter(function (zone) {
         return !movementName || zone.movement === movementName;
       })
@@ -396,6 +396,25 @@ scoreParts.voicePagesZones = function (voiceId) {
       return zone.voice === voiceId;
     });
     if (voiceZones.length) result.pages[pageKey] = voiceZones;
+  }
+  return result;
+};
+
+// Zones de PLUSIEURS voix combinées (partition complète des voix actives),
+// groupées par page en conservant l'ordre naturel des zones dans chaque page.
+scoreParts.combinedPagesZones = function (voiceIds) {
+  scoreParts.writeCurrentPageZones();
+  var voiceIdSet = {};
+  voiceIds.forEach(function (voiceId) {
+    voiceIdSet[voiceId] = true;
+  });
+  var pages = scoreParts.allPagesZones.pages;
+  var result = { pages: {} };
+  for (var pageKey in pages) {
+    var combinedZones = pages[pageKey].filter(function (zone) {
+      return voiceIdSet[zone.voice];
+    });
+    if (combinedZones.length) result.pages[pageKey] = combinedZones;
   }
   return result;
 };

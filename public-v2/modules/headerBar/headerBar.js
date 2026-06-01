@@ -1,6 +1,6 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
-import { saveScoreInfos, generateVoiceScore } from '../../common/proxy.js';
+import { saveScoreInfos, generateVoiceScore, createZip } from '../../common/proxy.js';
 import { persistVoices } from '../voices/voices.js';
 
 // ============== Mouvements
@@ -363,72 +363,237 @@ if (resetBtn) resetBtn.addEventListener('click', confirmAndResetAll);
 const dlSplit = document.getElementById('dl-split');
 const dlMenu = document.getElementById('dl-menu');
 const dlCaret = document.getElementById('dl-caret');
-// Mark PDF as default
-dlMenu.querySelector('[data-fmt="pdf"]').classList.add('default');
-dlCaret.addEventListener('click', (e) => {
-  e.stopPropagation();
-  dlMenu.classList.toggle('open');
-  // refresh zip count from active voices
+const dlMainBtn = dlSplit.querySelector('.dl-main');
+const dlPdfItem = dlMenu.querySelector('[data-fmt="pdf"]');
+const dlZipItem = dlMenu.querySelector('[data-fmt="zip"]');
+
+// Format déclenché par le bouton principal ; la coche du menu le reflète.
+let selectedFormat = 'pdf';
+// Empêche de lancer un 2e téléchargement pendant qu'un autre génère.
+let isDownloading = false;
+
+function refreshZipMenuCount() {
   const activeCount = state.VOICES.filter((voice) => voice.on).length;
-  const badge = document.getElementById('dl-zip-count');
-  const sub = document.getElementById('dl-zip-sub');
-  badge.textContent = activeCount;
-  sub.textContent =
+  document.getElementById('dl-zip-count').textContent = activeCount;
+  document.getElementById('dl-zip-sub').textContent =
     activeCount === 0
       ? 'aucune voix active'
       : activeCount === 1
         ? '1 PDF (voix active)'
         : `${activeCount} PDF (une par voix active)`;
+}
+
+// Déplace la coche sur le format choisi et met à jour le bouton principal.
+function selectFormat(format) {
+  selectedFormat = format;
+  dlPdfItem.classList.toggle('default', format === 'pdf');
+  dlZipItem.classList.toggle('default', format === 'zip');
+  dlMainBtn.title =
+    format === 'zip'
+      ? 'Télécharger les voix séparées (.zip)'
+      : 'Télécharger la partition complète (PDF)';
+}
+
+selectFormat('pdf');
+
+dlCaret.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dlMenu.classList.toggle('open');
+  refreshZipMenuCount();
 });
 document.addEventListener('click', (e) => {
   if (!dlSplit.contains(e.target)) dlMenu.classList.remove('open');
 });
 
-// ============== Download handlers
-// PDF complet = partition source (PDF original, pas de découpage par voix).
-dlMenu.querySelector('[data-fmt="pdf"]').addEventListener('click', () => {
-  if (!scoreParts.pdfName) return;
-  window.open('/data/pdf/' + encodeURIComponent(scoreParts.pdfName) + '.pdf', '_blank');
-  dlMenu.classList.remove('open');
-});
+// ============== Barre de progression de génération
 
-// ZIP = un PDF par voix ACTIVE, généré en série puis téléchargé un par un.
-// (Pas de vraie archive ZIP côté backend pour l'instant → chaque PDF s'ouvre.)
-dlMenu.querySelector('[data-fmt="zip"]').addEventListener('click', () => {
-  if (!scoreParts.pdfName) return;
+const dlToast = document.getElementById('dl-toast');
+// Rattacher au body : un ancêtre transformé du header capterait le position:fixed
+// et ancrerait le toast en haut au lieu du coin bas-droit du viewport.
+if (dlToast && dlToast.parentElement !== document.body) {
+  document.body.appendChild(dlToast);
+}
+const dlToastLabel = document.getElementById('dl-toast-label');
+const dlToastPct = document.getElementById('dl-toast-pct');
+const dlToastFill = document.getElementById('dl-toast-fill');
+
+function showProgress(label, indeterminate) {
+  dlToastLabel.textContent = label;
+  dlToast.hidden = false;
+  if (indeterminate) {
+    dlToast.classList.add('indeterminate');
+    dlToastPct.textContent = '';
+    dlToastFill.style.width = '';
+  } else {
+    dlToast.classList.remove('indeterminate');
+    setProgress(0);
+  }
+}
+
+function setProgress(percent, label) {
+  dlToast.classList.remove('indeterminate');
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  dlToastFill.style.width = clamped + '%';
+  dlToastPct.textContent = clamped + '%';
+  if (label) dlToastLabel.textContent = label;
+}
+
+function hideProgress(delay) {
+  window.setTimeout(() => {
+    dlToast.hidden = true;
+  }, delay || 0);
+}
+
+function beginDownload() {
+  isDownloading = true;
+  dlMainBtn.disabled = true;
+  dlCaret.disabled = true;
+}
+
+function endDownload() {
+  isDownloading = false;
+  dlMainBtn.disabled = false;
+  dlCaret.disabled = false;
+}
+
+// ============== Download handlers
+
+function getMovementDirName() {
+  const base = scoreParts.allPagesZones && scoreParts.allPagesZones.title
+    ? scoreParts.allPagesZones.title
+    : scoreParts.pdfName;
+  const mvt = scoreParts.currentMovement || '';
+  return (base + (mvt ? '_' + mvt : '')).replace(/[ .]/g, '-');
+}
+
+// Voix actives ayant au moins une zone affectée (sinon rien à générer).
+function getActiveVoicesWithZones() {
+  return state.VOICES
+    .filter((voice) => voice.on)
+    .map((voice) => ({ voice, pagesZones: scoreParts.voicePagesZones(voice.id) }))
+    .filter(({ pagesZones }) => Object.keys(pagesZones.pages).length > 0);
+}
+
+// Partition complète = UN PDF avec les zones de toutes les voix ACTIVES empilées.
+function downloadCompletePdf() {
+  if (!scoreParts.pdfName || isDownloading) return;
   const activeVoices = state.VOICES.filter((voice) => voice.on);
   if (activeVoices.length === 0) {
     alert('Aucune voix active. Activez au moins une voix avant de télécharger.');
-    dlMenu.classList.remove('open');
     return;
   }
-  dlMenu.classList.remove('open');
-  let pendingCount = activeVoices.length;
-  activeVoices.forEach((voice) => {
-    const pagesZones = scoreParts.voicePagesZones(voice.id);
-    if (Object.keys(pagesZones.pages).length === 0) {
-      pendingCount -= 1;
-      return;
+  const pagesZones = scoreParts.combinedPagesZones(activeVoices.map((voice) => voice.id));
+  if (Object.keys(pagesZones.pages).length === 0) {
+    alert('Aucune zone assignée aux voix actives. Utilisez Auto-attribuer d\'abord.');
+    return;
+  }
+  const targetPdfName = (getMovementDirName() + '_complet').replace(/[ .]/g, '-');
+  beginDownload();
+  showProgress('Génération de la partition complète…', true);
+  generateVoiceScore(
+    {
+      sourcePdfName: scoreParts.pdfName,
+      targetPdfName,
+      part: 'Partition complete',
+      pagesZones,
+      margin: scoreParts.margin,
+      naturalW: scoreParts.naturalW,
+      naturalH: scoreParts.naturalH,
+    },
+    (err, result) => {
+      endDownload();
+      if (err) {
+        hideProgress();
+        return alert(err.responseText || err);
+      }
+      setProgress(100, 'Partition prête');
+      hideProgress(1000);
+      window.open('/' + result, '_blank');
     }
-    const targetPdfName = (scoreParts.pdfName + '_' + voice.name).replace(/[ .]/g, '-');
+  );
+}
+
+// ZIP = un PDF par voix ACTIVE dans un répertoire partagé, puis zip côté backend.
+function downloadZip() {
+  if (!scoreParts.pdfName || isDownloading) return;
+  const activeVoices = state.VOICES.filter((voice) => voice.on);
+  if (activeVoices.length === 0) {
+    alert('Aucune voix active. Activez au moins une voix avant de télécharger.');
+    return;
+  }
+  const voiceJobs = getActiveVoicesWithZones();
+  if (voiceJobs.length === 0) {
+    alert('Aucune zone assignée aux voix actives. Utilisez Auto-attribuer d\'abord.');
+    return;
+  }
+
+  const movementDirName = getMovementDirName();
+  const totalSteps = voiceJobs.length + 1; // +1 = étape de création du ZIP
+  let completedCount = 0;
+  let pendingCount = voiceJobs.length;
+
+  beginDownload();
+  showProgress(`Génération voix 1/${voiceJobs.length}…`, false);
+
+  voiceJobs.forEach(({ voice, pagesZones }) => {
     generateVoiceScore(
       {
         sourcePdfName: scoreParts.pdfName,
-        targetPdfName,
+        targetPdfName: movementDirName,
         part: voice.name,
         pagesZones,
         margin: scoreParts.margin,
-        coefV: scoreParts.coefV,
-        coefH: scoreParts.coefH,
+        naturalW: scoreParts.naturalW,
+        naturalH: scoreParts.naturalH,
       },
-      (err, result) => {
+      (err) => {
+        completedCount += 1;
         pendingCount -= 1;
         if (err) {
           console.error('Erreur génération voix ' + voice.name, err);
-          return;
         }
-        window.open(result, '_blank');
+        setProgress(
+          (completedCount / totalSteps) * 100,
+          pendingCount > 0
+            ? `Génération voix ${completedCount + 1}/${voiceJobs.length}…`
+            : 'Création du ZIP…'
+        );
+        if (pendingCount === 0) {
+          createZip(movementDirName, (zipErr, result) => {
+            endDownload();
+            if (zipErr) {
+              hideProgress();
+              return alert('Erreur création ZIP : ' + (zipErr.responseText || zipErr));
+            }
+            setProgress(100, 'ZIP prêt');
+            hideProgress(1000);
+            window.open('/' + result.zipPath, '_blank');
+          });
+        }
       }
     );
   });
+}
+
+function runSelectedDownload() {
+  if (selectedFormat === 'zip') {
+    downloadZip();
+  } else {
+    downloadCompletePdf();
+  }
+}
+
+// Bouton principal : lance le format sélectionné.
+dlMainBtn.addEventListener('click', runSelectedDownload);
+
+// Items du menu : sélectionnent le format (déplacent la coche) puis lancent.
+dlPdfItem.addEventListener('click', () => {
+  selectFormat('pdf');
+  dlMenu.classList.remove('open');
+  downloadCompletePdf();
+});
+dlZipItem.addEventListener('click', () => {
+  selectFormat('zip');
+  dlMenu.classList.remove('open');
+  downloadZip();
 });

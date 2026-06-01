@@ -1,7 +1,9 @@
 ﻿import { Jimp } from 'jimp';
+import fs from 'fs';
 
 async function _getImage(imageFile) {
-  return await Jimp.read(imageFile);
+  const buffer = fs.readFileSync(imageFile);
+  return await Jimp.read(buffer);
 }
 
 async function _writeImage(image, file) {
@@ -19,30 +21,46 @@ async function _getBuffer(image) {
 }
 
 async function _crop(imageFile, x, y, w, h) {
-  var image = await Jimp.read(imageFile);
+  const buffer = fs.readFileSync(imageFile);
+  var image = await Jimp.read(buffer);
+  // Clamp à l'intérieur des dimensions réelles : une zone peut déborder
+  // (ex. largeur fractionnaire 1 → pixels > largeur image) et Jimp lèverait.
+  var maxW = image.bitmap.width;
+  var maxH = image.bitmap.height;
+  var cropX = Math.max(0, Math.min(x, maxW - 1));
+  var cropY = Math.max(0, Math.min(y, maxH - 1));
+  var cropW = Math.max(1, Math.min(w, maxW - cropX));
+  var cropH = Math.max(1, Math.min(h, maxH - cropY));
   try {
-    var cropped = image.crop({ x: x, y: y, w: w, h: h });
+    var cropped = image.crop({ x: cropX, y: cropY, w: cropW, h: cropH });
     return cropped;
   } catch (e) {
     return e;
   }
 }
 
+// .then(onOk, onErr) au lieu de .then().catch() : onErr n'attrape QUE le rejet
+// de la promesse Jimp. Sinon un throw synchrone dans la suite du callback
+// (chaîne async) déclencherait .catch → double appel du callback.
 export function getImage(imageFile, callback) {
-  var promise = _getImage(imageFile);
-  promise.then((image) => {
-    image = image.greyscale();
-    image = image.contrast(1);
-    return callback(null, image);
-  });
+  _getImage(imageFile).then(
+    (image) => {
+      image = image.greyscale();
+      image = image.contrast(1);
+      return callback(null, image);
+    },
+    (err) => callback(err)
+  );
 }
 
 export function crop(imageFile, x, y, w, h, callback) {
-  var promise = _crop(imageFile, x, y, w, h);
-  promise.then((image) => {
-    if (image.message) return callback(image.message);
-    return callback(null, image);
-  });
+  _crop(imageFile, x, y, w, h).then(
+    (image) => {
+      if (image instanceof Error) return callback(image.message);
+      return callback(null, image);
+    },
+    (err) => callback(err)
+  );
 }
 
 export function createImage(w, h, callback) {
@@ -57,10 +75,10 @@ export function blitImage(toImage, bitmap, x, y, callback) {
 }
 
 export function getBuffer(image, callback) {
-  var promise = _getBuffer(image);
-  promise.then((buffer) => {
-    return callback(null, buffer);
-  });
+  _getBuffer(image).then(
+    (buffer) => callback(null, buffer),
+    (err) => callback(err)
+  );
 }
 
 export function getImageColors(image) {

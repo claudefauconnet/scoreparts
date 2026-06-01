@@ -179,10 +179,32 @@ var scoreSplitter = {
     margin,
     imgScaleCoefV,
     imgScaleCoefH,
+    naturalW,
+    naturalH,
     callback
   ) {
     var obj = JSON.parse(zonesStr);
     var zones = obj.pages;
+
+    var scaleH = imgScaleCoefH;
+    var scaleV = imgScaleCoefV;
+
+    // Mode v2 : les zones sont des fractions 0→1 des dimensions naturelles du PNG.
+    // On les convertit en points (système v1) et on dérive les échelles
+    // points→pixels (pageDim/naturalDim) pour que toute la mise en page backend
+    // (canvas, pas vertical, taille PDF) reste cohérente comme en v1.
+    if (naturalW && naturalH) {
+      scaleH = scoreSplitter.pageWidth / naturalW;
+      scaleV = scoreSplitter.pageHeight / naturalH;
+      for (var pageKey in zones) {
+        zones[pageKey].forEach(function (zone) {
+          zone.x = zone.x * scoreSplitter.pageWidth;
+          zone.width = zone.width * scoreSplitter.pageWidth;
+          zone.y = zone.y * scoreSplitter.pageHeight;
+          zone.height = zone.height * scoreSplitter.pageHeight;
+        });
+      }
+    }
 
     var targetPagesImages = [];
     async.waterfall(
@@ -192,8 +214,8 @@ var scoreSplitter = {
           sourcePdfName,
           zones,
           margin,
-          imgScaleCoefH,
-          imgScaleCoefV
+          scaleH,
+          scaleV
         ),
         scoreSplitter.setTargetPages,
         scoreSplitter.blitImages,
@@ -230,15 +252,14 @@ var scoreSplitter = {
           return callbackEachPage();
         }
 
-        var sourceImg = pdfName + '-' + pageNum + '.png';
         var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-        var imageFile = imageDir + path.sep + sourceImg;
+        var imageFile = imageDir + path.sep + pdfName + path.sep + pageNum + '.png';
 
         async.eachSeries(
           pageZones,
           function (zone, callbackEachZone) {
             if (zone.x < 0 || zone.y < 0) {
-              return callbackWaterfall('invalid zone coordinates: ' + JSON.stringify(zone));
+              return callbackEachZone('invalid zone coordinates: ' + JSON.stringify(zone));
             }
 
             try {
@@ -250,14 +271,14 @@ var scoreSplitter = {
                 Math.round(zone.height / scaleV),
                 function (err, zoneImg) {
                   if (err) {
-                    return callbackWaterfall(err + '*********\n' + JSON.stringify(zone));
+                    return callbackEachZone(err + '*********\n' + JSON.stringify(zone));
                   }
                   zone.bitmap = zoneImg.bitmap;
-                  return callbackEachZone(err);
+                  return callbackEachZone();
                 }
               );
             } catch (e) {
-              return callbackEachPage(e + '*********\n' + JSON.stringify(zone));
+              return callbackEachZone(e + '*********\n' + JSON.stringify(zone));
             }
           },
           function (err) {
@@ -424,7 +445,8 @@ var scoreSplitter = {
     });
     let pageNumber = 1;
 
-    doc.pipe(fs.createWriteStream(partPdfFile));
+    var writeStream = fs.createWriteStream(partPdfFile);
+    doc.pipe(writeStream);
     for (let pageIndex = 0; pageIndex < pagesImagesArray.length; pageIndex++) {
       var imageBuffer = pagesImagesArray[pageIndex].imageBuffer;
       doc.image(imageBuffer, scoreSplitter.imageBackOffset, scoreSplitter.firstScaleY, {
@@ -479,8 +501,15 @@ var scoreSplitter = {
 
       doc.addPage();
     }
+    // Attendre la fin d'écriture sur disque avant de répondre : sinon le
+    // client ouvre le PDF avant qu'il soit complet ("Échec de chargement").
+    writeStream.on('finish', function () {
+      callback(null, partPdfUrl);
+    });
+    writeStream.on('error', function (err) {
+      callback(err);
+    });
     doc.end();
-    callback(null, partPdfUrl);
   },
 
   createZip: function (movementDirName, callback) {

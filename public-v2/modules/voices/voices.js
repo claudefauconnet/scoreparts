@@ -1,6 +1,7 @@
 import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
-import { saveScoreInfos, generateVoiceScore } from '../../common/proxy.js';
+import { saveScoreInfos, generateVoiceScore, findPageZones } from '../../common/proxy.js';
+import { Paper } from '../../common/paper.js';
 
 // ============== Voix
 const list = document.getElementById('voice-list');
@@ -171,6 +172,99 @@ function addVoice() {
   emit('voices-changed');
 }
 
+// Détecte automatiquement les systèmes musicaux de la page courante via l'API
+// et crée une zone par système (sans voix assignée, prêt pour auto-attribuer).
+// Algo identique à l'ancien Proxy.autoDetectPageZones + Paper.drawAutoDetectedZones,
+// converti en coordonnées fractionnelles (0→1 de natW/natH) pour le v2.
+function autoDetectZones() {
+  if (!scoreParts.pdfName) return;
+  if (!scoreParts.currentMovement) {
+    alert('Sélectionnez ou déclarez un mouvement.');
+    return;
+  }
+
+  const natW = scoreParts.naturalW || 1;
+  const natH = scoreParts.naturalH || 1;
+
+  findPageZones(scoreParts.pdfName, scoreParts.currentPage, function (err, data) {
+    if (err || !data || !data.topLines || data.topLines.length === 0) {
+      alert('Aucun système détecté sur cette page.');
+      return;
+    }
+
+    const interline = data.interline;
+    const xFrac = data.firstVerticalLine / natW;
+    const widthFrac = Math.max(0.01, 1 - 2 * xFrac);
+
+    // Auto overflow: half the empty space between consecutive systems (capped to 2 interlines).
+    const autoOverflowPx = data.topLines.length > 1
+      ? Math.min(2 * interline, Math.max(0, (data.topLines[1] - data.topLines[0] - 6 * interline) / 2))
+      : interline;
+
+    const heightInputEl = document.getElementById('rect-h');
+    const heightInputDisplayPx = heightInputEl ? parseFloat(heightInputEl.value) : NaN;
+    const useCustomHeight = !isNaN(heightInputDisplayPx) && heightInputDisplayPx > 0;
+    // coefV = canvasH / natH → fraction = displayPx / (natH * coefV)
+    const coefV = scoreParts.coefV || 1;
+
+    const zones = data.topLines.map(function (topY) {
+      if (useCustomHeight) {
+        return {
+          x: xFrac,
+          y: Math.max(0, topY / natH),
+          width: widthFrac,
+          height: heightInputDisplayPx / (natH * coefV),
+          voice: null,
+          movement: scoreParts.currentMovement,
+          page: scoreParts.currentPage,
+        };
+      }
+      return {
+        x: xFrac,
+        y: Math.max(0, (topY - autoOverflowPx) / natH),
+        width: widthFrac,
+        height: (6 * interline + 2 * autoOverflowPx) / natH,
+        voice: null,
+        movement: scoreParts.currentMovement,
+        page: scoreParts.currentPage,
+      };
+    });
+
+    scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
+    scoreParts.currentZones = zones;
+    scoreParts.modified = true;
+    Paper.redrawCurrentPage();
+    scoreParts.saveZones(function () {});
+    emit('zones-changed');
+  });
+}
+
+// Copie les zones de la page précédente vers la page courante (même mouvement).
+function duplicatePreviousPage() {
+  if (!scoreParts.pdfName) return;
+  if (scoreParts.currentPage === 0) {
+    alert('Aucune page précédente à dupliquer.');
+    return;
+  }
+  const prevPage = scoreParts.currentPage - 1;
+  const prevZones = (scoreParts.allPagesZones.pages[prevPage] || []).filter(
+    function (zone) { return zone.movement === scoreParts.currentMovement; }
+  );
+  if (prevZones.length === 0) {
+    alert('Aucune zone sur la page précédente pour ce mouvement.');
+    return;
+  }
+  const cloned = prevZones.map(function (zone) {
+    return Object.assign({}, zone, { page: scoreParts.currentPage });
+  });
+  scoreParts.allPagesZones.pages[scoreParts.currentPage] = cloned;
+  scoreParts.currentZones = cloned;
+  scoreParts.modified = true;
+  Paper.redrawCurrentPage();
+  scoreParts.saveZones(function () {});
+  emit('zones-changed');
+}
+
 // Auto-attribue les voix renseignées aux zones du mouvement courant.
 function autoAssignVoices() {
   if (!scoreParts.pdfName) return;
@@ -207,14 +301,14 @@ function downloadVoice(voice) {
       part: voice.name,
       pagesZones,
       margin: scoreParts.margin,
-      // Les zones sont stockées en fractions 0→1 des dimensions naturelles.
-      // Backend : fraction / (1/natDim) = fraction * natDim = pixels naturels PNG.
-      coefV: scoreParts.naturalH ? 1 / scoreParts.naturalH : scoreParts.coefV,
-      coefH: scoreParts.naturalW ? 1 / scoreParts.naturalW : scoreParts.coefH,
+      // Zones stockées en fractions 0→1 des dimensions naturelles du PNG.
+      // Le backend convertit ces fractions selon naturalW/naturalH.
+      naturalW: scoreParts.naturalW,
+      naturalH: scoreParts.naturalH,
     },
     (err, result) => {
       if (err) return alert(err.responseText || err);
-      window.open(result, '_blank');
+      window.open('/' + result, '_blank');
     }
   );
 }
@@ -335,13 +429,40 @@ function renderScoreInfo() {
   document.querySelector('.score-info-sub').textContent = sub;
 }
 
+function renderProgress() {
+  const pages = scoreParts.allPagesZones && scoreParts.allPagesZones.pages;
+  const totalPages = scoreParts.totalPages || 0;
+  const pagesWithZones = pages
+    ? Object.values(pages).filter((pageZones) => pageZones.length > 0).length
+    : 0;
+  const pct = totalPages > 0 ? Math.round((pagesWithZones / totalPages) * 100) : 0;
+  const totalZones = pages
+    ? Object.values(pages).reduce((sum, pageZones) => sum + pageZones.length, 0)
+    : 0;
+  const voiceCount = state.VOICES.filter((v) => v.active !== false).length;
+  const currentPage = (scoreParts.currentPage || 0) + 1;
+
+  document.querySelector('.progress-pct').textContent = pct + '%';
+  document.querySelector('.progress-fill').style.width = pct + '%';
+  document.querySelector('.progress-detail').innerHTML =
+    `<span>${totalZones} zone${totalZones !== 1 ? 's' : ''} · ${voiceCount} voix</span>` +
+    `<span>${pagesWithZones} / ${totalPages || '?'} p.</span>`;
+}
+
 on('voices-changed', renderVoices);
+on('voices-changed', renderProgress);
+on('zones-changed', renderProgress);
 on('score-loaded', loadVoices);
 on('score-loaded', renderScoreInfo);
+on('score-loaded', renderProgress);
 const addVoiceBtn = document.querySelector('.add-voice');
 if (addVoiceBtn) addVoiceBtn.addEventListener('click', addVoice);
 const autoAssignBtn = document.getElementById('act-auto-assign');
 if (autoAssignBtn) autoAssignBtn.addEventListener('click', autoAssignVoices);
+const autoDetectBtn = document.getElementById('act-auto-detect');
+if (autoDetectBtn) autoDetectBtn.addEventListener('click', autoDetectZones);
+const duplicateBtn = document.getElementById('act-duplicate');
+if (duplicateBtn) duplicateBtn.addEventListener('click', duplicatePreviousPage);
 loadVoices();
 renderVoices();
 

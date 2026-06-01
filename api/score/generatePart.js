@@ -37,6 +37,8 @@ router.post('/generatePart', function (req, res) {
     parseInt(req.body.margin),
     parseFloat(req.body.imgScaleCoefV),
     parseFloat(req.body.imgScaleCoefH),
+    req.body.naturalW ? parseInt(req.body.naturalW) : null,
+    req.body.naturalH ? parseInt(req.body.naturalH) : null,
     function (error, result) {
       processResponse(res, error, result);
     }

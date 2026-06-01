@@ -35,27 +35,7 @@ document.querySelectorAll('#tw-book-style button').forEach((button) => {
   });
 });
 
-// ============== State (loaded / empty)
-document.querySelectorAll('#tw-state button').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('#tw-state button').forEach((x) => x.classList.remove('active'));
-    button.classList.add('active');
-    const stage = document.getElementById('stage');
-    const book = document.getElementById('book');
-    const closed = document.getElementById('closed-book-wrap');
-    if (button.dataset.val === 'empty') {
-      stage.classList.add('empty');
-      book.style.display = 'none';
-      closed.style.display = 'grid';
-    } else {
-      stage.classList.remove('empty');
-      book.style.display = 'grid';
-      closed.style.display = 'none';
-    }
-  });
-});
-
-// Toggle empty state via "Open" button (lives in the scorePlayer fragment)
+// "Open" button (lives in the scorePlayer empty-state fragment) → open score selector
 document.getElementById('open-btn').addEventListener('click', () => {
-  document.querySelector('#tw-state button[data-val="loaded"]').click();
+  document.getElementById('dialog-overlay').style.display = 'grid';
 });

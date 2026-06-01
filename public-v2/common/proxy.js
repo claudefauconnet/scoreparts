@@ -103,7 +103,7 @@ export function loadZones(scoreParts, callback) {
 //   part         = libellé de la voix (nom affiché / nom de fichier)
 //   pagesZones   = { pages: { <pageIndex>: [zone, ...] } } limité à cette voix
 export function generateVoiceScore(
-  { sourcePdfName, targetPdfName, part, pagesZones, margin, coefV, coefH },
+  { sourcePdfName, targetPdfName, part, pagesZones, margin, naturalW, naturalH },
   callback
 ) {
   $.ajax({
@@ -115,13 +115,43 @@ export function generateVoiceScore(
       margin: margin,
       sourcePdfName: sourcePdfName,
       zonesStr: JSON.stringify(pagesZones),
-      imgScaleCoefV: coefV,
-      imgScaleCoefH: coefH,
+      naturalW: naturalW,
+      naturalH: naturalH,
       targetPdfName: targetPdfName,
     },
     dataType: 'json',
     success: function (data) {
       callback(null, data.result);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
+export function createZip(movementDirName, callback) {
+  $.ajax({
+    type: 'POST',
+    url: '/api/score/createZip',
+    data: { movementDirName },
+    dataType: 'json',
+    success: function (data) {
+      callback(null, data);
+    },
+    error: function (err) {
+      callback(err);
+    },
+  });
+}
+
+export function findPageZones(pdfName, pageNum, callback) {
+  $.ajax({
+    type: 'POST',
+    url: '/api/score/findPageZones',
+    data: { findPageZones: 1, pdfName, pageNum },
+    dataType: 'json',
+    success: function (data) {
+      callback(null, data);
     },
     error: function (err) {
       callback(err);
