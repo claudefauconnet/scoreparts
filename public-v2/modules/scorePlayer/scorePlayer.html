@@ -62,6 +62,18 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>
 </button>
 
+<!-- Multi-select toolbar -->
+<div class="multiselect-toolbar" id="multiselect-toolbar" style="display:none">
+  <span class="multiselect-count" id="multiselect-count">0 zones</span>
+  <div class="multiselect-divider"></div>
+  <button class="multiselect-btn" id="multiselect-move" title="Déplacer : glissez une zone sélectionnée">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/><path d="M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3M21 12l-3-3m3 3-3 3"/></svg>
+  </button>
+  <button class="multiselect-btn multiselect-btn--delete" id="multiselect-delete" title="Supprimer les zones sélectionnées">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+  </button>
+</div>
+
 <!-- Zoom controls -->
 <div class="zoom-controls" id="zoom-controls">
   <button class="zoom-btn" id="zoom-in" title="Zoom avant">

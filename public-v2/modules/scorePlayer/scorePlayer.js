@@ -163,6 +163,25 @@ function wireControls() {
     cancelNewZone.addEventListener('click', () => Paper.setPending(false));
   }
 
+  // Toolbar de sélection multiple.
+  const multiselectToolbar = document.getElementById('multiselect-toolbar');
+  const multiselectCount = document.getElementById('multiselect-count');
+  const multiselectDelete = document.getElementById('multiselect-delete');
+
+  Paper.onSelectionChange = (count) => {
+    if (!multiselectToolbar) return;
+    if (count > 0) {
+      multiselectCount.textContent = count + ' zone' + (count > 1 ? 's' : '');
+      multiselectToolbar.style.display = 'flex';
+    } else {
+      multiselectToolbar.style.display = 'none';
+    }
+  };
+
+  if (multiselectDelete) {
+    multiselectDelete.addEventListener('click', () => Paper.deleteSelectedZones());
+  }
+
   // Clic sur une page → elle devient la page courante (gauche = origine du
   // spread, droite = origine + 1). scoreParts sauve les zones de l'ancienne page.
   document.querySelectorAll('.page').forEach((pageEl) => {

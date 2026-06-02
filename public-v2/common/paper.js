@@ -69,6 +69,7 @@ function deleteBadgeCenter(rectBounds) {
 var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
 var toolInstalled = false;
 var hoverGroup = null; // zone actuellement survolée (poignées visibles)
+var selectedGroups = []; // zones sélectionnées par lasso
 
 Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
 Paper.activeCanvas = null; // <canvas> de la page courante
@@ -78,6 +79,10 @@ Paper.currentPath = null;
 Paper.defaultZoneHeight = 50;
 Paper.margin = 10;
 Paper.onPendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
+Paper.onSelectionChange = null; // hook(count) posé par scorePlayer pour la toolbar
+Paper.isLasso = false;
+Paper.lassoStart = null;
+Paper.lassoPath = null;
 
 // Largeur de dessin = taille CSS du canvas actif (espace de coordonnées du projet).
 function canvasW() {
@@ -125,6 +130,8 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
     Paper.activeCanvas = canvas;
     Paper.currentCanvasId = canvas.id;
     hoverGroup = null;
+    selectedGroups = [];
+    if (Paper.onSelectionChange) Paper.onSelectionChange(0);
   }
   var zones = scoreParts.allPagesZones.pages[pageIndex];
   if (zones && zones.length > 0) {
@@ -167,6 +174,8 @@ function installTool() {
   var tool = new paper.Tool();
   tool.onMouseDown = onCanvasMouseDown;
   tool.onMouseMove = onCanvasMouseMove;
+  tool.onMouseDrag = onCanvasMouseDrag;
+  tool.onMouseUp = onCanvasMouseUp;
 }
 
 // ============== Mode "nouvelle zone" (activable / désactivable)
@@ -175,40 +184,116 @@ Paper.setPending = function (on) {
   if (Paper.onPendingChange) Paper.onPendingChange(on);
 };
 
+// ============== Sélection multiple (lasso)
+function clearSelection() {
+  selectedGroups.forEach(function (g) { setGroupSelected(g, false); });
+  selectedGroups = [];
+  if (Paper.onSelectionChange) Paper.onSelectionChange(0);
+}
+
+function setGroupSelected(group, isSelected) {
+  if (!group || !group.data || !group.data.rect) return;
+  group.data.isSelected = isSelected;
+  group.data.rect.dashArray = isSelected ? [6, 3] : null;
+  group.data.rect.strokeWidth = isSelected ? 2.5 : 1.5;
+}
+
+function selectGroupsInRect(selRect) {
+  var found = [];
+  paper.project.activeLayer.children.forEach(function (item) {
+    if (item.data && item.data.role === 'zoneGroup' && selRect.intersects(item.data.rect.bounds)) {
+      setGroupSelected(item, true);
+      found.push(item);
+    }
+  });
+  return found;
+}
+
+function onCanvasMouseDrag(event) {
+  if (!Paper.isLasso) return;
+  if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
+  var start = Paper.lassoStart;
+  var end = event.point;
+  var lassoRect = new paper.Rectangle(
+    new paper.Point(Math.min(start.x, end.x), Math.min(start.y, end.y)),
+    new paper.Size(Math.abs(end.x - start.x), Math.abs(end.y - start.y))
+  );
+  var lassoPath = new paper.Path.Rectangle(lassoRect);
+  lassoPath.strokeColor = ZONE_STROKE;
+  lassoPath.strokeWidth = 1.5;
+  lassoPath.dashArray = [5, 4];
+  lassoPath.fillColor = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.07);
+  lassoPath.data.role = 'lasso';
+  Paper.lassoPath = lassoPath;
+  if (paper.view) paper.view.update();
+}
+
+function onCanvasMouseUp(event) {
+  if (!Paper.isLasso) return;
+  Paper.isLasso = false;
+  if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
+  var start = Paper.lassoStart;
+  Paper.lassoStart = null;
+  if (!start) return;
+  var dx = Math.abs(event.point.x - start.x);
+  var dy = Math.abs(event.point.y - start.y);
+  if (dx < 5 && dy < 5) { if (paper.view) paper.view.update(); return; }
+  var selRect = new paper.Rectangle(
+    new paper.Point(Math.min(start.x, event.point.x), Math.min(start.y, event.point.y)),
+    new paper.Size(dx, dy)
+  );
+  selectedGroups = selectGroupsInRect(selRect);
+  if (paper.view) paper.view.update();
+  if (Paper.onSelectionChange) Paper.onSelectionChange(selectedGroups.length);
+}
+
 // ============== Outil canvas (clic dans le vide / déplacement souris)
 function onCanvasMouseDown(event) {
   if (Paper.currentZoneAction === 'removeZone') {
     Paper.currentZoneAction = null;
     return;
   }
-  if (!Paper.pendingNewZone) return; // création uniquement en mode "New zone"
-  if (!scoreParts.currentMovement) {
-    alert('sélectionnez ou déclarez un mouvement');
+  var hitResult = paper.project.hitTest(event.point, HIT_OPTIONS);
+  var hitGroup = hitResult ? zoneGroupOf(hitResult.item) : null;
+
+  if (Paper.pendingNewZone) {
+    if (!scoreParts.currentMovement) {
+      alert('sélectionnez ou déclarez un mouvement');
+      return;
+    }
+    if (hitGroup) return; // ne pas créer par-dessus une zone existante
+    var natW = scoreParts.naturalW || canvasW() || 1;
+    var natH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
+    var coefH = scoreParts.coefH || 1;
+    var coefV = scoreParts.coefV || 1;
+    var zone = {
+      x: (scoreParts.margin || Paper.margin) / (natW * coefH),
+      y: event.point.y / (natH * coefV),
+      width: 1.0,
+      height: Paper.defaultZoneHeight / (natH * coefV),
+      page: scoreParts.currentPage,
+      type: 'zone',
+      voice: '',
+      movement: scoreParts.currentMovement,
+    };
+    Paper.drawZone(zone, scoreParts.currentPage, true);
+    commit();
+    scoreParts.saveZones(function () {});
     return;
   }
-  // Clic sur une zone existante : ne pas créer par-dessus.
-  var hitResult = paper.project.hitTest(event.point, HIT_OPTIONS);
-  if (hitResult && hitResult.item) return;
 
-  // Stocker en fractions 0→1 des dimensions naturelles de l'image (screen-indépendant).
-  var natW = scoreParts.naturalW || canvasW() || 1;
-  var natH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
-  var coefH = scoreParts.coefH || 1;
-  var coefV = scoreParts.coefV || 1;
-  var zone = {
-    x: (scoreParts.margin || Paper.margin) / (natW * coefH),
-    y: event.point.y / (natH * coefV),
-    width: 1.0,
-    height: Paper.defaultZoneHeight / (natH * coefV),
-    page: scoreParts.currentPage,
-    type: 'zone',
-    voice: '',
-    movement: scoreParts.currentMovement,
-  };
-  Paper.drawZone(zone, scoreParts.currentPage, true);
-  // Mode persistant : on NE désactive PAS — l'utilisateur peut enchaîner les zones.
-  commit();
-  scoreParts.saveZones(function () {}); // enregistrement immédiat (chaque zone tracée)
+  // Clic sur zone non sélectionnée → vider la sélection et laisser la zone gérer.
+  if (hitGroup && !hitGroup.data.isSelected) {
+    clearSelection();
+    if (paper.view) paper.view.update();
+    return;
+  }
+  // Clic dans le vide → démarrer le lasso.
+  if (!hitGroup) {
+    clearSelection();
+    Paper.isLasso = true;
+    Paper.lassoStart = event.point.clone();
+  }
 }
 
 function onCanvasMouseMove(event) {
@@ -328,7 +413,11 @@ function onZoneMouseDrag(event) {
     if (newHeightTop < MIN_ZONE_HEIGHT) return;
     group.scale(1, newHeightTop / rect.height, rect.bottomLeft);
   } else if (Paper.currentZoneAction === 'moveZone') {
-    group.position.y += event.delta.y;
+    if (group.data.isSelected && selectedGroups.length > 1) {
+      selectedGroups.forEach(function (g) { g.position.y += event.delta.y; });
+    } else {
+      group.position.y += event.delta.y;
+    }
   }
 }
 
@@ -336,8 +425,11 @@ function onZoneMouseUp() {
   var action = Paper.currentZoneAction;
   if (action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot') {
     commit();
-    Paper.redrawCurrentPage(); // redessine propre (pastille/poignées non déformées)
-    scoreParts.saveZones(function () {}); // enregistrement immédiat
+    // Vider la sélection avant le redraw (les groupes vont être recrées).
+    selectedGroups = [];
+    if (Paper.onSelectionChange) Paper.onSelectionChange(0);
+    Paper.redrawCurrentPage();
+    scoreParts.saveZones(function () {});
   }
   Paper.currentZoneAction = null;
 }
@@ -564,12 +656,23 @@ Paper.redrawCurrentPage = function () {
   activateCurrent();
   paper.project.activeLayer.removeChildren();
   hoverGroup = null;
+  selectedGroups = [];
   var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
   if (zones && zones.length > 0) {
     scoreParts.currentZones = zones;
     Paper.drawZones(zones);
   }
   if (paper.view) paper.view.update();
+};
+
+// ============== Suppression multiple
+Paper.deleteSelectedZones = function () {
+  if (!selectedGroups.length) return;
+  selectedGroups.forEach(function (g) { Paper.deleteZone(g); });
+  selectedGroups = [];
+  commit();
+  scoreParts.saveZones(function () {});
+  if (Paper.onSelectionChange) Paper.onSelectionChange(0);
 };
 
 // ============== Helpers
