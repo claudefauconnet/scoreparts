@@ -1,7 +1,20 @@
 export const Common = {};
 
-Common.resourceColorPalettes = {};
+Common.toRoman = function (n) {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+  let result = '';
+  vals.forEach((val, valIndex) => {
+    while (n >= val) {
+      result += syms[valIndex];
+      n -= val;
+    }
+  });
+  return result;
+};
 
+
+/*
 Common.fillSelectOptions = function (
   selectId,
   data,
@@ -77,7 +90,7 @@ Common.getResourceColor = function (resourceType, resourceId, palette) {
   }
   return color;
 };
-
+*/
 Common.palette = [
   '#9edae5',
   '#17becf',

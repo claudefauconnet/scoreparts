@@ -1,5 +1,5 @@
 // Globals externes attendus : `$` (jQuery), `window.event`.
-export const PopupMenuWidget = {};
+/*export const PopupMenuWidget = {};
 
 PopupMenuWidget.initAndShow = function (html, popupDivId, options) {
   if (!options) {
@@ -81,3 +81,4 @@ PopupMenuWidget.hidePopup = function (popupDiv) {
   }
   $('#' + popupDiv).css('display', 'none');
 };
+*/

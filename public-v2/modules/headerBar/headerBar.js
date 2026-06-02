@@ -2,15 +2,7 @@ import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
 import { saveScoreInfos, generateVoiceScore, createZip } from '../../common/proxy.js';
 import { persistVoices } from '../voices/voices.js';
-
-// ============== Mouvements
-function toRoman(n) {
-  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
-  let result = '';
-  vals.forEach((val, i) => { while (n >= val) { result += syms[i]; n -= val; } });
-  return result;
-}
+import { Common } from '../../common/common.js';
 
 function getCurrentPage() {
   return scoreParts.currentPage + 1;
@@ -141,7 +133,7 @@ function renderMvt() {
   scoreParts.currentMovement = movement.name;
   const order = state.MOVEMENTS.findIndex((x) => x.id === state.activeMvt);
   document.getElementById('mvt-number').innerHTML =
-    'Mouvement <span class="roman">' + toRoman(order + 1) + '</span>';
+    'Mouvement <span class="roman">' + Common.toRoman(order + 1) + '</span>';
   document.getElementById('mvt-name').value = movement.name;
 
   const popList = document.getElementById('mvt-list');
@@ -151,7 +143,7 @@ function renderMvt() {
     const item = document.createElement('div');
     item.className = 'mvt-item' + (mv.id === state.activeMvt ? ' active' : '');
     item.innerHTML = `
-        <span class="num">${toRoman(i + 1)}</span>
+        <span class="num">${Common.toRoman(i + 1)}</span>
         <span class="name">${mv.name || 'Sans titre'}</span>
         <span class="range">p. ${range.start}–${range.end}</span>
         <button class="del" title="Supprimer ce mouvement">

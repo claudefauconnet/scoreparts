@@ -32,3 +32,24 @@ ZonesChecker.addMessage = function (page, zoneindex, message) {
 ZonesChecker.printMessage = function () {
   console.log(ZonesChecker.message);
 };
+
+ZonesChecker.getErrors = function () {
+  const errors = [];
+  if (!scoreParts.allPagesZones || !scoreParts.allPagesZones.pages) return errors;
+
+  for (var pagenum in scoreParts.allPagesZones.pages) {
+    var page = scoreParts.allPagesZones.pages[pagenum];
+
+    if (scoreParts.allPagesZones.numberOfVoices) {
+      var modulo = page.length % scoreParts.allPagesZones.numberOfVoices;
+      if (modulo !== 0) {
+        errors.push({
+          page: parseInt(pagenum),
+          message: `${page.length} zone${page.length !== 1 ? 's' : ''}, attendu multiple de ${scoreParts.allPagesZones.numberOfVoices}`,
+        });
+      }
+    }
+  }
+
+  return errors;
+};

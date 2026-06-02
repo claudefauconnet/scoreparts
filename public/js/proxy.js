@@ -108,7 +108,6 @@ var Proxy = (function () {
       var movementName = self.getPdfMovementName();
       var zonesStr = JSON.stringify(selectedZones);
       var payload = {
-        generatePart: 1,
         part: part,
         margin: scoreParts.margin,
         sourcePdfName: pdfName,

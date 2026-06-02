@@ -2,27 +2,18 @@ import { state, on, emit, resetAll } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
 import { saveScoreInfos, generateVoiceScore, findPageZones } from '../../common/proxy.js';
 import { Paper } from '../../common/paper.js';
+import { Common } from '../../common/common.js';
+import { ZonesChecker } from '../../common/zonesChecker.js';
 
 // ============== Voix
 const list = document.getElementById('voice-list');
-
-const COLOR_PALETTE = [
-  '#c9534b',
-  '#d99441',
-  '#4a7a8c',
-  '#6b6396',
-  '#5e8c61',
-  '#a86b9b',
-  '#3a342b',
-  '#b08a3e',
-];
 
 // Couleur distincte : 1re couleur de la palette non encore utilisée par une voix ;
 // si toutes prises, on boucle sur la palette (taille = nombre de voix).
 function nextVoiceColor() {
   const used = new Set(state.VOICES.map((v) => v.color));
-  const free = COLOR_PALETTE.find((color) => !used.has(color));
-  return free || COLOR_PALETTE[state.VOICES.length % COLOR_PALETTE.length];
+  const free = Common.palette.find((color) => !used.has(color));
+  return free || Common.palette[state.VOICES.length % Common.palette.length];
 }
 
 function nextVoiceId() {
@@ -39,7 +30,7 @@ function loadVoices() {
     .map((voice, index) => ({
       id: voice.id || 'v' + (index + 1),
       name: voice.name,
-      color: voice.color || COLOR_PALETTE[index % COLOR_PALETTE.length],
+      color: voice.color || Common.palette[index % Common.palette.length],
       on: voice.on !== false,
       count: voice.count || 0,
     }));
@@ -397,7 +388,7 @@ function openColorPopover(swatch, voice) {
   document.querySelectorAll('.color-pop').forEach((p) => p.remove());
   const pop = document.createElement('div');
   pop.className = 'color-pop';
-  COLOR_PALETTE.forEach((color) => {
+  Common.palette.forEach((color) => {
     const button = document.createElement('button');
     button.style.background = color;
     button.addEventListener('click', (ev) => {
@@ -447,6 +438,35 @@ function renderProgress() {
   document.querySelector('.progress-detail').innerHTML =
     `<span>${totalZones} zone${totalZones !== 1 ? 's' : ''} · ${voiceCount} voix</span>` +
     `<span>${pagesWithZones} / ${totalPages || '?'} p.</span>`;
+
+  renderProgressWarning();
+}
+
+function renderProgressWarning() {
+  const errors = ZonesChecker.getErrors();
+  const progressCard = document.querySelector('.progress-card');
+  let warningEl = progressCard.querySelector('.progress-warning');
+
+  if (errors.length === 0) {
+    if (warningEl) warningEl.remove();
+    return;
+  }
+
+  const badPages = errors.map((error) => `p. ${error.page + 1}`).join(', ');
+  const tooltipLines = errors.map((error) => `p. ${error.page + 1} : ${error.message}`).join('\n');
+
+  if (!warningEl) {
+    warningEl = document.createElement('div');
+    warningEl.className = 'progress-warning';
+    progressCard.appendChild(warningEl);
+  }
+
+  warningEl.title = tooltipLines;
+  warningEl.innerHTML =
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">` +
+    `<path d="M12 9v4M12 16.5v.5M10.268 4.5L3 17h18L13.732 4.5a2 2 0 0 0-3.464 0z"/>` +
+    `</svg>` +
+    `<span>${badPages} : zones incohérentes</span>`;
 }
 
 on('voices-changed', renderVoices);

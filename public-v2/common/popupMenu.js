@@ -1,5 +1,5 @@
 // Globals externes attendus : `$` (jQuery).
-import { Paper } from './paper.js';
+/*import { Paper } from './paper.js';
 import { PopupMenuWidget } from './popupMenuWidget.js';
 
 export const popupMenu = {};
@@ -75,3 +75,4 @@ $(document).on('click', '#popupMenuWidgetDiv .popupMenuItem', function () {
     popupMenu.addText();
   }
 });
+*/

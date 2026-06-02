@@ -110,7 +110,6 @@ export function generateVoiceScore(
     type: 'POST',
     url: '/api/score/generatePart',
     data: {
-      generatePart: 1,
       part: part,
       margin: margin,
       sourcePdfName: sourcePdfName,

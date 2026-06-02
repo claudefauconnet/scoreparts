@@ -18,6 +18,47 @@ import { state } from '../modules/partitions.state.js';
 
 export const Paper = {};
 
+
+
+// ============== Constantes de style / interaction (look module)
+const ZONE_RADIUS = 8; // coins arrondis
+const EDGE_GRAB = 9; // px de proximité d'un bord (haut/bas) → redimensionnement
+const BADGE_INSET = 12; // décalage de la croix depuis le coin haut-droit du rect
+const BADGE_GRAB = 12; // px de proximité au centre de la croix → suppression
+const MIN_ZONE_HEIGHT = 8;
+const HIT_OPTIONS = { fill: true, stroke: true, tolerance: 4 };
+
+// Couleur de base d'une zone non affectée (l'affectation de voix viendra
+// dans la partie voices et recolorera la zone).
+const BASE_COLOR = '#4a7a8c';
+const ZONE_FILL = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.16);
+const ZONE_STROKE = new paper.Color(BASE_COLOR);
+const PILL_BG = new paper.Color(BASE_COLOR);
+
+
+
+// ============== État privé
+var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
+var toolInstalled = false;
+var hoverGroup = null; // zone actuellement survolée (poignées visibles)
+var selectedGroups = []; // zones sélectionnées par lasso
+
+Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
+Paper.activeCanvas = null; // <canvas> de la page courante
+Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
+Paper.currentZoneAction = null;
+Paper.currentPath = null;
+Paper.defaultZoneHeight = 50;
+Paper.margin = 10;
+Paper.onPendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
+Paper.onSelectionChange = null; // hook(count) posé par scorePlayer pour la toolbar
+Paper.isLasso = false;
+Paper.lassoStart = null;
+Paper.lassoPath = null;
+// Centre de la croix de suppression d'après le rectangle (path) d'une zone.
+function deleteBadgeCenter(rectBounds) {
+  return rectBounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
+}
 // Couleurs + libellé d'une zone selon la voix affectée (zone.voice = id de voix).
 // Voix inconnue / non affectée → couleur neutre de base et libellé générique.
 function zoneColors(zone) {
@@ -44,46 +85,6 @@ function zoneColors(zone) {
     label: voice.name,
   };
 }
-
-// ============== Constantes de style / interaction (look module)
-const ZONE_RADIUS = 8; // coins arrondis
-const EDGE_GRAB = 9; // px de proximité d'un bord (haut/bas) → redimensionnement
-const BADGE_INSET = 12; // décalage de la croix depuis le coin haut-droit du rect
-const BADGE_GRAB = 12; // px de proximité au centre de la croix → suppression
-const MIN_ZONE_HEIGHT = 8;
-const HIT_OPTIONS = { fill: true, stroke: true, tolerance: 4 };
-
-// Couleur de base d'une zone non affectée (l'affectation de voix viendra
-// dans la partie voices et recolorera la zone).
-const BASE_COLOR = '#4a7a8c';
-const ZONE_FILL = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.16);
-const ZONE_STROKE = new paper.Color(BASE_COLOR);
-const PILL_BG = new paper.Color(BASE_COLOR);
-
-// Centre de la croix de suppression d'après le rectangle (path) d'une zone.
-function deleteBadgeCenter(rectBounds) {
-  return rectBounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
-}
-
-// ============== État privé
-var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
-var toolInstalled = false;
-var hoverGroup = null; // zone actuellement survolée (poignées visibles)
-var selectedGroups = []; // zones sélectionnées par lasso
-
-Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
-Paper.activeCanvas = null; // <canvas> de la page courante
-Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
-Paper.currentZoneAction = null;
-Paper.currentPath = null;
-Paper.defaultZoneHeight = 50;
-Paper.margin = 10;
-Paper.onPendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
-Paper.onSelectionChange = null; // hook(count) posé par scorePlayer pour la toolbar
-Paper.isLasso = false;
-Paper.lassoStart = null;
-Paper.lassoPath = null;
-
 // Largeur de dessin = taille CSS du canvas actif (espace de coordonnées du projet).
 function canvasW() {
   return Paper.activeCanvas ? Paper.activeCanvas.clientWidth : 0;
@@ -262,15 +263,15 @@ function onCanvasMouseDown(event) {
       return;
     }
     if (hitGroup) return; // ne pas créer par-dessus une zone existante
-    var natW = scoreParts.naturalW || canvasW() || 1;
-    var natH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
+    var naturalW = scoreParts.naturalW || canvasW() || 1;
+    var naturalH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
     var coefH = scoreParts.coefH || 1;
     var coefV = scoreParts.coefV || 1;
     var zone = {
-      x: (scoreParts.margin || Paper.margin) / (natW * coefH),
-      y: event.point.y / (natH * coefV),
+      x: (scoreParts.margin || Paper.margin) / (naturalW * coefH),
+      y: event.point.y / (naturalH * coefV),
       width: 1.0,
-      height: Paper.defaultZoneHeight / (natH * coefV),
+      height: Paper.defaultZoneHeight / (naturalH * coefV),
       page: scoreParts.currentPage,
       type: 'zone',
       voice: '',
@@ -450,15 +451,15 @@ Paper.getPageZones = function () {
   activateCurrent(); // lit toujours le projet de la page courante
   var zones = [];
   // Normaliser en fractions 0→1 de la taille de canvas (= fraction de l'image).
-  // canvasW = natW * coefH, canvasH = natH * coefV.
+  // canvasW = naturalW * coefH, canvasH = naturalH * coefV.
   // stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
-  // PDF backend: png_y = stored_y * natH (avec coefV=1/natH envoyé depuis voices.js).
-  var natW = scoreParts.naturalW || 1;
-  var natH = scoreParts.naturalH || 1;
+  // PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH envoyé depuis voices.js).
+  var naturalW = scoreParts.naturalW || 1;
+  var naturalH = scoreParts.naturalH || 1;
   var coefH = scoreParts.coefH || 1;
   var coefV = scoreParts.coefV || 1;
-  var canvasH = natH * coefV;
-  var canvasWval = natW * coefH;
+  var canvasH = naturalH * coefV;
+  var canvasWval = naturalW * coefH;
   paper.project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
       var measure = item.data.measure;
@@ -504,15 +505,15 @@ Paper.drawZones = function (zones) {
 Paper.drawZone = function (zone, pageIndex, interactive) {
   if (pageIndex == null) pageIndex = scoreParts.currentPage;
   // Dénormaliser les fractions stockées vers des pixels canvas courants.
-  // natW * coefH = canvasW, natH * coefV = canvasH.
-  var natW = scoreParts.naturalW || 1;
-  var natH = scoreParts.naturalH || 1;
+  // naturalW * coefH = canvasW, naturalH * coefV = canvasH.
+  var naturalW = scoreParts.naturalW || 1;
+  var naturalH = scoreParts.naturalH || 1;
   var coefH = scoreParts.coefH || 1;
   var coefV = scoreParts.coefV || 1;
-  var left   = Math.round(zone.x * natW * coefH);
-  var right  = Math.round((zone.x + zone.width) * natW * coefH);
-  var top    = Math.round(zone.y * natH * coefV);
-  var bottom = Math.round((zone.y + zone.height) * natH * coefV);
+  var left   = Math.round(zone.x * naturalW * coefH);
+  var right  = Math.round((zone.x + zone.width) * naturalW * coefH);
+  var top    = Math.round(zone.y * naturalH * coefV);
+  var bottom = Math.round((zone.y + zone.height) * naturalH * coefV);
   var midX = (left + right) / 2;
 
   // Rectangle de la zone (corps).
