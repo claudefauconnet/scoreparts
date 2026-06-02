@@ -1,0 +1,29 @@
+/* leftPanel/actions — rangée d'outils de découpage (zones) */
+
+/* Tools row — keep one column per button */
+.tool-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 6px;
+}
+.tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfaf7;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+  text-align: center;
+}
+.tool-btn:hover { border-color: var(--line-2); background: #fffefa; }
+.tool-btn.active { border-color: var(--ink); background: white; }
+.tool-btn svg { width: 16px; height: 16px; stroke: currentColor; }

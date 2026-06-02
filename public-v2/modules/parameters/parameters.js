@@ -29,13 +29,9 @@ document.querySelectorAll('#tw-book-style button').forEach((button) => {
   button.addEventListener('click', () => {
     document
       .querySelectorAll('#tw-book-style button')
-      .forEach((x) => x.classList.remove('active'));
+      .forEach((styleButton) => styleButton.classList.remove('active'));
     button.classList.add('active');
     document.getElementById('stage').dataset.bookStyle = button.dataset.val;
   });
 });
 
-// "Open" button (lives in the scorePlayer empty-state fragment) → open score selector
-document.getElementById('open-btn').addEventListener('click', () => {
-  document.getElementById('dialog-overlay').style.display = 'grid';
-});

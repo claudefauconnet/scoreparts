@@ -453,7 +453,7 @@ Paper.getPageZones = function () {
   // Normaliser en fractions 0→1 de la taille de canvas (= fraction de l'image).
   // canvasW = naturalW * coefH, canvasH = naturalH * coefV.
   // stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
-  // PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH envoyé depuis voices.js).
+  // PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH envoyé depuis leftPanel.js).
   var naturalW = scoreParts.naturalW || 1;
   var naturalH = scoreParts.naturalH || 1;
   var coefH = scoreParts.coefH || 1;

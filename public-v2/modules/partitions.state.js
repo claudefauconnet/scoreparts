@@ -45,7 +45,7 @@ export function emit(eventName, detail) {
 }
 
 export function voiceLabel(id) {
-  const voice = state.VOICES.find((v) => v.id === id);
+  const voice = state.VOICES.find((storedVoice) => storedVoice.id === id);
   return voice ? voice.name : id;
 }
 

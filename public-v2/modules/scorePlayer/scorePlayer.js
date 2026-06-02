@@ -15,26 +15,26 @@ import { Paper } from '../../common/paper.js';
 // positionne/dimensionne sur la boîte de mise en page de l'<img> via la chaîne
 // offsetParent (valeurs de layout, insensibles à la transform de zoom) → le zoom
 // reste purement visuel et les coordonnées Paper restent invariantes au zoom.
-function offsetWithinPage(el, pageEl) {
+function offsetWithinPage(element, pageElement) {
   let x = 0;
   let y = 0;
-  let node = el;
-  while (node && node !== pageEl) {
+  let node = element;
+  while (node && node !== pageElement) {
     x += node.offsetLeft;
     y += node.offsetTop;
     node = node.offsetParent;
   }
-  return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+  return { x, y, width: element.offsetWidth, height: element.offsetHeight };
 }
 
-function fitCanvasToImage(canvas, img, pageEl) {
-  const box = offsetWithinPage(img, pageEl);
+function fitCanvasToImage(canvas, img, pageElement) {
+  const box = offsetWithinPage(img, pageElement);
   canvas.style.left = box.x + 'px';
   canvas.style.top = box.y + 'px';
-  canvas.style.width = box.w + 'px';
-  canvas.style.height = box.h + 'px';
-  canvas.width = box.w;
-  canvas.height = box.h;
+  canvas.style.width = box.width + 'px';
+  canvas.style.height = box.height + 'px';
+  canvas.width = box.width;
+  canvas.height = box.height;
 }
 
 function whenImageReady(img, callback) {
@@ -118,19 +118,19 @@ function setupEditorForCurrentPage() {
   }
   descriptors.sort((a, b) => (b.side === side) - (a.side === side)); // courante en premier
 
-  descriptors.forEach((d) => {
-    const canvas = document.getElementById(d.canvasId);
+  descriptors.forEach((descriptor) => {
+    const canvas = document.getElementById(descriptor.canvasId);
     if (!canvas) return;
-    const isCurrent = d.side === side;
+    const isCurrent = descriptor.side === side;
     // Attend l'<img> de la page (chargement async possible pour la page de droite).
-    waitForPageImage(d.systemsId, (img) => {
+    waitForPageImage(descriptor.systemsId, (img) => {
       if (token !== renderToken) return; // changement de page survenu entre-temps
       // setTimeout(0) : laisse les handlers synchrones (aspect-ratio mono-page,
       // resetZoom) s'appliquer avant de mesurer la boîte de l'image.
       setTimeout(() => {
         if (token !== renderToken) return;
-        fitCanvasToImage(canvas, img, d.pageEl);
-        Paper.renderPage(canvas, img, d.pageIndex, isCurrent);
+        fitCanvasToImage(canvas, img, descriptor.pageEl);
+        Paper.renderPage(canvas, img, descriptor.pageIndex, isCurrent);
       }, 0);
     });
   });
@@ -195,8 +195,8 @@ function wireControls() {
 
   // Effacer les zones d'une page.
   document.querySelectorAll('.clear-zones-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
       const pageEl = btn.closest('.page');
       const side = pageEl.classList.contains('page-left') ? 0 : 1;
       const origin = scoreParts.spreadOrigin();
@@ -284,9 +284,9 @@ stageEl.classList.toggle('single-page', smallScreen.matches);
       if (scoreParts.pdfName) setupEditorForCurrentPage();
     }, 80);
   });
-  ['.page-left', '.page-right'].forEach((sel) => {
-    const el = document.querySelector(sel);
-    if (el) observer.observe(el);
+  ['.page-left', '.page-right'].forEach((selector) => {
+    const pageElement = document.querySelector(selector);
+    if (pageElement) observer.observe(pageElement);
   });
 })();
 
@@ -343,11 +343,11 @@ function zoomFromCenter(nextZoom) {
 // Wheel / trackpad pinch (ctrlKey) zoom
 document.getElementById('stage-body').addEventListener(
   'wheel',
-  (e) => {
-    if (e.target.closest('.zoom-controls')) return;
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-    zoomAt(e.clientX, e.clientY, zoom * factor);
+  (event) => {
+    if (event.target.closest('.zoom-controls')) return;
+    event.preventDefault();
+    const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+    zoomAt(event.clientX, event.clientY, zoom * factor);
   },
   { passive: false }
 );
@@ -355,17 +355,17 @@ document.getElementById('stage-body').addEventListener(
 // Drag to pan (only while zoomed). Capture phase so it pre-empts zone drag.
 document.getElementById('stage-body').addEventListener(
   'mousedown',
-  (e) => {
+  (event) => {
     if (zoom <= 1) return;
     if (Paper.pendingNewZone) return;
-    if (e.target.closest('.zone-canvas.editing') || e.target.closest('[data-act]')) return;
-    if (e.target.closest('.page.editing .zone-canvas')) return;
-    if (e.target.closest('.zoom-controls') || e.target.closest('.nav-arrow')) return;
-    e.preventDefault();
-    e.stopPropagation();
+    if (event.target.closest('.zone-canvas.editing') || event.target.closest('[data-act]')) return;
+    if (event.target.closest('.page.editing .zone-canvas')) return;
+    if (event.target.closest('.zoom-controls') || event.target.closest('.nav-arrow')) return;
+    event.preventDefault();
+    event.stopPropagation();
     bookEl.classList.add('panning');
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const startX = event.clientX;
+    const startY = event.clientY;
     const startPanX = panX;
     const startPanY = panY;
     function move(ev) {

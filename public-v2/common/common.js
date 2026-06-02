@@ -1,13 +1,13 @@
 export const Common = {};
 
 Common.toRoman = function (n) {
-  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
-  const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+  const romanValues = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const romanSymbols = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
   let result = '';
-  vals.forEach((val, valIndex) => {
-    while (n >= val) {
-      result += syms[valIndex];
-      n -= val;
+  romanValues.forEach((romanValue, romanValueIndex) => {
+    while (n >= romanValue) {
+      result += romanSymbols[romanValueIndex];
+      n -= romanValue;
     }
   });
   return result;

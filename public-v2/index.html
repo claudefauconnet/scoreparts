@@ -35,8 +35,15 @@
 <link rel="stylesheet" href="/modules/scoreSelector/selector/selector.css">
 <link rel="stylesheet" href="/modules/scoreSelector/import_pdf/import_pdf.css">
 <link rel="stylesheet" href="/modules/partitions.css">
-<link rel="stylesheet" href="/modules/voices/voices.css">
+<link rel="stylesheet" href="/modules/leftPanel/leftPanel.css">
+<link rel="stylesheet" href="/modules/leftPanel/actions/actions.css">
+<link rel="stylesheet" href="/modules/leftPanel/voices/voices.css">
+<link rel="stylesheet" href="/modules/leftPanel/progress/progress.css">
+<link rel="stylesheet" href="/modules/leftPanel/scoreInfo/scoreInfo.css">
 <link rel="stylesheet" href="/modules/headerBar/headerBar.css">
+<link rel="stylesheet" href="/modules/headerBar/movements/movements.css">
+<link rel="stylesheet" href="/modules/headerBar/download/download.css">
+<link rel="stylesheet" href="/modules/headerBar/reset/reset.css">
 <link rel="stylesheet" href="/modules/scorePlayer/scorePlayer.css">
 <link rel="stylesheet" href="/modules/parameters/parameters.css">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -63,9 +70,37 @@
 
 <script>
 $(function () {
-  var appFragments = $.when(
-    $('#voices-host').load('/modules/voices/voices.html'),
-    $('#headerbar-host').load('/modules/headerBar/headerBar.html'),
+  function appendModule(modulePath) {
+    var script = document.createElement('script');
+    script.type = 'module';
+    script.src = '/modules/' + modulePath + '.js';
+    document.body.appendChild(script);
+  }
+
+  // leftPanel et headerBar sont des shells : on charge d'abord leur HTML (qui
+  // contient des hosts), PUIS les fragments de leurs sous-composants dans ces hosts.
+  var leftPanelParts = $('#voices-host')
+    .load('/modules/leftPanel/leftPanel.html')
+    .then(function () {
+      return $.when(
+        $('#lp-actions-host').load('/modules/leftPanel/actions/actions.html'),
+        $('#lp-voices-host').load('/modules/leftPanel/voices/voices.html'),
+        $('#lp-progress-host').load('/modules/leftPanel/progress/progress.html'),
+        $('#lp-scoreinfo-host').load('/modules/leftPanel/scoreInfo/scoreInfo.html')
+      );
+    });
+
+  var headerBarParts = $('#headerbar-host')
+    .load('/modules/headerBar/headerBar.html')
+    .then(function () {
+      return $.when(
+        $('#hb-movements-host').load('/modules/headerBar/movements/movements.html'),
+        $('#hb-reset-host').load('/modules/headerBar/reset/reset.html'),
+        $('#hb-download-host').load('/modules/headerBar/download/download.html')
+      );
+    });
+
+  var otherParts = $.when(
     $('#stage-body').load('/modules/scorePlayer/scorePlayer.html'),
     $('#scoreplayer-bottom').load('/modules/scorePlayer/bottomBar.html'),
     $('#parameters-host').load('/modules/parameters/parameters.html')
@@ -76,22 +111,27 @@ $(function () {
       $('#selector-slot').load('/modules/scoreSelector/selector/selector.html'),
       $('#import-slot').load('/modules/scoreSelector/import_pdf/import_pdf.html')
     ).done(function () {
-      ['scoreSelector/dialog/dialog', 'scoreSelector/selector/selector', 'scoreSelector/import_pdf/import_pdf'].forEach(function (path) {
-        var s = document.createElement('script');
-        s.type = 'module';
-        s.src = '/modules/' + path + '.js';
-        document.body.appendChild(s);
-      });
+      ['scoreSelector/dialog/dialog', 'scoreSelector/selector/selector', 'scoreSelector/import_pdf/import_pdf'].forEach(appendModule);
     });
   });
 
-  appFragments.done(function () {
-    ['voices/voices', 'headerBar/headerBar', 'scorePlayer/scorePlayer', 'scorePlayer/bottomBar', 'parameters/parameters'].forEach(function (modulePath) {
-      var s = document.createElement('script');
-      s.type = 'module';
-      s.src = '/modules/' + modulePath + '.js';
-      document.body.appendChild(s);
-    });
+  // Une fois tous les fragments (shells + sous-composants) dans le DOM, on charge
+  // les scripts ES modules. Le shell leftPanel.js ne porte que le tooltip global ;
+  // headerBar n'a pas de script shell (toute sa logique est dans les sous-composants).
+  $.when(leftPanelParts, headerBarParts, otherParts).done(function () {
+    [
+      'leftPanel/leftPanel',
+      'leftPanel/actions/actions',
+      'leftPanel/voices/voices',
+      'leftPanel/progress/progress',
+      'leftPanel/scoreInfo/scoreInfo',
+      'headerBar/movements/movements',
+      'headerBar/reset/reset',
+      'headerBar/download/download',
+      'scorePlayer/scorePlayer',
+      'scorePlayer/bottomBar',
+      'parameters/parameters',
+    ].forEach(appendModule);
   });
 });
 </script>

@@ -2,88 +2,12 @@
   <strong></strong>
 </div>
 
-<div class="mvt" id="mvt">
-  <span class="mvt-number" id="mvt-number">Mouvement I</span>
-  <span class="mvt-divider"></span>
-  <div class="mvt-name-wrap">
-    <input class="mvt-name" id="mvt-name" value="" />
-    <button class="mvt-edit" id="mvt-edit" title="Renommer le mouvement">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-    </button>
-  </div>
-  <button class="mvt-dd" id="mvt-dd" title="Mouvements">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-  </button>
-
-  <div class="mvt-pop" id="mvt-pop">
-    <div class="mvt-pop-head">Mouvements</div>
-    <div id="mvt-list"></div>
-    <div class="mvt-add" id="mvt-add">
-      <div class="mvt-add-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-      </div>
-      <div class="mvt-add-text">
-        <div class="t">Créer un mouvement à partir d'ici</div>
-        <div class="s" id="mvt-add-sub">de la page courante jusqu'au mouvement suivant</div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Sélecteur de mouvement (sous-composant, piste centrale de la grille) -->
+<div id="hb-movements-host" style="display:contents"></div>
 
 <div class="top-actions">
-  <button class="btn btn-ghost" style="padding:6px 14px;font-size:12px;color:var(--violon1);border-color:var(--line);" title="Tout recommencer : supprime mouvements, voix et zones" id="reset-btn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-    Tout recommencer
-  </button>
-  <!-- <button class="btn" style="padding:6px 14px;font-size:12px;background:#5e8c61;color:white;border-color:#5e8c61;" title="Publier cette partition" id="publish-btn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-    Publier
-  </button> -->
-  <div class="dl-split" id="dl-split">
-    <button class="btn btn-primary dl-main" style="padding:6px 14px;font-size:12px;" title="Télécharger la partition complète (PDF)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>
-      Télécharger
-    </button>
-    <button class="btn btn-primary dl-caret" id="dl-caret" title="Autres formats" aria-label="Plus d'options">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M6 9l6 6 6-6"/></svg>
-    </button>
-    <div class="dl-menu" id="dl-menu">
-      <button class="dl-item" data-fmt="pdf">
-        <span class="dl-icon pdf">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/></svg>
-        </span>
-        <div class="dl-text">
-          <div class="dl-title">Partition complète (PDF)</div>
-          <div class="dl-sub">un seul fichier, voix actives empilées</div>
-        </div>
-        <span class="dl-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M5 12l5 5L20 7"/></svg>
-        </span>
-      </button>
-      <button class="dl-item" data-fmt="zip">
-        <span class="dl-icon zip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h14v16H5z"/><path d="M11 4v2M11 8v2M11 12v2M11 16h2v3h-2z"/></svg>
-        </span>
-        <div class="dl-text">
-          <div class="dl-title">Voix séparées (.zip)</div>
-          <div class="dl-sub" id="dl-zip-sub">un PDF par voix sélectionnée</div>
-        </div>
-        <span class="dl-end">
-          <span class="dl-badge" id="dl-zip-count">3</span>
-          <span class="dl-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M5 12l5 5L20 7"/></svg>
-          </span>
-        </span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Barre de progression de génération (affichée pendant un téléchargement) -->
-<div class="dl-toast" id="dl-toast" hidden>
-  <div class="dl-toast-head">
-    <span class="dl-toast-label" id="dl-toast-label">Génération…</span>
-    <span class="dl-toast-pct" id="dl-toast-pct"></span>
-  </div>
-  <div class="dl-toast-track"><div class="dl-toast-fill" id="dl-toast-fill"></div></div>
+  <!-- Tout recommencer (sous-composant) -->
+  <span id="hb-reset-host" style="display:contents"></span>
+  <!-- Téléchargement (sous-composant) -->
+  <span id="hb-download-host" style="display:contents"></span>
 </div>

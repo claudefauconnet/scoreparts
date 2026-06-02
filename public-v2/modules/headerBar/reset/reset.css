@@ -1,0 +1,15 @@
+/* headerBar/reset — bouton « Tout recommencer » */
+
+#reset-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--violon1);
+  border-color: var(--line);
+}
+#reset-btn svg { width: 14px; height: 14px; }
+
+/* Tighter widths: drop the long "Tout recommencer" label (icon + tooltip stay)
+   so the centered movement pill never collides with the action buttons. */
+@media (max-width: 1500px) {
+  #reset-btn { font-size: 0 !important; gap: 0; padding: 6px 9px !important; }
+}

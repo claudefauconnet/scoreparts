@@ -1,5 +1,4 @@
 import { Paper } from './paper.js';
-import { Voices } from './voices.js';
 import { Common } from './common.js';
 import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
 import { emit } from '../modules/partitions.state.js';
@@ -118,7 +117,7 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
     return;
   }
 
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('contextmenu', (event) => event.preventDefault());
 
   // À l'ouverture, on CHARGE les zones persistées (pas de save préalable : le
   // modèle en mémoire est encore vide à ce stade, le sauver écraserait le backend).
@@ -151,6 +150,28 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
   });
 }
 
+// Propage mesure/texte de la 1re zone d'un système sur les zones suivantes
+// de la même page (les voix d'un même système partagent mesure + annotation).
+scoreParts.copyAnnotationsOnAllVoices = function (targetPage) {
+  var numberOfVoices = scoreParts.allPagesZones.numberOfVoices;
+  var currentMeasure = null;
+  var currentText = null;
+  for (var pageKey in scoreParts.allPagesZones.pages) {
+    if (targetPage == -1 || targetPage == pageKey) {
+      var zones = scoreParts.allPagesZones.pages[parseInt(pageKey)];
+      for (var zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
+        if (zoneIndex == 0 || zoneIndex == numberOfVoices) {
+          if (zones[zoneIndex].measure) currentMeasure = zones[zoneIndex].measure;
+          if (zones[zoneIndex].text) currentText = zones[zoneIndex].text;
+        } else {
+          if (currentMeasure) zones[zoneIndex].measure = currentMeasure;
+          if (currentText) zones[zoneIndex].text = currentText;
+        }
+      }
+    }
+  }
+};
+
 scoreParts.writeCurrentPageZones = function () {
   var zones = Paper.getPageZones();
   if (zones.length == 0) {
@@ -158,7 +179,7 @@ scoreParts.writeCurrentPageZones = function () {
   }
   scoreParts.currentZones = zones;
   scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
-  Voices.copyAnnotationsOnAllVoices(scoreParts.currentPage);
+  scoreParts.copyAnnotationsOnAllVoices(scoreParts.currentPage);
 };
 
 scoreParts.changePage = function (newPage) {
@@ -250,20 +271,75 @@ scoreParts.deletePageZones = function (page) {
   Paper.deleteZones();
 };
 
-scoreParts.repeatZonesFromPreviousPage = function (detect) {
-  // from previous page
+// Affecte les zones données à la page courante (modèle + sélection courante) puis
+// persiste. Point de commit commun aux opérations qui régénèrent une page entière
+// (auto-détection, duplication). Le (re)dessin et l'émission d'événement restent UI.
+scoreParts.commitCurrentPageZones = function (zones) {
+  scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
+  scoreParts.currentZones = zones;
+  scoreParts.modified = true;
+  scoreParts.saveZones(function () {});
+};
 
-  Proxy.autoDetectPageZones(function (err, data) {
-    var newZones = [];
-    var zoneHeights = [];
-    var zoneVoices = [];
-    scoreParts.currentZones.forEach(function (zone, index) {
-      if (data.topLines[index]) {
-        zoneHeights.push(zone.height);
-        zoneVoices.push(zone.voice || null);
-      }
-    });
-    Paper.drawAutoDetectedZones(data, zoneHeights, zoneVoices);
+// Construit les zones d'une page à partir des systèmes détectés par l'API
+// (data.topLines / interline / firstVerticalLine), en coordonnées fractionnelles
+// 0→1 des dimensions naturelles du PNG. Si customHeightDisplayPx est fourni (> 0),
+// la hauteur vient de ce réglage écran (converti via coefV) ; sinon elle est déduite
+// de l'interligne plus un débord automatique (moitié de l'espace inter-systèmes,
+// plafonné à 2 interlignes). Calcul pur, sans DOM ni mutation du modèle.
+scoreParts.buildAutoDetectedZones = function (data, customHeightDisplayPx) {
+  const naturalW = scoreParts.naturalW || 1;
+  const naturalH = scoreParts.naturalH || 1;
+  const interline = data.interline;
+  const xFrac = data.firstVerticalLine / naturalW;
+  const widthFrac = Math.max(0.01, 1 - 2 * xFrac);
+
+  const autoOverflowPx =
+    data.topLines.length > 1
+      ? Math.min(2 * interline, Math.max(0, (data.topLines[1] - data.topLines[0] - 6 * interline) / 2))
+      : interline;
+
+  const useCustomHeight = typeof customHeightDisplayPx === 'number' && customHeightDisplayPx > 0;
+  // coefV = canvasH / naturalH → fraction = displayPx / (naturalH * coefV)
+  const coefV = scoreParts.coefV || 1;
+
+  return data.topLines.map(function (topY) {
+    if (useCustomHeight) {
+      return {
+        x: xFrac,
+        y: Math.max(0, topY / naturalH),
+        width: widthFrac,
+        height: customHeightDisplayPx / (naturalH * coefV),
+        voice: null,
+        movement: scoreParts.currentMovement,
+        page: scoreParts.currentPage,
+      };
+    }
+    return {
+      x: xFrac,
+      y: Math.max(0, (topY - autoOverflowPx) / naturalH),
+      width: widthFrac,
+      height: (6 * interline + 2 * autoOverflowPx) / naturalH,
+      voice: null,
+      movement: scoreParts.currentMovement,
+      page: scoreParts.currentPage,
+    };
+  });
+};
+
+// Clone les zones de la page précédente appartenant au mouvement courant, en les
+// retaguant sur la page courante. Retourne le tableau cloné (vide si rien à copier).
+// Ne mute pas le modèle : le commit reste au choix de l'appelant.
+scoreParts.duplicatePreviousPageZones = function () {
+  if (scoreParts.currentPage === 0) return [];
+  const previousPage = scoreParts.currentPage - 1;
+  const previousZones = (scoreParts.allPagesZones.pages[previousPage] || []).filter(
+    function (zone) {
+      return zone.movement === scoreParts.currentMovement;
+    }
+  );
+  return previousZones.map(function (zone) {
+    return Object.assign({}, zone, { page: scoreParts.currentPage });
   });
 };
 

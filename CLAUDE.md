@@ -19,12 +19,15 @@ Use jQuery for DOM manipulation, AJAX, event handling, and HTML generation. No n
 
 ### Variable names
 
-Always explicit. Never single-letter or cryptic shorthands.
+Always explicit. Never single-letter or cryptic shorthands. Applies everywhere: loop indices, callback params, forEach/map/find/filter/findIndex lambdas.
 
-- Loop vars: name after what they index (`pageIndex` not `i`)
+- Loop vars: name after what they index (`pageIndex` not `i`, `movementIndex` not `idx`)
+- Callback params: full descriptive name (`(voice)` not `(v)`, `(event)` not `(e)`, `(movement)` not `(m)`, `(zone)` not `(z)`)
+- When outer and inner scopes would both use the same name, qualify the inner one (`(storedVoice)`, `(candidateMovement)`)
 - Booleans: `isLoaded`, `hasZones`, `canGenerate`
 - Callbacks: `callback` not `cb`
-- use same nomenclature everywhere : exemple for route scoreInfos the infos from it should always been named infos across all the frontend
+- Element params: `element` not `el`, `pageElement` not `pageEl`
+- Use same nomenclature everywhere: e.g. for route scoreInfos the infos from it should always be named `infos` across all the frontend
 
 ### Architecture — no new folders without asking
 

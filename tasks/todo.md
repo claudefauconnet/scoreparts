@@ -1,38 +1,44 @@
-# Voices in JSON + rename instruments→voices (public-v2)
+# Découpage leftPanel + headerBar en sous-composants
 
-## Goal
-- Store voices list in score JSON (`infos.voices`), synced w/ backend, editable in frontend, distinct colors per voice.
-- Frontend term "instrument" disappears → "voix"/voice everywhere in public-v2.
+## Décisions (validées)
+- leftPanel → actions / voices / progress / scoreInfo (brand + layout = shell)
+- headerBar → movements / download / reset (crumbs = shell, pas de JS shell)
+- Orchestration : index.html charge tous les sous-fragments + scripts (pattern scoreSelector)
 
-## Pattern
-Mirror movements: list in `state`, loaded from `scoreParts.infos.voices` on `score-loaded`, persisted via `saveScoreInfos`.
+## leftPanel/
+- [ ] leftPanel.html shell (brand + .panel hosts actions/voices/progress + host scoreInfo)
+- [ ] leftPanel.css shell (sidebar, brand, panel, section-label, global-tooltip)
+- [ ] leftPanel.js shell (setupGlobalTooltip)
+- [ ] actions/{html,css,js}
+- [ ] voices/{html,css,js}
+- [ ] progress/{html,css,js}
+- [ ] scoreInfo/{html,css,js}
 
-## Tasks
-- [ ] data JSON: add real `voices` array to L_Estro_Armonico conc 10 (id/name/color/on)
-- [ ] partitions.state.js: INSTRUMENTS→VOICES, activeInstr→activeVoice, instrLabel→voiceLabel, makeZone arg instr→voice, zone .instr→.voice, event instruments-changed→voices-changed, empty default list, resetAll
-- [ ] voices module js: loadVoices + persistVoices (mirror movements), renderVoices, rename instr→voice, distinct color picker, wire add/del/rename/color/toggle persist, +Ajouter handler
-- [ ] voices.html: ids/classes instr→voice, texts instrument→voix
-- [ ] voices.css: .instr*→.voice*
-- [ ] headerBar.js: state.INSTRUMENTS→VOICES, texts
-- [ ] scoreParts.js: init infos.voices on load
-- [ ] paper.js: zone.instrLabel→voiceLabel, default 'Instrument'→'Voix', comments
-- [ ] partitions.css + scorePlayer.css: comments instrument→voix
-- [ ] verify: no remaining instr/INSTRUMENT/instrument in public-v2
+## headerBar/
+- [ ] headerBar.html shell (crumbs + hosts)
+- [ ] headerBar.css shell (stage-top, crumbs, top-actions, btn, icon-btn, media)
+- [ ] supprimer headerBar.js
+- [ ] movements/{html,css,js}
+- [ ] download/{html,css,js}
+- [ ] reset/{html,css,js}
 
-## Phase 2 — boutons voix + generateVoiceScore
-- [x] A: rename generateInstrumentScore→generateVoiceScore (v1: proxy.js def, voices.js, cutParts.html ; v2 legacy call) + nouvelle fn ESM generateVoiceScore dans public-v2/common/proxy.js (POST /api/score/generatePart, sans DOM v1)
-- [x] B: scoreParts.deleteVoiceZones(id) + bouton Effacer câblé
-- [x] C: scoreParts.voicePagesZones(id) + downloadVoice → generateVoiceScore + bouton Télécharger
-- [x] E: count zones dérivé (zoneCountsByVoice par zone.voice===id)
-- [x] D: gate "≥1 voix pour tracer" (scorePlayer act-new-zone) + Auto-attribuer (mvt courant, cyclique j%n) → scoreParts.assignVoicesToZones ; pastille nom+couleur de la voix (paper.zoneColors + makePill colorée)
+## index.html + paths
+- [ ] bootstrap : shells → sous-fragments → scripts
+- [ ] liens CSS par sous-composant
+- [ ] corriger imports (+1 niveau ../)
+- [ ] node --check
 
 ## Review
-Done. JSON valide, `node --check` OK sur tous les .js touchés.
-- JSON: `voices` ajouté (7 voix réelles, couleurs distinctes) à L_Estro conc 10.
-- state.js: VOICES/activeVoice/voiceLabel, makeZone(voice), event voices-changed, listes vides par défaut.
-- voices.js: loadVoices/persistVoices (miroir movements via saveScoreInfos), renderVoices, couleur distincte (nextVoiceColor), +Ajouter câblé, persist sur add/del/rename/color/toggle.
-- voices.html/.css, headerBar.js/.html, scoreParts.js (init infos.voices), paper.js, partitions.css, scorePlayer.css: instr→voice, textes instrument→voix.
+Fait. `node --check` OK sur les 8 nouveaux JS. Aucun import croisé entre panneaux.
 
-Reste (hors scope frontend pur):
-- `Proxy.generateInstrumentScore` (common/voices.js legacy v1) : nom de méthode proxy défini côté v1 + route backend. Non renommé (casse la def). À traiter si on régularise le backend.
-- `count` des voix = 0 (pas encore dérivé des zones).
+Créé :
+- leftPanel/ shell (html/css/js=tooltip) + actions/ voices/ progress/ scoreInfo/ ({html,css,js})
+- headerBar/ shell (html/css, pas de js) + movements/ download/ reset/ ({html,css,js})
+- index.html : liens CSS par sous-composant + bootstrap 2 phases (shells → sous-fragments → scripts)
+
+Points d'attention :
+- Hosts headerBar en `display:contents` pour préserver la grille `.stage-top` (3 colonnes).
+- `#act-new-zone` (actions.html) reste câblé dans scorePlayer.js (couplage DOM existant).
+- Communication inter-panneaux uniquement via bus `on/emit` + modules common.
+
+Reste : valider le rendu réel (layout) dans le navigateur.
