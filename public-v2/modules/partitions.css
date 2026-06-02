@@ -1,0 +1,65 @@
+/* partitions — base de page : variables, reset, layout, stage */
+
+:root {
+  /* Couleurs */
+  --bg: #f5f1e8;            /* papier vieilli très doux */
+  --bg-2: #ebe5d6;
+  --ink: #1a1814;
+  --ink-2: #3a342b;
+  --muted: #8a8478;
+  --line: #d8cfbb;
+  --line-2: #c9bfa6;
+  --paper: #fbf7ec;
+  --paper-edge: #e9e0c7;
+  --paper-shadow: rgba(60, 45, 20, 0.18);
+  --accent: #6b3a2e;          /* acajou doux */
+  --accent-soft: #8a4d3e;
+  --gold: #b08a3e;
+
+  /* Couleurs voix (palette par défaut) */
+  --violon1: #c9534b;
+  --violon2: #d99441;
+  --violoncelle: #4a7a8c;
+  --piano: #6b6396;
+
+  /* Type */
+  --serif: 'Cormorant Garamond', 'Georgia', serif;
+  --script: 'Pinyon Script', 'Cormorant Garamond', cursive;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 800px at 30% 20%, #faf6ea 0%, var(--bg) 60%, var(--bg-2) 100%);
+  overflow: hidden;
+}
+
+/* ============== LAYOUT ============== */
+.app {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+.app > * {
+  min-height: 0;
+}
+.stage {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Soft vignette */
+.stage::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: radial-gradient(1000px 600px at 50% 40%, transparent 50%, rgba(60,45,20,0.06) 100%);
+}

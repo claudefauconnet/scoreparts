@@ -37,7 +37,7 @@ var scoreParts = (function () {
           self.allPagesZones = data;
         }
 
-        var pageImage = imagesDir + pdfName + '-0.png';
+        var pageImage = imagesDir + pdfName + '/0.png';
         //  Paper.drawImage(pageImage)
 
         self.voices = [];
@@ -82,9 +82,9 @@ var scoreParts = (function () {
       }
 
       self.currentPage = newPage;
-      var name = $('#scoresSelect').val() + '-' + self.currentPage;
+      var pdfName = $('#scoresSelect').val();
 
-      Paper.drawImage(imagesDir + name + '.png');
+      Paper.drawImage(imagesDir + pdfName + '/' + self.currentPage + '.png');
       var zones = self.allPagesZones.pages[self.currentPage];
       if (zones && zones.length > 0) {
         self.currentZones = zones;

@@ -9,9 +9,8 @@ var __dirname = dirname(__filename);
 
 var ZonesDetector = {
   getPageImage: function (pdfName, pageNum, callback) {
-    var sourceImg = pdfName + '-' + pageNum + '.png';
     var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-    var imageFile = imageDir + path.sep + sourceImg;
+    var imageFile = imageDir + path.sep + pdfName + path.sep + pageNum + '.png';
     JimpProxy.getImage(imageFile, function (err, image) {
       callback(err, image);
     });

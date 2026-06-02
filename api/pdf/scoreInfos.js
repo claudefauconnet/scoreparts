@@ -26,7 +26,14 @@ export function readScoreInfos(pdfName) {
 
 export function writeScoreInfos(pdfName, totalPages) {
   fs.mkdirSync(SCORE_INFOS_DIR, { recursive: true });
-  const scoreInfos = { pdfName, totalPages, category: null, composer: null, published: false };
+  const scoreInfos = {
+    pdfName,
+    totalPages,
+    category: null,
+    composer: null,
+    published: false,
+    movements: [],
+  };
   fs.writeFileSync(getScoreInfosPath(pdfName), JSON.stringify(scoreInfos, null, 2), 'utf8');
   return scoreInfos;
 }
@@ -74,6 +81,7 @@ router.get('/scoreInfos/:pdfName', function (req, res) {
  *             properties:
  *               category: { type: string }
  *               composer: { type: string }
+ *               movements: { type: array, items: { type: object } }
  *     responses:
  *       200: { description: Updated score infos }
  *       404: { description: Not found }
@@ -84,6 +92,8 @@ router.put('/scoreInfos/:pdfName', function (req, res) {
 
   if (req.body.category !== undefined) scoreInfos.category = req.body.category;
   if (req.body.composer !== undefined) scoreInfos.composer = req.body.composer;
+  if (req.body.movements !== undefined) scoreInfos.movements = req.body.movements;
+  if (req.body.voices !== undefined) scoreInfos.voices = req.body.voices;
 
   fs.writeFileSync(
     getScoreInfosPath(req.params.pdfName),
