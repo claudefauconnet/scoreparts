@@ -1,9 +1,14 @@
+import { Paper } from '../../common/paper.js';
+
 // Settings panel — self-contained DOM controls (no shared state needed).
+
+const DEFAULT_ZONE_HEIGHT = 20;
 
 // ============== Rectangle height
 const rectInput = document.getElementById('rect-h');
 function applyRectH() {
-  const height = Math.max(10, Math.min(200, parseInt(rectInput.value) || 40));
+  const height = Math.max(10, Math.min(200, parseInt(rectInput.value) || DEFAULT_ZONE_HEIGHT));
+  Paper.defaultZoneHeight = height;
   document.documentElement.style.setProperty('--zone-h', height + 'px');
   document.querySelectorAll('.zone').forEach((zone) => {
     zone.style.minHeight = height + 'px';
@@ -11,11 +16,11 @@ function applyRectH() {
 }
 rectInput.addEventListener('input', applyRectH);
 document.getElementById('rect-minus').addEventListener('click', () => {
-  rectInput.value = (parseInt(rectInput.value) || 40) - 1;
+  rectInput.value = (parseInt(rectInput.value) || DEFAULT_ZONE_HEIGHT) - 1;
   applyRectH();
 });
 document.getElementById('rect-plus').addEventListener('click', () => {
-  rectInput.value = (parseInt(rectInput.value) || 40) + 1;
+  rectInput.value = (parseInt(rectInput.value) || DEFAULT_ZONE_HEIGHT) + 1;
   applyRectH();
 });
 

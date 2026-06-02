@@ -48,7 +48,7 @@ Paper.activeCanvas = null; // <canvas> de la page courante
 Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
 Paper.currentZoneAction = null;
 Paper.currentPath = null;
-Paper.defaultZoneHeight = 50;
+Paper.defaultZoneHeight = 20;
 Paper.margin = 10;
 Paper.onPendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
 Paper.onSelectionChange = null; // hook(count) posé par scorePlayer pour la toolbar
@@ -445,22 +445,19 @@ function hideDecorations(group) {
 }
 
 // ============== Lecture du modèle depuis le canvas courant
-// On ne garde que les chemins de zone (data.type === 'zone'), donc le rect.
-Paper.getPageZones = function () {
-  if (!paper || !paper.project) return [];
-  activateCurrent(); // lit toujours le projet de la page courante
-  var zones = [];
-  // Normaliser en fractions 0→1 de la taille de canvas (= fraction de l'image).
-  // canvasW = naturalW * coefH, canvasH = naturalH * coefV.
-  // stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
-  // PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH envoyé depuis leftPanel.js).
+// Lit les zones d'un projet Paper donné (déjà activé) et les renvoie normalisées
+// en fractions 0→1. canvasW = naturalW * coefH, canvasH = naturalH * coefV.
+// stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
+// PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH depuis leftPanel.js).
+function readZonesFromProject(project) {
   var naturalW = scoreParts.naturalW || 1;
   var naturalH = scoreParts.naturalH || 1;
   var coefH = scoreParts.coefH || 1;
   var coefV = scoreParts.coefV || 1;
   var canvasH = naturalH * coefV;
   var canvasWval = naturalW * coefH;
-  paper.project.getItems({ recursive: true }).forEach(function (item) {
+  var zones = [];
+  project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
       var measure = item.data.measure;
       var text = item.data.text;
@@ -477,18 +474,44 @@ Paper.getPageZones = function () {
       });
     }
   });
-
   zones.sort(function (a, b) {
     if (a.y > b.y) return 1;
     if (a.y < b.y) return -1;
     return 0;
   });
-  zones.forEach(function (zone, index) {
-    if (!zone.voice) {
-      zone.voice = '' + (index + 1);
-    }
-  });
+  // Pas de voix inventée : une zone sans voix reste sans voix (zoneColors la rend
+  // neutre, l'auto-attribution la remplira). Inventer '1','2'… créait des IDs de
+  // voix inexistants dans state.VOICES.
   return zones;
+}
+
+// On ne garde que les chemins de zone (data.type === 'zone'), donc le rect.
+Paper.getPageZones = function () {
+  if (!paper || !paper.project) return [];
+  activateCurrent(); // lit toujours le projet de la page courante
+  return readZonesFromProject(paper.project);
+};
+
+// Flush les DEUX pages visibles du spread vers le modèle (allPagesZones).
+// writeCurrentPageZones ne capture que la page courante : sur un spread 2 pages,
+// les zones fraîchement dessinées sur l'autre page visible n'étaient jamais
+// flushées avant l'auto-attribution → elles restaient sans voix.
+Paper.writeVisibleSpreadZones = function () {
+  if (!paper) return;
+  var origin = scoreParts.spreadOrigin();
+  var visiblePages = [{ canvasId: 'canvas-left', pageIndex: origin }];
+  if (!scoreParts.singlePage) {
+    visiblePages.push({ canvasId: 'canvas-right', pageIndex: origin + 1 });
+  }
+  visiblePages.forEach(function (visiblePage) {
+    var project = projectsByCanvasId[visiblePage.canvasId];
+    if (!project) return;
+    project.activate();
+    var zones = readZonesFromProject(project);
+    if (zones.length === 0) return; // ne pas écraser une page qui a des zones par []
+    scoreParts.allPagesZones.pages[visiblePage.pageIndex] = zones;
+  });
+  activateCurrent();
 };
 
 // ============== Dessin des zones (style module)

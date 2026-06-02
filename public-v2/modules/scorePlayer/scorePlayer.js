@@ -226,7 +226,7 @@ function redrawSpread() {
 wireControls();
 on('score-loaded', setupEditorForCurrentPage);
 on('page-changed', setupEditorForCurrentPage);
-on('zones-changed', redrawSpread);
+on('zones-changed', setupEditorForCurrentPage);
 
 // ============== Responsive single-page mode (small / short screens)
 // On small screens the 2-page spread is unreadable, so we show one page at a
