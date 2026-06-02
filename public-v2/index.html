@@ -77,33 +77,42 @@ $(function () {
     document.body.appendChild(script);
   }
 
+  // Charge un fragment HTML dans un host et renvoie une vraie Promise (jqXHR).
+  // $.fn.load() renvoie l'objet jQuery (non thenable) et ne s'enchaîne pas :
+  // on passe par $.get pour pouvoir composer avec .then / $.when.
+  function loadInto(selector, url) {
+    return $.get(url).then(function (html) {
+      $(selector).html(html);
+    });
+  }
+
   // leftPanel et headerBar sont des shells : on charge d'abord leur HTML (qui
   // contient des hosts), PUIS les fragments de leurs sous-composants dans ces hosts.
-  var leftPanelParts = $('#voices-host')
-    .load('/modules/leftPanel/leftPanel.html')
-    .then(function () {
+  var leftPanelParts = loadInto('#voices-host', '/modules/leftPanel/leftPanel.html').then(
+    function () {
       return $.when(
-        $('#lp-actions-host').load('/modules/leftPanel/actions/actions.html'),
-        $('#lp-voices-host').load('/modules/leftPanel/voices/voices.html'),
-        $('#lp-progress-host').load('/modules/leftPanel/progress/progress.html'),
-        $('#lp-scoreinfo-host').load('/modules/leftPanel/scoreInfo/scoreInfo.html')
+        loadInto('#lp-actions-host', '/modules/leftPanel/actions/actions.html'),
+        loadInto('#lp-voices-host', '/modules/leftPanel/voices/voices.html'),
+        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html'),
+        loadInto('#lp-scoreinfo-host', '/modules/leftPanel/scoreInfo/scoreInfo.html')
       );
-    });
+    }
+  );
 
-  var headerBarParts = $('#headerbar-host')
-    .load('/modules/headerBar/headerBar.html')
-    .then(function () {
+  var headerBarParts = loadInto('#headerbar-host', '/modules/headerBar/headerBar.html').then(
+    function () {
       return $.when(
-        $('#hb-movements-host').load('/modules/headerBar/movements/movements.html'),
-        $('#hb-reset-host').load('/modules/headerBar/reset/reset.html'),
-        $('#hb-download-host').load('/modules/headerBar/download/download.html')
+        loadInto('#hb-movements-host', '/modules/headerBar/movements/movements.html'),
+        loadInto('#hb-reset-host', '/modules/headerBar/reset/reset.html'),
+        loadInto('#hb-download-host', '/modules/headerBar/download/download.html')
       );
-    });
+    }
+  );
 
   var otherParts = $.when(
-    $('#stage-body').load('/modules/scorePlayer/scorePlayer.html'),
-    $('#scoreplayer-bottom').load('/modules/scorePlayer/bottomBar.html'),
-    $('#parameters-host').load('/modules/parameters/parameters.html')
+    loadInto('#stage-body', '/modules/scorePlayer/scorePlayer.html'),
+    loadInto('#scoreplayer-bottom', '/modules/scorePlayer/bottomBar.html'),
+    loadInto('#parameters-host', '/modules/parameters/parameters.html')
   );
 
   var dialogFragment = $('#dialog-host').load('/modules/scoreSelector/dialog/dialog.html', function () {

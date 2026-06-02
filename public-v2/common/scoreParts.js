@@ -428,7 +428,10 @@ scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
   if (!voiceIds || voiceIds.length === 0) {
     return;
   }
-  scoreParts.writeCurrentPageZones();
+  // Flush les deux pages visibles du spread (pas seulement la courante) : sinon
+  // les zones dessinées sur l'autre page visible ne sont pas dans le modèle au
+  // moment de l'attribution et restent sans voix.
+  Paper.writeVisibleSpreadZones();
   var voiceCount = voiceIds.length;
   var pages = scoreParts.allPagesZones.pages;
   for (var pageKey in pages) {
@@ -447,10 +450,13 @@ scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
   scoreParts.saveZones();
 };
 
-// Nombre de zones affectées à une voix (toutes pages). Capture d'abord la page
-// courante (canvas) pour compter les zones non encore persistées.
+// Nombre de zones affectées à une voix (toutes pages). Lecture seule sur le
+// modèle : ne PAS flush le canvas ici. Ce compteur est appelé sur 'voices-changed'
+// (renderVoices/renderProgress), parfois AVANT que le canvas reflète une mutation
+// faite directement sur le modèle (ex. assignVoicesToZones). Un flush canvas→modèle
+// à ce moment relirait un canvas périmé et écraserait l'attribution. Le modèle est
+// déjà à jour : chaque geste (création/déplacement/suppression) fait commit().
 scoreParts.countVoiceZones = function (voiceId) {
-  scoreParts.writeCurrentPageZones();
   var pages = scoreParts.allPagesZones.pages;
   var total = 0;
   for (var pageKey in pages) {
