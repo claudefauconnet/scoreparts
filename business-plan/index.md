@@ -62,26 +62,32 @@ Site web progressif sans serveur de traitement. Tout tourne dans le navigateur (
 
 ---
 
-## Comparaison rapide
+## 04 — VPS Communautaire
 
-| | 01 Desktop | 02 SaaS | 03 PWA |
-| - | ---------- | ------- | ------ |
-| Effort | 15-20j | 25-32j | **13-15j** |
-| Coût infra | 0-25€/mois (prix certificat windows/apple) | 4-35€/mois | **0€** |
-| Modèle revenu | One-shot | MRR | One-shot |
-| Net/vente ou MRR/abonné | ~21€ | ~10€/mois | ~21€ |
-| Rentable dès | 1ère vente | ~2 abonnés | **1ère vente** |
-| Multiplateforme | Repackager | Natif | **Natif** |
-| Offline | ✅ | ❌ | ✅ |
+App déployée telle quelle sur un VPS. Accès libre, aucun compte. Financé par dons. Zéro dev supplémentaire — validation d'usage avant monétisation.
+
+→ [Détail complet](./04-vps-communautaire.md)
+
+| Critère | Valeur |
+| ------- | ------ |
+| **Effort d'implémentation** | ~1 jour |
+| **Coût infra** | 3.5-13€/mois (Hetzner VPS) |
+| **Modèle revenu** | Dons volontaires (Ko-fi, GitHub Sponsors) |
+| **Revenu net espéré** | 0€ — objectif : équilibre uniquement |
+| **+ Pour** | Lancement immédiat, zéro code, feedback réel, visibilité communautaire |
+| **− Contre** | Zéro revenu net, dons imprévisibles, ne scale pas au-delà de 300 users actifs |
 
 ---
 
-## Trajectoire recommandée
+## Comparaison rapide
 
-```text
-Maintenant   →   03 PWA  (chemin le plus court, 0€ infra)
-                  ↓
-100+ ventes  →   01 Desktop en parallèle (audience institutionnelle)
-                  ↓
-500+ users   →   02 SaaS si demande de sync/collaboration confirmée
-```
+| | 01 Desktop | 02 SaaS | 03 PWA | 04 VPS Communautaire |
+| - | ---------- | ------- | ------ | -------------------- |
+| Effort | 15-20j | 25-32j | **13-15j** | **~1j** |
+| Coût infra | 0-25€/mois (certificats) | 4-35€/mois | **0€** | 3.5-13€/mois |
+| Modèle revenu | One-shot | MRR | One-shot | Dons |
+| Net/vente ou MRR | ~21€ | ~10€/mois | ~21€ | 0€ net |
+| Rentable dès | 1ère vente | ~2 abonnés | **1ère vente** | N/A (équilibre seulement) |
+| Multiplateforme | Repackager | Natif | **Natif** | Natif |
+| Offline | ✅ | ❌ | ✅ | ❌ |
+
