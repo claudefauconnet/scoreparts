@@ -29,7 +29,7 @@ Browser
 ├── Web Worker        → traitement PDF lourd (non-bloquant)
 │   ├── pdfjs-dist    → PDF → images (remplace GM+GS)
 │   ├── pdf-lib       → déjà compatible browser
-│   └── Canvas API    → manipulation image
+│   └── Jimp v1       → crop/blit/buffer (browser-compatible, fs retiré)
 └── IndexedDB
     ├── scores/       → PDFs uploadés (ArrayBuffer)
     ├── zones/        → définitions de zones (JSON)
@@ -47,7 +47,7 @@ Browser
 | Actuel (Node) | PWA (Browser) |
 | ------------- | ------------- |
 | `gm convert` | `pdfjs-dist` rendu canvas |
-| `fs.readFile` | `IndexedDB.get` |
+| `fs.readFile` dans `jimpProxy.js` | Supprimé — buffer passé directement depuis pdfjs |
 | `res.sendFile` | `URL.createObjectURL` |
 | `multer` upload | `FileReader` / `File API` |
 | `socket.io` progress | `Worker.postMessage` progress |
@@ -55,6 +55,7 @@ Browser
 ### Ce qui est réutilisé tel quel
 
 - `pdf-lib` — compatible browser sans modification
+- `Jimp v1` — compatible browser, seul `fs.readFileSync` à retirer de `jimpProxy.js` (~2 lignes). Toutes les opérations crop/blit/getBuffer restent identiques.
 - Logique de détection de zones — pure JS, portable
 - Frontend jQuery existant — adaptations mineures
 
@@ -94,21 +95,26 @@ Zéro coût d'infrastructure récurrent. Rentable dès la première vente.
 
 ### Seuil de rentabilité
 
-Identique au modèle 01 mais **sans les 8-25€/mois de certificats** si on reste web pur :
+Valorisation retenue : **350€/jour**. Zéro coût infra récurrent (Cloudflare Pages).
 
-| Net par vente (25€) | Coût fixe | Ventes pour couvrir dev (8 000€) |
-| ------------------- | --------- | -------------------------------- |
-| ~21€ | 0€ | **381 ventes** |
+Référence : v1→v2 fonctionnelle réalisée en 26h avec Claude Code sur ce même projet.
 
-### Projection 12 mois (scénario prudent)
+| Scénario | Durée | Coût (350€/j) | Ventes pour récupérer |
+| -------- | ----- | ------------- | --------------------- |
+| Prudent (tests rendu inclus) | 5 jours | 1 750€ | **84 ventes** |
+| Réaliste | 3-4 jours | 1 050-1 400€ | **50-67 ventes** |
 
-| Mois | Ventes cumulées | Revenu net cumulé | Vs coût dev 8 000€ |
+Le seul imprévu non compressible : **qualité du rendu pdfjs-dist sur vraies partitions**. Tâche humaine — vérifier sur des scores IMSLP réels, ajuster densité/résolution si besoin.
+
+### Projection 12 mois (350€/j, 4 jours → 1 400€ dev)
+
+| Mois | Ventes cumulées | Revenu net cumulé | Vs coût dev 1 400€ |
 | ---- | --------------- | ----------------- | ------------------ |
-| 1-2 | 30 (beta 15€) | ~390€ | -7 610€ |
-| 3-6 | +50 (25€) | +1 050€ → 1 440€ | -6 560€ |
-| 7-12 | +100 (25€) | +2 100€ → 3 540€ | -4 460€ |
+| 1 | 20 (beta 15€) | ~260€ | -1 140€ |
+| 2-3 | +30 (25€) | +630€ → 890€ | -510€ |
+| 4 | +25 (25€) | +525€ → 1 415€ | **rentable mois 4** |
 
-Rentabilité complète autour du mois 20 en scénario prudent, mois 12 en scénario optimiste (article dans une newsletter musique, recommandations IMSLP community).
+Scénario optimiste : **rentable en 6 semaines**.
 
 ---
 
@@ -123,10 +129,48 @@ Rentabilité complète autour du mois 20 en scénario prudent, mois 12 en scéna
 
 ## Inconvénients
 
-- **Performances** — pdfjs-dist moins rapide que GM+GS natif pour les grosses partitions
+- **Performances** — pdfjs-dist plus lent que GM+GS natif, mais acceptable : le traitement se fait en Web Worker (UI reste réactive) et le cas d'usage est une tâche planifiée, pas interactive. L'utilisateur lance et attend — comme il le ferait avec n'importe quel outil de traitement lourd.
 - **Stockage limité** — IndexedDB limité par le navigateur (~1-5 GB selon OS/browser)
 - **Pas de sync cross-device** — l'utilisateur ne retrouve pas ses zones sur un autre ordinateur
 - **Réécriture du pipeline** — `pdfToImages` et toutes les routes Express à supprimer/réécrire
+
+---
+
+## Prérequis machine utilisateur
+
+La contrainte principale n'est pas le CPU ni la RAM — c'est le **navigateur**. pdfjs-dist, Jimp v1 et Service Workers requièrent des APIs modernes absentes des browsers anciens.
+
+### Compatibilité OS / browser
+
+| OS | Browser | Verdict |
+| -- | ------- | ------- |
+| Windows XP | Chrome 49 max (arrêt support 2016) | ❌ incompatible — ESM et APIs modernes absentes |
+| Windows 7 | Chrome / Edge récent | ✅ fonctionne — lent mais viable |
+| Windows 8.1+ | Chrome / Edge / Firefox | ✅ correct |
+| Windows 10+ | Tout navigateur moderne | ✅ |
+| macOS 10.13+ | Safari / Chrome / Firefox | ✅ |
+| iPad (iOS 14+) | Safari | ✅ |
+
+**Minimum réel : Windows 7 + Chrome récent.** XP bloqué non par le CPU mais par l'absence d'ESM et Service Workers dans Chrome 49. Dans le parc musical en 2025, XP est quasi inexistant — Win7 encore présent dans quelques conservatoires anciens.
+
+### RAM et CPU
+
+| Spec | Minimum | Confortable |
+| ---- | ------- | ----------- |
+| RAM | 4 GB | 8 GB |
+| CPU | Core 2 Duo Win7 era | i5 2018+ |
+| Pic mémoire (une page à la fois) | ~200-250 MB | — |
+
+### Temps de traitement estimé par page
+
+| Machine | Temps/page | Score 50 pages |
+| ------- | ---------- | -------------- |
+| M1 / i7 récent | 0.3-0.8s | ~20s |
+| i5 2018 | 0.8-1.5s | ~50s |
+| i5 2014 | 2-4s | ~2 min |
+| Core 2 Duo / Win7 era | 15-30s | ~15-25 min |
+
+La lenteur sur vieilles machines est acceptable : le Web Worker isole le traitement (UI toujours réactive), et le cas d'usage est une tâche planifiée — l'utilisateur lance et attend. Un utilisateur habitué à une machine lente est habitué à attendre. Une barre de progression suffit.
 
 ---
 
@@ -137,6 +181,7 @@ Rentabilité complète autour du mois 20 en scénario prudent, mois 12 en scéna
 | Tâche | Existe | Effort | Bloque |
 | ----- | ------ | ------ | ------ |
 | Réécriture `pdfToImages` avec pdfjs-dist en Web Worker | ❌ | 3-4 jours | tout |
+| Retrait `fs` de `jimpProxy.js` (2 lignes) + passage buffer direct | ❌ | 0.5 jour | image |
 | Remplacement routes Express / `fs` par IndexedDB | ❌ | 3-4 jours | stockage |
 | Adaptation frontend (suppression appels API Express) | ❌ | 2-3 jours | UX |
 | Watermark sur exports trial | ❌ | 1 jour | freemium |
@@ -152,8 +197,10 @@ Rentabilité complète autour du mois 20 en scénario prudent, mois 12 en scéna
 
 | Scénario | Effort total |
 | -------- | ------------ |
-| Sans réutilisation modèle 01 | **~16-19 jours** |
-| Avec réutilisation licence RSA depuis 01 | **~13-15 jours** |
+| Estimation classique | ~13-15 jours |
+| **Réaliste avec Claude Code** | **3-5 jours** |
+
+Référence terrain : v1→v2 fonctionnelle réalisée en 26h avec Claude Code sur ce projet. Les tâches de migration PWA sont du même ordre (systématiques, bien définies). Seuls les tests qualité rendu pdfjs-dist sur vraies partitions ne sont pas compressibles.
 
 ### Chemin critique
 
