@@ -2,9 +2,12 @@
 // complète (voix actives empilées), soit un ZIP (un PDF par voix active).
 // La barre de progression vit dans la header bar : ce module reçoit un adaptateur
 // `ui = { begin, show, setProgress, hide, end, error }` et n'accède jamais au DOM.
+//
+// POC PWA : la génération PDF + le ZIP se font côté client (Web Worker + fflate),
+// plus aucune route serveur de traitement. Voir common/localBackendProxy.js.
 import { state } from '../modules/partitions.state.js';
 import { scoreParts } from './scoreParts.js';
-import { generateVoiceScore, createZip } from './proxy.js';
+import { downloadSinglePart, downloadPartsZip } from './localBackendProxy.js';
 
 export const Download = {};
 
@@ -44,31 +47,32 @@ Download.completePdf = function (ui) {
   Download.isDownloading = true;
   ui.begin();
   ui.show('Génération de la partition complète…', true);
-  generateVoiceScore(
-    {
-      sourcePdfName: scoreParts.pdfName,
-      targetPdfName,
-      part: 'Partition complete',
-      pagesZones,
-      margin: scoreParts.margin,
-      naturalW: scoreParts.naturalW,
-      naturalH: scoreParts.naturalH,
-    },
-    (err, result) => {
+
+  downloadSinglePart({
+    pdfName: scoreParts.pdfName,
+    targetPdfName,
+    part: 'Partition complete',
+    pagesZones,
+    margin: scoreParts.margin,
+    naturalW: scoreParts.naturalW,
+    naturalH: scoreParts.naturalH,
+    fileName: targetPdfName,
+  })
+    .then(() => {
       Download.isDownloading = false;
       ui.end();
-      if (err) {
-        ui.hide();
-        return ui.error(err.responseText || err);
-      }
       ui.setProgress(100, 'Partition prête');
       ui.hide(1000);
-      window.open('/' + result, '_blank');
-    }
-  );
+    })
+    .catch((err) => {
+      Download.isDownloading = false;
+      ui.end();
+      ui.hide();
+      ui.error(err.message || err);
+    });
 };
 
-// ZIP = un PDF par voix ACTIVE dans un répertoire partagé, puis zip côté backend.
+// ZIP = un PDF par voix ACTIVE, empaquetés dans un ZIP — entièrement côté client.
 Download.zip = function (ui) {
   if (!scoreParts.pdfName || Download.isDownloading) return;
   const activeVoices = state.VOICES.filter((voice) => voice.on);
@@ -83,53 +87,38 @@ Download.zip = function (ui) {
   }
 
   const movementDirName = Download.movementDirName();
-  const totalSteps = voiceJobs.length + 1; // +1 = étape de création du ZIP
-  let completedCount = 0;
-  let pendingCount = voiceJobs.length;
 
   Download.isDownloading = true;
   ui.begin();
   ui.show(`Génération voix 1/${voiceJobs.length}…`, false);
 
-  voiceJobs.forEach(({ voice, pagesZones }) => {
-    generateVoiceScore(
-      {
-        sourcePdfName: scoreParts.pdfName,
-        targetPdfName: movementDirName,
-        part: voice.name,
-        pagesZones,
-        margin: scoreParts.margin,
-        naturalW: scoreParts.naturalW,
-        naturalH: scoreParts.naturalH,
-      },
-      (err) => {
-        completedCount += 1;
-        pendingCount -= 1;
-        if (err) {
-          console.error('Erreur génération voix ' + voice.name, err);
-        }
-        ui.setProgress(
-          (completedCount / totalSteps) * 100,
-          pendingCount > 0
-            ? `Génération voix ${completedCount + 1}/${voiceJobs.length}…`
-            : 'Création du ZIP…'
-        );
-        if (pendingCount === 0) {
-          createZip(movementDirName, (zipErr, result) => {
-            Download.isDownloading = false;
-            ui.end();
-            if (zipErr) {
-              ui.hide();
-              return ui.error('Erreur création ZIP : ' + (zipErr.responseText || zipErr));
-            }
-            ui.setProgress(100, 'ZIP prêt');
-            ui.hide(1000);
-            window.open('/' + result.zipPath, '_blank');
-          });
-        }
-      }
+  const common = {
+    pdfName: scoreParts.pdfName,
+    targetPdfName: movementDirName,
+    margin: scoreParts.margin,
+    naturalW: scoreParts.naturalW,
+    naturalH: scoreParts.naturalH,
+  };
+  const jobs = voiceJobs.map(({ voice, pagesZones }) => ({ part: voice.name, pagesZones }));
+
+  downloadPartsZip(common, jobs, movementDirName, (completedCount, total) => {
+    ui.setProgress(
+      (completedCount / (total + 1)) * 100,
+      completedCount < total ? `Génération voix ${completedCount + 1}/${total}…` : 'Création du ZIP…'
     );
-  });
+  })
+    .then(() => {
+      Download.isDownloading = false;
+      ui.end();
+      ui.setProgress(100, 'ZIP prêt');
+      ui.hide(1000);
+    })
+    .catch((err) => {
+      Download.isDownloading = false;
+      ui.end();
+      ui.hide();
+      ui.error('Erreur création ZIP : ' + (err.message || err));
+    });
 };
 
 Download.run = function (format, ui) {

@@ -36,6 +36,22 @@ var fileUpload = {
       callback(null, req.file, req.body);
     });
   },
+  // Reçoit un nombre quelconque de fichiers (multipart) en mémoire. Utilisé par
+  // /api/pdf/uploadImages : le client envoie le PDF source + les PNG rendus par
+  // pdfjs (remplace la conversion GraphicsMagick côté serveur).
+  uploadAny: function (req, callback) {
+    var upload = multer({
+      storage: memStorage,
+      limits: { fileSize: fileUpload.maxUploadSize },
+    }).any();
+    upload(req, null, function (err) {
+      if (err) {
+        callback('Error Occured' + err);
+        return;
+      }
+      callback(null, req.files, req.body);
+    });
+  },
   uploadData: async function (req, callback) {
     var storage = memStorage;
     var upload = multer({

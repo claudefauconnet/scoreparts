@@ -1,5 +1,6 @@
 import { state, on, emit } from '../state.js';
-import { uploadPdf } from '../../../common/proxy.js';
+import { uploadRenderedScore } from '../../../common/proxy.js';
+import { renderPdfToImages } from '../../../common/localBackendProxy.js';
 
 (function importPdfModule() {
   const $preview = $('#preview');
@@ -33,8 +34,6 @@ import { uploadPdf } from '../../../common/proxy.js';
     'F. Liszt',
     'R. Schumann',
   ];
-
-  const socket = typeof io === 'function' ? io() : null;
 
   // ============== Score preview card (shown on score-picked event)
 
@@ -91,67 +90,51 @@ import { uploadPdf } from '../../../common/proxy.js';
     `;
   }
 
-  function attachSocketProgressListeners($card, file) {
-    if (!socket) return function () {};
-
-    function onConversionProgress({ percent, current, total }) {
-      const mappedPercent = 1 + percent * 0.99;
-      setProgressPercent($card, mappedPercent);
-      if (total > 0) {
-        $card
-          .find('.importing-size')
-          .text(`${(file.size / 1024).toFixed(1)} Ko · Conversion ${current}/${total} pages`);
-      }
-    }
-
-    function onConversionError({ message }) {
-      $card.find('.importing-size').text('Erreur backend : ' + message);
-    }
-
-    socket.on('pdf-progress', onConversionProgress);
-    socket.on('pdf-error', onConversionError);
-
-    return function cleanupSocketListeners() {
-      socket.off('pdf-progress', onConversionProgress);
-      socket.off('pdf-error', onConversionError);
-    };
-  }
-
-  function handleUploadComplete($card, file, data) {
-    if (data.bigFile) {
-      $card
-        .find('.importing-size')
-        .text(`Fichier trop gros (${Math.round(data.bigFile / 1000000)} Mo, max 10 Mo)`);
-      return;
-    }
+  function handleUploadComplete($card, file) {
     setProgressPercent($card, 100);
     showClassifyForm(file);
   }
 
-  function startUpload($card, file) {
-    const cleanupSocketListeners = attachSocketProgressListeners($card, file);
+  // PWA : le PDF est rendu en images PNG DANS le navigateur (pdfjs dans un Web
+  // Worker → UI fluide, remplace GraphicsMagick), puis PDF + pages sont envoyés au
+  // serveur qui ne fait que les écrire. Le rendu (phase lourde) pilote 0→90 % de
+  // la barre ; l'upload 90→100 %.
+  async function startUpload($card, file) {
+    function setSizeLabel(text) {
+      $card.find('.importing-size').text((file.size / 1024).toFixed(1) + ' Ko · ' + text);
+    }
 
-    const formData = new FormData();
-    formData.append('pdfFile', file);
-    formData.append('imageQuality', 'medium');
-    if (socket && socket.id) formData.append('socketId', socket.id);
+    try {
+      const pdfData = await file.arrayBuffer();
+      const result = await renderPdfToImages(pdfData, 'medium', function (pageNum, totalPages) {
+        setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
+        setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
+      });
 
-    uploadPdf(
-      {
-        formData,
-        onUploadProgress: function (ratio) {
-          setProgressPercent($card, ratio * 1);
+      const pageBlobs = result.pages.map(function (page) {
+        return new Blob([page.bytes], { type: 'image/png' });
+      });
+      setSizeLabel('Envoi…');
+
+      uploadRenderedScore(
+        {
+          pdfFile: file,
+          pageBlobs: pageBlobs,
+          onUploadProgress: function (ratio) {
+            setProgressPercent($card, 90 + ratio * 10);
+          },
         },
-      },
-      function (err, data) {
-        cleanupSocketListeners();
-        if (err) {
-          $card.find('.importing-size').text('Erreur upload (' + err.message + ')');
-          return;
+        function (err) {
+          if (err) {
+            setSizeLabel('Erreur upload (' + err.message + ')');
+            return;
+          }
+          handleUploadComplete($card, file);
         }
-        handleUploadComplete($card, file, data);
-      }
-    );
+      );
+    } catch (renderError) {
+      setSizeLabel('Erreur rendu PDF (' + (renderError.message || renderError) + ')');
+    }
   }
 
   function handleImport(file) {

@@ -1,21 +1,11 @@
-﻿import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import * as JimpProxy from './jimpProxy.js';
-import scoreSplitter from './scoreSplitter..js';
-
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = dirname(__filename);
+// Port browser de bin/zonesDetector.js — preuve de portabilité PWA.
+// L'algorithme de détection des portées est pur JS (scan de pixels) : il tourne
+// à l'identique côté client. Seuls les accès fichier (getPageImage/findPageZones,
+// qui dépendaient de path/fs/scoreSplitter) sont retirés — l'image Jimp arrive
+// déjà chargée depuis jimpProxyBrowser. isPixelBlack / detectPageScoreLines /
+// findBarsInScale sont copiés verbatim du serveur.
 
 var ZonesDetector = {
-  getPageImage: function (pdfName, pageNum, callback) {
-    var imageDir = path.resolve(__dirname, scoreSplitter.extractedImagesDir);
-    var imageFile = imageDir + path.sep + pdfName + path.sep + pageNum + '.png';
-    JimpProxy.getImage(imageFile, function (err, image) {
-      callback(err, image);
-    });
-  },
-
   isPixelBlack: function (image, x, y) {
     var color = image.getPixelColor(x, y);
     if (color != 4294967295) {
@@ -106,23 +96,12 @@ var ZonesDetector = {
         if (!previousbarPoints || i - previousbarPoints > 100) {
           previousbarPoints = i;
           bars.push(i);
-          console.log(i + '   ' + barPoints);
         }
       } else if (barPoints == interline) {
         previousNotePoints = i;
       }
     }
     return bars;
-  },
-
-  findPageZones: function (pdfName, pageNum, callback) {
-    ZonesDetector.getPageImage(pdfName, pageNum, function (err, image) {
-      if (err) {
-        return callback(err);
-      }
-      var zones = ZonesDetector.detectPageScoreLines(image);
-      return callback(null, zones);
-    });
   },
 };
 

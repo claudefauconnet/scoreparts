@@ -10,25 +10,17 @@
     "format:check": "prettier --check \"**/*.{js,json,md}\""
   },
   "dependencies": {
-    "async": "latest",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
-    "dotenv": "^16.0.0",
+    "dotenv": "^17.4.2",
     "express": "~4.15.5",
     "jade": "~1.11.0",
-    "jimp": "^1.6.0",
-    "latest": "^0.2.0",
     "morgan": "~1.9.0",
     "multer": "latest",
-    "pdf-image": "latest",
-    "pdf-lib": "^1.17.1",
-    "pdfkit": "^0.12.1",
     "serve-favicon": "~2.4.5",
-    "socket.io": "^4.8.3",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "zip-dir": "^2.0.0"
+    "swagger-ui-express": "^5.0.1"
   },
   "description": "score scrapper",
   "main": "app.js",

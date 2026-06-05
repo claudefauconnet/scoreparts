@@ -5,7 +5,7 @@
 import { state, on, emit, resetAll } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { Common } from '../../../common/common.js';
-import { generateVoiceScore } from '../../../common/proxy.js';
+import { downloadSinglePart } from '../../../common/localBackendProxy.js';
 import { Voices } from '../../../common/voices.js';
 
 const list = document.getElementById('voice-list');
@@ -97,23 +97,18 @@ function downloadVoice(voice) {
     return;
   }
   const targetPdfName = (scoreParts.pdfName + '_' + voice.name).replace(/[ .]/g, '-');
-  generateVoiceScore(
-    {
-      sourcePdfName: scoreParts.pdfName,
-      targetPdfName,
-      part: voice.name,
-      pagesZones,
-      margin: scoreParts.margin,
-      // Zones stockées en fractions 0→1 des dimensions naturelles du PNG.
-      // Le backend convertit ces fractions selon naturalW/naturalH.
-      naturalW: scoreParts.naturalW,
-      naturalH: scoreParts.naturalH,
-    },
-    (err, result) => {
-      if (err) return alert(err.responseText || err);
-      window.open('/' + result, '_blank');
-    }
-  );
+  // POC PWA : génération + téléchargement côté client (Web Worker). Zones en
+  // fractions 0→1 des dimensions naturelles du PNG, converties dans le pipeline.
+  downloadSinglePart({
+    pdfName: scoreParts.pdfName,
+    targetPdfName,
+    part: voice.name,
+    pagesZones,
+    margin: scoreParts.margin,
+    naturalW: scoreParts.naturalW,
+    naturalH: scoreParts.naturalH,
+    fileName: targetPdfName,
+  }).catch((err) => alert(err.message || err));
 }
 
 // Destructive-action popover anchored to the voice's × button.

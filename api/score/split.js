@@ -1,5 +1,4 @@
-﻿import express from 'express';
-import scoreSplitter from '../../bin/scoreSplitter..js';
+import express from 'express';
 import processResponse from '../../bin/processResponse.js';
 
 var router = express.Router();
@@ -29,13 +28,12 @@ var router = express.Router();
  *       400:
  *         description: Paramètre image manquant
  */
+// POC PWA : analyse migrée côté client (pdfPipeline). Route conservée, vidée.
 router.post('/split', function (req, res) {
   if (!req.body || !req.body.image) {
     return processResponse(res, 'missing parameter: image', null);
   }
-  scoreSplitter.split(req.body.image, function (error, result) {
-    processResponse(res, error, result);
-  });
+  processResponse(res, null, { movedToClient: true });
 });
 
 export default router;

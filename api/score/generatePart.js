@@ -1,5 +1,4 @@
-﻿import express from 'express';
-import scoreSplitter from '../../bin/scoreSplitter..js';
+import express from 'express';
 import processResponse from '../../bin/processResponse.js';
 
 var router = express.Router();
@@ -28,21 +27,10 @@ var router = express.Router();
  *     responses:
  *       200: { description: Generated PDF path }
  */
+// POC PWA : traitement migré côté client (public-v2/modules/pdfPipeline).
+// La route est conservée mais ne fait plus aucun calcul serveur.
 router.post('/generatePart', function (req, res) {
-  scoreSplitter.generatePart(
-    req.body.sourcePdfName,
-    req.body.targetPdfName,
-    req.body.part,
-    req.body.zonesStr,
-    parseInt(req.body.margin),
-    parseFloat(req.body.imgScaleCoefV),
-    parseFloat(req.body.imgScaleCoefH),
-    req.body.naturalW ? parseInt(req.body.naturalW) : null,
-    req.body.naturalH ? parseInt(req.body.naturalH) : null,
-    function (error, result) {
-      processResponse(res, error, result);
-    }
-  );
+  processResponse(res, null, { partPdfUrl: null, movedToClient: true });
 });
 
 export default router;

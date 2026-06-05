@@ -97,79 +97,26 @@ export function loadZones(scoreParts, callback) {
   });
 }
 
-// Génère le PDF d'UNE voix : le backend (POST /api/score/generatePart) découpe la
-// partition source selon les zones de la voix et renvoie le chemin du PDF.
-// Version v2 (sans DOM v1) : tous les paramètres sont passés explicitement.
-//   part         = libellé de la voix (nom affiché / nom de fichier)
-//   pagesZones   = { pages: { <pageIndex>: [zone, ...] } } limité à cette voix
-export function generateVoiceScore(
-  { sourcePdfName, targetPdfName, part, pagesZones, margin, naturalW, naturalH },
-  callback
-) {
-  $.ajax({
-    type: 'POST',
-    url: '/api/score/generatePart',
-    data: {
-      part: part,
-      margin: margin,
-      sourcePdfName: sourcePdfName,
-      zonesStr: JSON.stringify(pagesZones),
-      naturalW: naturalW,
-      naturalH: naturalH,
-      targetPdfName: targetPdfName,
-    },
-    dataType: 'json',
-    success: function (data) {
-      callback(null, data.result);
-    },
-    error: function (err) {
-      callback(err);
-    },
+// Envoie le PDF source + les PNG rendus côté client (pdfjs) au serveur, qui se
+// contente de les écrire (route /api/pdf/uploadImages). Remplace l'upload qui
+// déclenchait la conversion GraphicsMagick serveur.
+export function uploadRenderedScore({ pdfFile, pageBlobs, onUploadProgress }, callback) {
+  const formData = new FormData();
+  formData.append('pdfFile', pdfFile);
+  pageBlobs.forEach(function (blob, pageIndex) {
+    formData.append('page_' + pageIndex, blob, pageIndex + '.png');
   });
-}
-
-export function createZip(movementDirName, callback) {
   $.ajax({
     type: 'POST',
-    url: '/api/score/createZip',
-    data: { movementDirName },
-    dataType: 'json',
-    success: function (data) {
-      callback(null, data);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
-}
-
-export function findPageZones(pdfName, pageNum, callback) {
-  $.ajax({
-    type: 'POST',
-    url: '/api/score/findPageZones',
-    data: { findPageZones: 1, pdfName, pageNum },
-    dataType: 'json',
-    success: function (data) {
-      callback(null, data);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
-}
-
-export function uploadPdf({ formData, onUploadProgress }, callback) {
-  $.ajax({
-    type: 'POST',
-    url: '/api/pdf/upload',
+    url: '/api/pdf/uploadImages',
     data: formData,
     contentType: false,
     processData: false,
     xhr: function () {
       const xhr = $.ajaxSettings.xhr();
       if (onUploadProgress) {
-        xhr.upload.addEventListener('progress', function (e) {
-          if (e.lengthComputable) onUploadProgress(e.loaded / e.total);
+        xhr.upload.addEventListener('progress', function (event) {
+          if (event.lengthComputable) onUploadProgress(event.loaded / event.total);
         });
       }
       return xhr;

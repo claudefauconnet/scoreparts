@@ -3,7 +3,7 @@
 // événements. Le bouton « New zone » (#act-new-zone) est câblé côté scorePlayer.
 import { state, emit } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
-import { findPageZones } from '../../../common/proxy.js';
+import { findPageZones } from '../../../common/localBackendProxy.js';
 import { Paper } from '../../../common/paper.js';
 
 // Détecte les systèmes de la page courante via l'API puis confie le calcul des

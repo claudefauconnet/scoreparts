@@ -1,5 +1,4 @@
-﻿import express from 'express';
-import ZonesDetector from '../../bin/zonesDetector.js';
+import express from 'express';
 import processResponse from '../../bin/processResponse.js';
 
 var router = express.Router();
@@ -23,9 +22,15 @@ var router = express.Router();
  *     responses:
  *       200: { description: Detected zones }
  */
+// POC PWA : détection migrée côté client (pdfPipeline/zonesDetectorBrowser.js).
+// Route conservée, sans traitement serveur.
 router.post('/findPageZones', function (req, res) {
-  ZonesDetector.findPageZones(req.body.pdfName, req.body.pageNum, function (error, result) {
-    processResponse(res, error, result);
+  processResponse(res, null, {
+    topLines: [],
+    interline: 0,
+    firstVerticalLine: 0,
+    bars: {},
+    movedToClient: true,
   });
 });
 

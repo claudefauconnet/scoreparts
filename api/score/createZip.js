@@ -1,5 +1,4 @@
-﻿import express from 'express';
-import scoreSplitter from '../../bin/scoreSplitter..js';
+import express from 'express';
 import processResponse from '../../bin/processResponse.js';
 
 var router = express.Router();
@@ -22,14 +21,10 @@ var router = express.Router();
  *     responses:
  *       200: { description: Zip path }
  */
+// POC PWA : zip migré côté client (pdfPipeline/partsBundlerBrowser.js, fflate).
+// Route conservée, sans traitement serveur.
 router.post('/createZip', function (req, res) {
-  scoreSplitter.createZip(req.body.movementDirName, function (err, result) {
-    try {
-      processResponse(res, null, result);
-    } catch (error) {
-      processResponse(res, error, null);
-    }
-  });
+  processResponse(res, null, { zipPath: null, movedToClient: true });
 });
 
 export default router;
