@@ -22,7 +22,7 @@ var router = express.Router();
  *     responses:
  *       200: { description: Detected zones }
  */
-// POC PWA : détection migrée côté client (pdfPipeline/zonesDetectorBrowser.js).
+// POC PWA : détection migrée côté client (localBackend/zonesDetector.js).
 // Route conservée, sans traitement serveur.
 router.post('/findPageZones', function (req, res) {
   processResponse(res, null, {

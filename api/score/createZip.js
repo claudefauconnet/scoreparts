@@ -21,7 +21,7 @@ var router = express.Router();
  *     responses:
  *       200: { description: Zip path }
  */
-// POC PWA : zip migré côté client (pdfPipeline/partsBundlerBrowser.js, fflate).
+// POC PWA : zip migré côté client (localBackend/downloadProcessor.js, fflate).
 // Route conservée, sans traitement serveur.
 router.post('/createZip', function (req, res) {
   processResponse(res, null, { zipPath: null, movedToClient: true });

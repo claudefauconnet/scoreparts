@@ -20,7 +20,7 @@ var router = express.Router();
  *     summary: Store a PDF and its page images rendered client-side (pdfjs)
  *     description: >
  *       Remplace la conversion serveur GraphicsMagick. Le client rend le PDF en
- *       PNG (pdfPipeline/pdfToImagesBrowser) et envoie le PDF source (champ
+ *       PNG (localBackend/PDFToImages.js) et envoie le PDF source (champ
  *       pdfFile) + les pages (champs page_0, page_1, …). Le serveur ne fait
  *       qu'écrire les fichiers — aucun traitement d'image.
  *     responses:

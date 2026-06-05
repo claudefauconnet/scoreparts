@@ -28,7 +28,7 @@ var router = express.Router();
  *       400:
  *         description: Paramètre image manquant
  */
-// POC PWA : analyse migrée côté client (pdfPipeline). Route conservée, vidée.
+// POC PWA : analyse migrée côté client (localBackend/). Route conservée, vidée.
 router.post('/split', function (req, res) {
   if (!req.body || !req.body.image) {
     return processResponse(res, 'missing parameter: image', null);

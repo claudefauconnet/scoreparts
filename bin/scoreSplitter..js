@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 // PWA : tout le traitement (generatePart, zip, ET la conversion PDF→images) a
-// migré côté client (public-v2/modules/pdfPipeline). GraphicsMagick/Ghostscript
+// migré côté client (public-v2/localBackend/). GraphicsMagick/Ghostscript
 // ne sont plus requis ; Jimp, PDFKit, async, zip-dir désinstallés. Ne reste ici
 // que listScores — lecture des métadonnées (donnée conservée côté serveur).
 

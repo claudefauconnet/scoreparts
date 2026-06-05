@@ -27,7 +27,7 @@ var router = express.Router();
  *     responses:
  *       200: { description: Generated PDF path }
  */
-// POC PWA : traitement migré côté client (public-v2/modules/pdfPipeline).
+// POC PWA : traitement migré côté client (public-v2/localBackend/).
 // La route est conservée mais ne fait plus aucun calcul serveur.
 router.post('/generatePart', function (req, res) {
   processResponse(res, null, { partPdfUrl: null, movedToClient: true });
