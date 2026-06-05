@@ -29,12 +29,19 @@ async function renderPageToPng(page, scale) {
 }
 
 // Convertit un PDF (ArrayBuffer/Uint8Array) en PNG, une entrée par page.
-// quality ∈ {low, medium, high}. onProgress(pageNum, totalPages) optionnel.
-// options.maxPages limite le rendu (aperçu / test) sans changer totalPages.
-// Retourne { pages: [{ bytes, width, height }], totalPages }.
+// quality ∈ {low, medium, high}. onProgress(rendu, àRendre) optionnel.
+// options :
+//   - countOnly   : ne rend rien, retourne juste { totalPages } (le pool s'en sert
+//                   pour répartir les pages avant rendu).
+//   - pageIndices : sous-ensemble de pages (1-based) à rendre — un worker du pool
+//                   ne traite que sa tranche. Absent → toutes les pages.
+//   - maxPages    : borne le rendu (aperçu / test) sans changer totalPages.
+//   - scale       : force une échelle précise (sinon dérivée de la qualité).
+// Chaque page rendue porte son `index` 0-based (= nom de fichier <n>.png), ce qui
+// permet de recombiner dans l'ordre les résultats de plusieurs workers.
+// Retourne { pages: [{ index, bytes, width, height }], totalPages }.
 export async function pdfToImages(pdfData, quality, onProgress, options) {
   options = options || {};
-  // options.scale force une échelle précise (sinon dérivée de la qualité).
   const scale = options.scale || QUALITY_SCALE[quality] || QUALITY_SCALE.medium;
   // disableFontFace : dans un Web Worker il n'y a pas de DOM → l'API @font-face
   // utilisée par défaut par pdfjs échoue et les glyphes (notes, texte) sortent en
@@ -42,17 +49,34 @@ export async function pdfToImages(pdfData, quality, onProgress, options) {
   // ça et fonctionne aussi bien thread principal que Worker.
   const loadingTask = pdfjsLib.getDocument({ data: pdfData, disableFontFace: true });
   const pdf = await loadingTask.promise;
+  const totalPages = pdf.numPages;
 
-  const lastPage = options.maxPages ? Math.min(options.maxPages, pdf.numPages) : pdf.numPages;
-  const pages = [];
-  for (let pageNum = 1; pageNum <= lastPage; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const rendered = await renderPageToPng(page, scale);
-    // Index 0-based dans le tableau = nom de fichier <n>.png côté serveur actuel.
-    pages.push(rendered);
-    page.cleanup();
-    if (onProgress) onProgress(pageNum, pdf.numPages);
+  // Comptage seul : le pool appelle ça d'abord pour dimensionner/répartir.
+  if (options.countOnly) {
+    return { pages: [], totalPages: totalPages };
   }
 
-  return { pages: pages, totalPages: pdf.numPages };
+  // Pages à rendre : tranche fournie par le pool, ou toutes (borné par maxPages).
+  let pageNumbers;
+  if (options.pageIndices && options.pageIndices.length) {
+    pageNumbers = options.pageIndices;
+  } else {
+    const lastPage = options.maxPages ? Math.min(options.maxPages, totalPages) : totalPages;
+    pageNumbers = [];
+    for (let pageNum = 1; pageNum <= lastPage; pageNum++) pageNumbers.push(pageNum);
+  }
+
+  const pages = [];
+  let renderedCount = 0;
+  for (const pageNum of pageNumbers) {
+    const page = await pdf.getPage(pageNum);
+    const rendered = await renderPageToPng(page, scale);
+    rendered.index = pageNum - 1;
+    pages.push(rendered);
+    page.cleanup();
+    renderedCount++;
+    if (onProgress) onProgress(renderedCount, pageNumbers.length);
+  }
+
+  return { pages: pages, totalPages: totalPages };
 }

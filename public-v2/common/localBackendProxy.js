@@ -5,15 +5,16 @@
 // buffers. Aucune route serveur de traitement n'est sollicitée.
 import { downloadPdf, downloadZip } from '../localBackend/downloadProcessor.js';
 
-// Worker singleton (créé à la première génération, réutilisé ensuite).
-let worker = null;
+// Pool de workers (créés à la demande, réutilisés entre imports). Les ids de
+// requête sont globaux → un même registre `pending` route les réponses quel que
+// soit le worker émetteur.
+const workers = [];
 let nextId = 1;
 const pending = new Map();
 
-function getWorker() {
-  if (worker) return worker;
-  worker = new Worker('/localBackend/worker.js', { type: 'module' });
-  worker.onmessage = function (event) {
+function makeWorker() {
+  const newWorker = new Worker('/localBackend/worker.js', { type: 'module' });
+  newWorker.onmessage = function (event) {
     const data = event.data || {};
     const entry = pending.get(data.id);
     if (!entry) return; // message obsolète
@@ -29,36 +30,143 @@ function getWorker() {
       entry.reject(new Error(data.message));
     }
   };
-  worker.onerror = function (event) {
+  newWorker.onerror = function (event) {
     // Rejette tout ce qui est en attente : sinon un téléchargement reste bloqué.
     pending.forEach(function (entry) {
       entry.reject(new Error('worker error: ' + (event.message || 'unknown')));
     });
     pending.clear();
   };
-  return worker;
+  return newWorker;
 }
 
-function callWorker(type, payload, transfer, onProgress) {
+// Garantit au moins `size` workers dans le pool.
+function ensurePool(size) {
+  while (workers.length < size) workers.push(makeWorker());
+}
+
+function callWorkerOn(workerIndex, type, payload, transfer, onProgress) {
+  ensurePool(workerIndex + 1);
   return new Promise(function (resolve, reject) {
     const id = nextId++;
-    pending.set(id, { resolve, reject, onProgress: onProgress });
-    getWorker().postMessage({ type: type, id: id, payload: payload }, transfer || []);
+    pending.set(id, { resolve: resolve, reject: reject, onProgress: onProgress });
+    workers[workerIndex].postMessage({ type: type, id: id, payload: payload }, transfer || []);
   });
 }
 
-// Rendu PDF→images dans le Worker (pdfjs hors thread principal → UI fluide).
-// pdfData (ArrayBuffer) est transféré (zéro-copie). onProgress(pageNum, total).
-// Retourne { pages: [{ bytes, width, height }], totalPages }.
-export function renderPdfToImages(pdfData, quality, onProgress) {
-  return callWorker(
+// Appels mono-worker (détection, génération) : toujours worker 0.
+function callWorker(type, payload, transfer, onProgress) {
+  return callWorkerOn(0, type, payload, transfer, onProgress);
+}
+
+// Copie d'un ArrayBuffer : chaque worker du pool a besoin de SA copie, car le
+// transfert détache le buffer (impossible de partager le même vers plusieurs).
+function copyBuffer(arrayBuffer) {
+  return arrayBuffer.slice(0);
+}
+
+// Taille du pool de rendu — pilotée par floor(cores / 2), pas par un nombre fixe :
+// chaque worker du pool spawn SON worker pdfjs interne (= 2 threads par worker),
+// donc l'optimum suit les cœurs *physiques* ≈ hardwareConcurrency / 2. Cette
+// formule cale d'elle-même sur le physique sur n'importe quelle machine, sans
+// jamais sur-souscrire (cause des régressions au-delà).
+//
+// Mesuré (36 pages, medium, machine 8 logiques / 4 physiques) :
+//   workers 1→6445ms · 2→4236 · 3→3473 · 4→3039 · 5→3093 · 6→3138 → genou net à 4
+//   = floor(8/2). Seul ce point machine est mesuré ; la formule est une heuristique
+//   raisonnée (à re-vérifier ailleurs via options.poolSize), pas un optimum prouvé
+//   sur tout matériel.
+//
+// MAX_POOL = plafond de sécurité mémoire (chaque worker = une instance pdfjs), pas
+// un réglage de perf : floor(cores/2) reste le vrai pilote en dessous.
+// < 4 pages → 1 worker (overhead pool inutile). ≤3 logiques → 1 = séquentiel.
+const MAX_POOL = 8;
+
+function renderPoolSize(pageCount) {
+  if (pageCount < 4) return 1;
+  const cores = navigator.hardwareConcurrency || 2;
+  return Math.max(1, Math.min(Math.floor(cores / 2), MAX_POOL, pageCount));
+}
+
+// Rendu PDF→images parallélisé sur un pool de Workers (pdfjs hors thread principal
+// → UI fluide). onProgress(pagesRendues, totalPages). Retourne
+// { pages: [{ index, bytes, width, height }], totalPages } trié par page.
+export async function renderPdfToImages(pdfData, quality, onProgress, options) {
+  options = options || {};
+
+  // 1. Compter les pages (parse léger, sans rendu) pour dimensionner le pool et
+  //    répartir le travail. Copie transférée → pdfData reste utilisable ensuite.
+  const countCopy = copyBuffer(pdfData);
+  const countResult = await callWorkerOn(
+    0,
     'pdfToImages',
-    { pdfData: pdfData, quality: quality },
-    [pdfData],
-    function (progress) {
-      if (onProgress) onProgress(progress.current, progress.total);
-    }
+    { pdfData: countCopy, quality: quality, options: { countOnly: true } },
+    [countCopy]
   );
+  const totalPages = countResult.totalPages;
+  // options.poolSize force une taille précise (benchmark / réglage) ; sinon auto.
+  const poolSize = options.poolSize
+    ? Math.max(1, Math.min(options.poolSize, totalPages))
+    : renderPoolSize(totalPages);
+
+  // 2. Cas mono-worker : transfert direct de pdfData (zéro-copie), pas de découpage.
+  if (poolSize === 1) {
+    return await callWorkerOn(
+      0,
+      'pdfToImages',
+      { pdfData: pdfData, quality: quality, options: options },
+      [pdfData],
+      function (progress) {
+        if (onProgress) onProgress(progress.current, progress.total);
+      }
+    );
+  }
+
+  // 3. Répartition round-robin des pages sur les workers du pool.
+  ensurePool(poolSize);
+  const buckets = [];
+  for (let bucketIndex = 0; bucketIndex < poolSize; bucketIndex++) buckets.push([]);
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    buckets[(pageNum - 1) % poolSize].push(pageNum);
+  }
+
+  // 4. Progress global = somme des pages terminées par chaque worker.
+  const completedPerWorker = new Array(poolSize).fill(0);
+
+  // 5. Dispatch parallèle ; chaque worker reçoit sa COPIE du PDF (transférée).
+  const bucketResults = await Promise.all(
+    buckets.map(function (pageIndices, workerIndex) {
+      const pdfCopy = copyBuffer(pdfData);
+      return callWorkerOn(
+        workerIndex,
+        'pdfToImages',
+        {
+          pdfData: pdfCopy,
+          quality: quality,
+          options: Object.assign({}, options, { pageIndices: pageIndices }),
+        },
+        [pdfCopy],
+        function (progress) {
+          completedPerWorker[workerIndex] = progress.current;
+          if (onProgress) {
+            const totalDone = completedPerWorker.reduce(function (sum, count) {
+              return sum + count;
+            }, 0);
+            onProgress(totalDone, totalPages);
+          }
+        }
+      );
+    })
+  );
+
+  // 6. Recombinaison ordonnée par index de page.
+  const pages = [];
+  bucketResults.forEach(function (result) {
+    result.pages.forEach(function (page) {
+      pages[page.index] = page;
+    });
+  });
+  return { pages: pages, totalPages: totalPages };
 }
 
 async function fetchPageBuffer(pdfName, pageIndex) {
