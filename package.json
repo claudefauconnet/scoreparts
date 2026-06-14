@@ -10,23 +10,12 @@
     "format:check": "prettier --check \"**/*.{js,json,md}\""
   },
   "dependencies": {
-    "body-parser": "~1.18.2",
-    "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "dotenv": "^17.4.2",
-    "express": "~4.15.5",
-    "jade": "~1.11.0",
-    "morgan": "~1.9.0",
-    "multer": "latest",
-    "serve-favicon": "~2.4.5",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "express": "~4.15.5"
   },
   "description": "score scrapper",
   "main": "app.js",
-  "bin": {
-    "scoreparts": "bin/scoreSplitter..js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/claudefauconnet/scoreparts.git"

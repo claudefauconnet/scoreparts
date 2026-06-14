@@ -1,5 +1,5 @@
 import { state, on, emit } from '../state.js';
-import { uploadRenderedScore } from '../../../common/proxy.js';
+import { uploadRenderedScore, toScoreName } from '../../../common/proxy.js';
 import { renderPdfToImages } from '../../../common/localBackendProxy.js';
 
 (function importPdfModule() {
@@ -218,7 +218,9 @@ import { renderPdfToImages } from '../../../common/localBackendProxy.js';
         return category.id === selectedCategoryId;
       });
       const selectedNode = {
-        name: file.name.replace(/\.[^.]+$/, ''),
+        // Même normalisation que le stockage (toScoreName) : le nom est l'identité
+        // utilisée pour ouvrir la partition et retrouver ses pages/zones.
+        name: toScoreName(file.name),
         author: artistName,
         category: matchedCategory.label,
         meta: { mvts: 1, pages: '?', key: '—', published: false },

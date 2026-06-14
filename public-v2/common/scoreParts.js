@@ -1,6 +1,7 @@
 import { Paper } from './paper.js';
 import { Common } from './common.js';
 import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
+import { getPageBlob } from './localDb.js';
 import { emit } from '../modules/partitions.state.js';
 
 export const scoreParts = {};
@@ -32,7 +33,44 @@ scoreParts.pageStep = function () {
   return scoreParts.singlePage ? 1 : 2;
 };
 
-var imagesDir = './data/images/';
+// Object URL courant par container — révoqué au remplacement pour ne pas fuir la
+// mémoire (chaque Blob de page lu depuis IndexedDB est exposé via createObjectURL).
+var activeObjectUrls = {};
+
+function clearContainerImage(containerId) {
+  var container = document.getElementById(containerId);
+  if (container) container.innerHTML = '';
+  if (activeObjectUrls[containerId]) {
+    URL.revokeObjectURL(activeObjectUrls[containerId]);
+    delete activeObjectUrls[containerId];
+  }
+}
+
+// Charge l'image d'une page (Blob IndexedDB → object URL) dans un container.
+// Page absente (hors limites, ex. page droite d'un spread en fin de PDF) → vide
+// le container. L'ancien object URL n'est révoqué qu'une fois la nouvelle image
+// chargée, pour éviter de couper l'image affichée pendant la transition.
+function loadPageImage(page, containerId, callback) {
+  getPageBlob(scoreParts.pdfName, page)
+    .then(function (blob) {
+      if (!blob) {
+        clearContainerImage(containerId);
+        if (callback) callback();
+        return;
+      }
+      var objectUrl = URL.createObjectURL(blob);
+      var previousUrl = activeObjectUrls[containerId];
+      activeObjectUrls[containerId] = objectUrl;
+      scoreParts.loadImageIntoContainer(objectUrl, containerId, function () {
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
+        if (callback) callback();
+      });
+    })
+    .catch(function () {
+      clearContainerImage(containerId);
+      if (callback) callback();
+    });
+}
 
 scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
   var container = document.getElementById(containerId);
@@ -71,15 +109,12 @@ scoreParts.spreadOrigin = function (pageIndex) {
 
 function loadPageSpread(pageIndex, callback) {
   var spreadOrigin = scoreParts.spreadOrigin(pageIndex);
-  var leftSrc = imagesDir + scoreParts.pdfName + '/' + spreadOrigin + '.png';
-  scoreParts.loadImageIntoContainer(leftSrc, 'systems-left', callback);
+  loadPageImage(spreadOrigin, 'systems-left', callback);
   if (scoreParts.singlePage) {
-    var rightContainer = document.getElementById('systems-right');
-    if (rightContainer) rightContainer.innerHTML = '';
+    clearContainerImage('systems-right');
     return;
   }
-  var rightSrc = imagesDir + scoreParts.pdfName + '/' + (spreadOrigin + 1) + '.png';
-  scoreParts.loadImageIntoContainer(rightSrc, 'systems-right', null);
+  loadPageImage(spreadOrigin + 1, 'systems-right', null);
 }
 
 scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
