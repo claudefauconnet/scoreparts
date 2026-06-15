@@ -182,14 +182,17 @@ function wireControls() {
     multiselectDelete.addEventListener('click', () => Paper.deleteSelectedZones());
   }
 
-  // Clic sur une page → elle devient la page courante (gauche = origine du
-  // spread, droite = origine + 1). scoreParts sauve les zones de l'ancienne page.
+  // En mode 2 pages : survol → page courante. En mode 1 page : clic → page courante.
   document.querySelectorAll('.page').forEach((pageEl) => {
     const side = pageEl.classList.contains('page-left') ? 0 : 1;
-    pageEl.addEventListener('mousedown', () => {
-      const origin = scoreParts.spreadOrigin();
-      const targetPage = scoreParts.singlePage ? origin : origin + side;
+    pageEl.addEventListener('mouseenter', () => {
+      if (scoreParts.singlePage) return;
+      const targetPage = scoreParts.spreadOrigin() + side;
       scoreParts.setCurrentPage(targetPage);
+    });
+    pageEl.addEventListener('mousedown', () => {
+      if (!scoreParts.singlePage) return;
+      scoreParts.setCurrentPage(scoreParts.spreadOrigin());
     });
   });
 
