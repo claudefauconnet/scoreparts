@@ -64,6 +64,7 @@ Movements.merge = function () {
         name: mvt.name,
         startPage: range ? range.startPage : mvt.startPage,
         endPage: range ? range.endPage : undefined,
+        systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null,
       };
     });
 };
@@ -95,7 +96,7 @@ Movements.persist = function () {
   sorted.forEach((mvt, idx) => {
     if (!mvt.name) return;
     const range = Movements.range(sorted, idx);
-    payload.push({ name: mvt.name, startPage: range.start, endPage: range.end });
+    payload.push({ name: mvt.name, startPage: range.start, endPage: range.end, systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null });
   });
   if (scoreParts.infos) scoreParts.infos.movements = payload;
   saveScoreInfos(scoreParts.pdfName, { movements: payload }, function (err) {
@@ -109,7 +110,7 @@ Movements.persist = function () {
 Movements.load = function () {
   const movements = Movements.merge();
   if (movements.length === 0) {
-    state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1 });
+    state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1, systemNumber: null });
     state.activeMvt = 1;
     emit('movements-changed');
     return { needsNaming: !!scoreParts.pdfName };
@@ -133,7 +134,7 @@ Movements.add = function (currentPage) {
     return { created: false };
   }
   const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
-  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage });
+  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage, systemNumber: null });
   state.activeMvt = newId;
   emit('movements-changed');
   return { created: true };

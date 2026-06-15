@@ -4,6 +4,7 @@
 // calcul vit dans le Worker ; ce module orchestre les appels et le transfert des
 // buffers. Aucune route serveur de traitement n'est sollicitée.
 import { downloadPdf, downloadZip } from '../localBackend/downloadProcessor.js';
+import { getPageBuffer } from './localDb.js';
 
 // Pool de workers (créés à la demande, réutilisés entre imports). Les ids de
 // requête sont globaux → un même registre `pending` route les réponses quel que
@@ -169,10 +170,10 @@ export async function renderPdfToImages(pdfData, quality, onProgress, options) {
   return { pages: pages, totalPages: totalPages };
 }
 
+// Lit le PNG d'une page depuis IndexedDB (plus aucun appel réseau : les pages sont
+// stockées localement à l'import). Retourne l'ArrayBuffer attendu par le Worker.
 async function fetchPageBuffer(pdfName, pageIndex) {
-  const res = await fetch('/data/images/' + pdfName + '/' + pageIndex + '.png');
-  if (!res.ok) throw new Error('page image introuvable: ' + pageIndex + '.png (' + res.status + ')');
-  return await res.arrayBuffer();
+  return await getPageBuffer(pdfName, pageIndex);
 }
 
 // Détection des portées d'une page, côté client (remplace l'appel serveur

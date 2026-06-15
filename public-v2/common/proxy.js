@@ -1,131 +1,120 @@
+// Accès aux données de l'app. Le backend Express a été retiré : tout est stocké
+// localement dans IndexedDB (voir localDb.js). Les signatures (callback Node-style
+// err-first) restent identiques aux anciennes routes pour que les appelants ne
+// changent pas — seule l'implémentation passe du réseau au stockage local.
+import {
+  getAllScores,
+  getScore,
+  updateScore,
+  putScore,
+  deleteScore as dbDeleteScore,
+  getZones,
+  putZones,
+  putPdf,
+  putPages,
+} from './localDb.js';
+
+// Nom canonique d'une partition dérivé du nom de fichier : extension retirée,
+// espaces → underscores. Sert d'identité unique (clé IndexedDB) ET de nom utilisé
+// par l'UI à l'ouverture — les deux DOIVENT coïncider, sinon les pages/zones sont
+// introuvables. Source unique pour l'import et le stockage.
+export function toScoreName(fileName) {
+  return fileName.replace(/\.[^.]+$/, '').replace(/ /g, '_');
+}
+
 export function loadMyScores(callback) {
-  $.ajax({
-    type: 'POST',
-    url: '/api/score/list',
-    dataType: 'json',
-    success: function (scores) {
+  getAllScores()
+    .then(function (scores) {
       callback(null, Array.isArray(scores) ? scores : []);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
 export function deleteScore(scoreName, callback) {
-  $.ajax({
-    type: 'DELETE',
-    url: '/api/score/delete/' + encodeURIComponent(scoreName),
-    dataType: 'json',
-    success: function () {
+  dbDeleteScore(scoreName)
+    .then(function () {
       callback(null);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
 export function loadScoreInfos(scoreName, callback) {
-  $.ajax({
-    type: 'GET',
-    url: '/api/pdf/scoreInfos/' + encodeURIComponent(scoreName),
-    dataType: 'json',
-    success: function (data) {
-      callback(null, data);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+  getScore(scoreName)
+    .then(function (infos) {
+      callback(null, infos);
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
 export function saveScoreInfos(scoreName, infos, callback) {
-  $.ajax({
-    type: 'PUT',
-    url: '/api/pdf/scoreInfos/' + encodeURIComponent(scoreName),
-    contentType: 'application/json',
-    data: JSON.stringify(infos),
-    dataType: 'json',
-    success: function () {
+  updateScore(scoreName, infos)
+    .then(function () {
       callback(null);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
 export function saveZones(scoreParts, callback) {
   if (!scoreParts.pdfName || !scoreParts.modified) {
     return callback(null);
   }
-  $.ajax({
-    type: 'POST',
-    url: '/api/score/saveZones',
-    data: {
-      saveZones: 1,
-      fileName: scoreParts.pdfName + '_zones.json',
-      zonesStr: JSON.stringify(scoreParts.allPagesZones),
-    },
-    dataType: 'json',
-    success: function () {
+  putZones(scoreParts.pdfName, scoreParts.allPagesZones)
+    .then(function () {
       scoreParts.modified = false;
       callback(null);
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
 export function loadZones(scoreParts, callback) {
-  $.ajax({
-    type: 'POST',
-    url: '/api/score/loadZones',
-    data: {
-      loadZones: 1,
-      fileName: scoreParts.pdfName + '_zones.json',
-    },
-    dataType: 'json',
-    success: function (data) {
-      callback(null, JSON.parse(data.result));
-    },
-    error: function (err) {
-      callback(err);
-    },
-  });
+  getZones(scoreParts.pdfName)
+    .then(function (allPagesZones) {
+      // Pas de zones persistées → signalé en erreur pour que l'appelant initialise
+      // un modèle vierge (comportement de l'ancienne route quand le fichier manquait).
+      if (!allPagesZones) {
+        return callback(new Error('zones not found'));
+      }
+      callback(null, allPagesZones);
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }
 
-// Envoie le PDF source + les PNG rendus côté client (pdfjs) au serveur, qui se
-// contente de les écrire (route /api/pdf/uploadImages). Remplace l'upload qui
-// déclenchait la conversion GraphicsMagick serveur.
+// Persiste le PDF source + les PNG rendus côté client (pdfjs) dans IndexedDB, et
+// crée l'enregistrement d'infos de la partition. Remplace l'upload réseau vers le
+// serveur. Le nom de la partition est dérivé du fichier (extension retirée,
+// espaces → underscores), à l'identique de l'ancienne route /api/pdf/uploadImages.
 export function uploadRenderedScore({ pdfFile, pageBlobs, onUploadProgress }, callback) {
-  const formData = new FormData();
-  formData.append('pdfFile', pdfFile);
-  pageBlobs.forEach(function (blob, pageIndex) {
-    formData.append('page_' + pageIndex, blob, pageIndex + '.png');
-  });
-  $.ajax({
-    type: 'POST',
-    url: '/api/pdf/uploadImages',
-    data: formData,
-    contentType: false,
-    processData: false,
-    xhr: function () {
-      const xhr = $.ajaxSettings.xhr();
-      if (onUploadProgress) {
-        xhr.upload.addEventListener('progress', function (event) {
-          if (event.lengthComputable) onUploadProgress(event.loaded / event.total);
-        });
-      }
-      return xhr;
-    },
-    success: function (data) {
-      callback(null, data);
-    },
-    error: function (jqXHR) {
-      callback(new Error('HTTP ' + jqXHR.status));
-    },
-  });
+  const pdfName = toScoreName(pdfFile.name);
+
+  Promise.all([
+    putPdf(pdfName, pdfFile),
+    putPages(pdfName, pageBlobs),
+    putScore({
+      pdfName: pdfName,
+      totalPages: pageBlobs.length,
+      category: null,
+      composer: null,
+      published: false,
+      movements: [],
+    }),
+  ])
+    .then(function () {
+      if (onUploadProgress) onUploadProgress(1);
+      callback(null, { pages: pageBlobs.length, pdfName: pdfName });
+    })
+    .catch(function (error) {
+      callback(error);
+    });
 }

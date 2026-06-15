@@ -6,8 +6,10 @@
 //   - une page courante à la fois : un canvas (donc un projet Paper) par page,
 //     activé quand la page devient courante.
 //   - coordonnées en pixels-canvas (espace mise en page, hors zoom CSS) : le
-//     zoom est une transform CSS sur le conteneur, Paper la neutralise via
-//     getBoundingClientRect → les coords persistées sont invariantes au zoom.
+//     zoom est une transform CSS sur le conteneur. event.point de Paper.js est en
+//     pixels écran et n'est juste qu'à zoom 1. correctEventCoords() le remappe dans
+//     chaque handler via la boîte rendue du canvas (getBoundingClientRect) → les
+//     coords sont exactes à n'importe quel zoom/pan, sans supposer de facteur.
 //   - interactions sans touches modificatrices : bouton "New zone" (mode activable
 //     persistant → on peut tracer plusieurs zones), glisser le corps pour
 //     déplacer, glisser le bord HAUT ou BAS pour redimensionner, croix pour
@@ -39,14 +41,17 @@ const PILL_BG = new paper.Color(BASE_COLOR);
 
 // ============== État privé
 var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
-var toolInstalled = false;
+var wiredCanvases = {}; // id de canvas → listeners DOM déjà posés
+var isPointerDown = false; // bouton souris enfoncé (drag en cours)
 var hoverGroup = null; // zone actuellement survolée (poignées visibles)
 var selectedGroups = []; // zones sélectionnées par lasso
+var lastCorrectedPoint = null; // dernier point projet corrigé (pour recalculer event.delta)
 
 Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
 Paper.activeCanvas = null; // <canvas> de la page courante
 Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
 Paper.currentZoneAction = null;
+Paper.activeGroup = null; // zone en cours d'action (déplacement / redimensionnement)
 Paper.currentPath = null;
 Paper.defaultZoneHeight = 20;
 Paper.margin = 10;
@@ -110,7 +115,7 @@ function ensureProject(canvas, imgEl) {
     scoreParts.coefV = canvas.clientHeight / imgEl.naturalHeight;
     scoreParts.coefH = canvas.clientWidth / imgEl.naturalWidth;
   }
-  installTool();
+  wireCanvasListeners(canvas);
 }
 
 // Réactive le projet de la page COURANTE (le seul éditable / cible de l'outil).
@@ -169,14 +174,57 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
   if (!interactive) activateCurrent();
 };
 
-function installTool() {
-  if (toolInstalled) return;
-  toolInstalled = true;
-  var tool = new paper.Tool();
-  tool.onMouseDown = onCanvasMouseDown;
-  tool.onMouseMove = onCanvasMouseMove;
-  tool.onMouseDrag = onCanvasMouseDrag;
-  tool.onMouseUp = onCanvasMouseUp;
+// On N'utilise PAS paper.Tool : Paper.js filtre les events à la viewSize du canvas.
+// Or le canvas est agrandi par la transform CSS du #book (zoom), donc les offsets
+// écran dépassent viewSize dans la zone agrandie → Paper ignore ces events (zone
+// morte à droite/en bas). Les listeners DOM natifs, eux, reçoivent les events sur
+// TOUTE la surface réelle du canvas ; correctEventCoords() remappe ensuite via le
+// getBoundingClientRect. Un seul jeu de listeners par canvas (les éléments persistent).
+function wireCanvasListeners(canvas) {
+  if (wiredCanvases[canvas.id]) return;
+  wiredCanvases[canvas.id] = true;
+  canvas.addEventListener('mousedown', onNativeMouseDown);
+  canvas.addEventListener('mousemove', onNativeHover);
+}
+
+// Construit un pseudo-événement compatible avec les handlers (qui lisent .event,
+// .point et .delta). correctEventCoords() remplit .point/.delta depuis .event natif.
+function makeToolEvent(nativeEvent, withDelta) {
+  return { event: nativeEvent, point: null, delta: withDelta ? new paper.Point(0, 0) : undefined };
+}
+
+// Active le projet Paper du canvas visé (cible du hitTest) et le marque courant.
+function focusCanvas(canvas) {
+  if (projectsByCanvasId[canvas.id]) projectsByCanvasId[canvas.id].activate();
+  Paper.activeCanvas = canvas;
+}
+
+function onNativeHover(nativeEvent) {
+  if (isPointerDown) return; // pendant un drag, le listener window gère le mouvement
+  focusCanvas(nativeEvent.currentTarget);
+  onCanvasMouseMove(makeToolEvent(nativeEvent, false));
+}
+
+function onNativeMouseDown(nativeEvent) {
+  focusCanvas(nativeEvent.currentTarget);
+  isPointerDown = true;
+  lastCorrectedPoint = null; // repart proprement pour le calcul des deltas
+  onCanvasMouseDown(makeToolEvent(nativeEvent, false));
+  // Le drag et le relâchement sont suivis au niveau window : le pointeur peut
+  // sortir du canvas pendant un déplacement/lasso sans interrompre l'action.
+  window.addEventListener('mousemove', onNativeDrag);
+  window.addEventListener('mouseup', onNativeMouseUp);
+}
+
+function onNativeDrag(nativeEvent) {
+  onCanvasMouseDrag(makeToolEvent(nativeEvent, true));
+}
+
+function onNativeMouseUp(nativeEvent) {
+  window.removeEventListener('mousemove', onNativeDrag);
+  window.removeEventListener('mouseup', onNativeMouseUp);
+  isPointerDown = false;
+  onCanvasMouseUp(makeToolEvent(nativeEvent, true));
 }
 
 // ============== Mode "nouvelle zone" (activable / désactivable)
@@ -210,7 +258,40 @@ function selectGroupsInRect(selRect) {
   return found;
 }
 
+// Recalcule event.point (et event.delta) en coordonnées PROJET à partir de la
+// boîte RÉELLEMENT rendue du canvas (getBoundingClientRect). Cette boîte inclut
+// déjà toutes les transforms (zoom CSS, pan), le devicePixelRatio et les contraintes
+// de layout — on ne suppose donc AUCUN facteur de zoom. Sans cette correction,
+// event.point de Paper.js (pixels écran relatifs au BCR) n'est juste qu'à zoom 1.
+function correctEventCoords(event) {
+  var canvas = Paper.activeCanvas;
+  var domEvent = event.event; // MouseEvent natif porté par le ToolEvent
+  if (!canvas || !domEvent) return;
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  // Espace projet = dimensions de CE canvas (ensureProject pose viewSize =
+  // clientWidth/clientHeight). On les lit directement pour rester lié au canvas
+  // mesuré, sans dépendre du projet Paper actif (deux canvas par spread).
+  // Fraction 0→1 du pointeur dans la boîte rendue, puis dénormalisée vers l'espace projet.
+  var projectX = ((domEvent.clientX - rect.left) / rect.width) * canvas.clientWidth;
+  var projectY = ((domEvent.clientY - rect.top) / rect.height) * canvas.clientHeight;
+  var corrected = new paper.Point(projectX, projectY);
+  // event.delta n'existe que sur les drags : on le recalcule dans le même espace
+  // projet à partir du point corrigé précédent (les deltas bruts de Paper sont aussi
+  // en pixels écran et donc faux au zoom).
+  if (event.delta && lastCorrectedPoint) {
+    event.delta = corrected.subtract(lastCorrectedPoint);
+  }
+  event.point = corrected;
+  lastCorrectedPoint = corrected;
+}
+
 function onCanvasMouseDrag(event) {
+  correctEventCoords(event);
+  if (isZoneAction(Paper.currentZoneAction)) {
+    if (Paper.activeGroup) dragZoneAction(Paper.activeGroup, event.delta);
+    return;
+  }
   if (!Paper.isLasso) return;
   if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
   var start = Paper.lassoStart;
@@ -230,6 +311,12 @@ function onCanvasMouseDrag(event) {
 }
 
 function onCanvasMouseUp(event) {
+  correctEventCoords(event);
+  if (isZoneAction(Paper.currentZoneAction)) {
+    endZoneAction();
+    Paper.activeGroup = null;
+    return;
+  }
   if (!Paper.isLasso) return;
   Paper.isLasso = false;
   if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
@@ -250,12 +337,12 @@ function onCanvasMouseUp(event) {
 
 // ============== Outil canvas (clic dans le vide / déplacement souris)
 function onCanvasMouseDown(event) {
+  correctEventCoords(event);
   if (Paper.currentZoneAction === 'removeZone') {
     Paper.currentZoneAction = null;
     return;
   }
-  var hitResult = paper.project.hitTest(event.point, HIT_OPTIONS);
-  var hitGroup = hitResult ? zoneGroupOf(hitResult.item) : null;
+  var hitGroup = zoneGroupAt(event.point);
 
   if (Paper.pendingNewZone) {
     if (!scoreParts.currentMovement) {
@@ -283,21 +370,25 @@ function onCanvasMouseDown(event) {
     return;
   }
 
-  // Clic sur zone non sélectionnée → vider la sélection et laisser la zone gérer.
-  if (hitGroup && !hitGroup.data.isSelected) {
-    clearSelection();
-    if (paper.view) paper.view.update();
+  // Clic sur une zone → démarrer une action (déplacement / redimensionnement /
+  // suppression). Tout passe par le Tool : ses coords sont remappées par
+  // correctEventCoords(), contrairement au dispatch d'event d'item de Paper.js qui
+  // utilise le point écran brut et rate les zones au zoom > 1.
+  if (hitGroup) {
+    if (!hitGroup.data.isSelected) clearSelection();
+    Paper.activeGroup = hitGroup;
+    beginZoneAction(hitGroup, event.point);
     return;
   }
+
   // Clic dans le vide → démarrer le lasso.
-  if (!hitGroup) {
-    clearSelection();
-    Paper.isLasso = true;
-    Paper.lassoStart = event.point.clone();
-  }
+  clearSelection();
+  Paper.isLasso = true;
+  Paper.lassoStart = event.point.clone();
 }
 
 function onCanvasMouseMove(event) {
+  correctEventCoords(event);
   if (!Paper.activeCanvas) return;
   if (Paper.pendingNewZone) return; // curseur crosshair géré en CSS
   var group = zoneGroupAt(event.point);
@@ -366,26 +457,31 @@ function hitRegion(group, point) {
 }
 
 // ============== Interactions sur une zone
-function onZoneMouseDown(event) {
+// Une action de zone manipule un groupe au pointeur (déplacement / redimensionnement).
+function isZoneAction(action) {
+  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot';
+}
+
+// Démarre une action sur la zone `group` au point papier `point` (déjà corrigé du
+// zoom CSS). Appelé depuis onCanvasMouseDown — pas un handler d'item Paper.js.
+function beginZoneAction(group, point) {
   Paper.currentZoneAction = null;
-  var group = event.target;
-  var region = hitRegion(group, event.point);
+  var region = hitRegion(group, point);
 
   if (region === 'delete') {
     Paper.currentZoneAction = 'removeZone';
     Paper.deleteZone(group);
     if (hoverGroup === group) hoverGroup = null;
+    if (Paper.activeGroup === group) Paper.activeGroup = null;
     // Écrit le modèle directement (writeCurrentPageZones ignore une page vidée) :
     // indispensable pour supprimer la DERNIÈRE zone.
     scoreParts.allPagesZones.pages[scoreParts.currentPage] = Paper.getPageZones();
     scoreParts.currentZones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
     scoreParts.saveZones(function () {}); // enregistrement immédiat
-    if (event.stop) event.stop();
     return;
   }
   if (region === 'pill') {
     // Réservé à l'affectation de voix (phase voices). Aucun effet pour l'instant.
-    if (event.stop) event.stop();
     return;
   }
   if (region === 'resizeTop' || region === 'resizeBot') {
@@ -399,32 +495,34 @@ function onZoneMouseDown(event) {
   }
 }
 
-function onZoneMouseDrag(event) {
+// Applique le déplacement `delta` (déjà corrigé du zoom CSS) à la zone `group`
+// selon l'action courante. Appelé depuis onCanvasMouseDrag.
+function dragZoneAction(group, delta) {
   if (!scoreParts.currentMovement) return;
-  var group = event.target;
   var rect = group.data.rect.bounds;
   if (Paper.currentZoneAction === 'resizeBot') {
     // Bord bas : le haut reste fixe.
-    var newHeightBot = rect.height + event.delta.y;
+    var newHeightBot = rect.height + delta.y;
     if (newHeightBot < MIN_ZONE_HEIGHT) return;
     group.scale(1, newHeightBot / rect.height, rect.topLeft);
   } else if (Paper.currentZoneAction === 'resizeTop') {
     // Bord haut : le bas reste fixe.
-    var newHeightTop = rect.height - event.delta.y;
+    var newHeightTop = rect.height - delta.y;
     if (newHeightTop < MIN_ZONE_HEIGHT) return;
     group.scale(1, newHeightTop / rect.height, rect.bottomLeft);
   } else if (Paper.currentZoneAction === 'moveZone') {
     if (group.data.isSelected && selectedGroups.length > 1) {
-      selectedGroups.forEach(function (g) { g.position.y += event.delta.y; });
+      selectedGroups.forEach(function (selectedGroup) { selectedGroup.position.y += delta.y; });
     } else {
-      group.position.y += event.delta.y;
+      group.position.y += delta.y;
     }
   }
 }
 
-function onZoneMouseUp() {
+// Termine l'action de zone : persiste et redessine. Appelé depuis onCanvasMouseUp.
+function endZoneAction() {
   var action = Paper.currentZoneAction;
-  if (action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot') {
+  if (isZoneAction(action)) {
     commit();
     // Vider la sélection avant le redraw (les groupes vont être recrées).
     selectedGroups = [];
@@ -583,9 +681,8 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
     h.visible = false; // révélées au survol (comme le hover CSS du module)
   });
 
-  group.onMouseDown = onZoneMouseDown;
-  group.onMouseDrag = onZoneMouseDrag;
-  group.onMouseUp = onZoneMouseUp;
+  // Interactions gérées par le Tool (onCanvasMouse*) via hitTest manuel corrigé
+  // du zoom CSS — pas de handler d'item Paper.js (dispatch non corrigé du zoom).
 
   scoreParts.modified = true;
   Paper.currentPath = path;
