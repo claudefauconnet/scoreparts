@@ -187,6 +187,11 @@ function wireControls() {
     const side = pageEl.classList.contains('page-left') ? 0 : 1;
     pageEl.addEventListener('mouseenter', () => {
       if (scoreParts.singlePage) return;
+      // Ne pas basculer la page éditable pendant un pan ou une action de zone en
+      // cours (sinon on changerait de page en plein glissé / déplacement). Au zoom,
+      // basculer reste permis et NE réinitialise PAS le zoom (même spread visible).
+      if (bookEl.classList.contains('panning')) return;
+      if (Paper.currentZoneAction) return;
       const targetPage = scoreParts.spreadOrigin() + side;
       scoreParts.setCurrentPage(targetPage);
     });
@@ -302,6 +307,10 @@ const ZOOM_MAX = 5;
 let zoom = 1;
 let panX = 0;
 let panY = 0;
+// Origine du spread (index de page de gauche) pour lequel le zoom courant a été
+// posé. Sert à ne réinitialiser le zoom que lors d'un vrai changement de spread
+// (navigation), pas quand on bascule seulement la page éditable du même spread.
+let zoomSpreadOrigin = 0;
 
 function applyTransform() {
   bookEl.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
@@ -315,6 +324,7 @@ function resetZoom() {
   panX = 0;
   panY = 0;
   applyTransform();
+  zoomSpreadOrigin = scoreParts.spreadOrigin();
 }
 
 // Zoom toward a screen point (clientX/clientY). Keeps that point stationary.
@@ -391,8 +401,11 @@ document.getElementById('zoom-in').addEventListener('click', () => zoomFromCente
 document.getElementById('zoom-out').addEventListener('click', () => zoomFromCenter(zoom / 1.25));
 document.getElementById('zoom-reset').addEventListener('click', resetZoom);
 
-// Reset zoom whenever the page changes or a new score loads.
-on('page-changed', resetZoom);
+// Reset zoom on a real spread change (navigation) or a new score. Basculer la
+// page éditable du même spread (survol) NE réinitialise PAS le zoom.
+on('page-changed', () => {
+  if (scoreParts.spreadOrigin() !== zoomSpreadOrigin) resetZoom();
+});
 on('score-loaded', resetZoom);
 
 // Keep the single-page box hugging the current image.
