@@ -5,6 +5,21 @@ import { state, emit } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { findPageZones } from '../../../common/localBackendProxy.js';
 import { Paper } from '../../../common/paper.js';
+import { Movements } from '../../../common/movements.js';
+
+// Pour chaque groupe de systemNumber zones détectées (= un système), garde les
+// voiceCount premières (une par voix) et supprime les suivantes (sans voix).
+function filterZonesBySystemNumber(zones, systemNumber, voiceCount) {
+  if (!systemNumber || voiceCount === 0) return zones;
+  const filteredZones = [];
+  const groupCount = Math.ceil(zones.length / systemNumber);
+  for (let groupIndex = 0; groupIndex < groupCount; groupIndex++) {
+    const groupStartIndex = groupIndex * systemNumber;
+    const groupZones = zones.slice(groupStartIndex, groupStartIndex + systemNumber);
+    filteredZones.push(...groupZones.slice(0, voiceCount));
+  }
+  return filteredZones;
+}
 
 // Détecte les systèmes de la page courante via l'API puis confie le calcul des
 // zones (géométrie) à scoreParts ; ce handler ne gère que l'entrée DOM (hauteur
@@ -14,6 +29,20 @@ function autoDetectZones() {
   if (!scoreParts.currentMovement) {
     alert('Sélectionnez ou déclarez un mouvement.');
     return;
+  }
+
+  const currentMovement = state.MOVEMENTS.find((movement) => movement.name === scoreParts.currentMovement);
+
+  if (currentMovement && !currentMovement.systemNumber) {
+    const input = prompt('Combien de systèmes y a-t-il dans ce mouvement ?');
+    if (input === null) return;
+    const parsedSystemNumber = parseInt(input, 10);
+    if (!Number.isInteger(parsedSystemNumber) || parsedSystemNumber <= 0) {
+      alert('Veuillez entrer un entier positif.');
+      return;
+    }
+    currentMovement.systemNumber = parsedSystemNumber;
+    Movements.persist();
   }
 
   findPageZones(scoreParts.pdfName, scoreParts.currentPage, function (err, data) {
@@ -26,7 +55,10 @@ function autoDetectZones() {
     const heightInputDisplayPx = heightInputEl ? parseFloat(heightInputEl.value) : NaN;
     const customHeightDisplayPx = isNaN(heightInputDisplayPx) ? null : heightInputDisplayPx;
 
-    const zones = scoreParts.buildAutoDetectedZones(data, customHeightDisplayPx);
+    const detectedZones = scoreParts.buildAutoDetectedZones(data, customHeightDisplayPx);
+    const systemNumber = currentMovement ? currentMovement.systemNumber : null;
+    const voiceCount = state.VOICES.length;
+    const zones = filterZonesBySystemNumber(detectedZones, systemNumber, voiceCount);
     scoreParts.commitCurrentPageZones(zones);
     Paper.redrawCurrentPage();
     emit('zones-changed');
