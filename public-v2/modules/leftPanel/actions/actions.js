@@ -45,6 +45,12 @@ function autoDetectZones() {
     Movements.persist();
   }
 
+  // En double page, vise automatiquement la page à remplir (gauche puis droite).
+  // Obligatoire AVANT findPageZones : buildAutoDetectedZones tague les zones avec
+  // currentMovement/currentPage lus au moment du build.
+  const targetPage = scoreParts.pickAutoFillPage(scoreParts.currentMovement);
+  scoreParts.setCurrentPage(targetPage);
+
   findPageZones(scoreParts.pdfName, scoreParts.currentPage, function (err, data) {
     if (err || !data || !data.topLines || data.topLines.length === 0) {
       alert('Aucun système détecté sur cette page.');
@@ -68,6 +74,9 @@ function autoDetectZones() {
 // Copie les zones de la page précédente vers la page courante (même mouvement).
 function duplicatePreviousPage() {
   if (!scoreParts.pdfName) return;
+  // En double page, vise automatiquement la page à remplir (gauche puis droite).
+  const targetPage = scoreParts.pickAutoFillPage(scoreParts.currentMovement);
+  scoreParts.setCurrentPage(targetPage);
   if (scoreParts.currentPage === 0) {
     alert('Aucune page précédente à dupliquer.');
     return;
