@@ -185,24 +185,39 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
   });
 }
 
-// Propage mesure/texte de la 1re zone d'un système sur les zones suivantes
-// de la même page (les voix d'un même système partagent mesure + annotation).
+// Propage le texte de la 1re zone d'un système sur les zones suivantes de la même
+// page (les voix d'un même système partagent l'annotation texte).
 scoreParts.copyAnnotationsOnAllVoices = function (targetPage) {
   var numberOfVoices = scoreParts.allPagesZones.numberOfVoices;
-  var currentMeasure = null;
   var currentText = null;
   for (var pageKey in scoreParts.allPagesZones.pages) {
     if (targetPage == -1 || targetPage == pageKey) {
       var zones = scoreParts.allPagesZones.pages[parseInt(pageKey)];
       for (var zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
         if (zoneIndex == 0 || zoneIndex == numberOfVoices) {
-          if (zones[zoneIndex].measure) currentMeasure = zones[zoneIndex].measure;
           if (zones[zoneIndex].text) currentText = zones[zoneIndex].text;
         } else {
-          if (currentMeasure) zones[zoneIndex].measure = currentMeasure;
           if (currentText) zones[zoneIndex].text = currentText;
         }
       }
+    }
+  }
+};
+
+// Le numéro de mesure se propage sur TOUTE la page : une mesure posée se répète
+// sur chaque zone (même abscisse fractionnaire, ordonnée propre à chaque zone).
+// Modèle « une mesure par page » : la première mesure trouvée fait foi.
+scoreParts.propagateMeasureOnPage = function (targetPage) {
+  for (var pageKey in scoreParts.allPagesZones.pages) {
+    if (targetPage != -1 && targetPage != pageKey) continue;
+    var zones = scoreParts.allPagesZones.pages[parseInt(pageKey)];
+    var pageMeasure = null;
+    for (var zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
+      if (zones[zoneIndex].measure) { pageMeasure = zones[zoneIndex].measure; break; }
+    }
+    if (!pageMeasure) continue;
+    for (var copyIndex = 0; copyIndex < zones.length; copyIndex++) {
+      zones[copyIndex].measure = { x: pageMeasure.x, y: zones[copyIndex].y, number: pageMeasure.number };
     }
   }
 };
@@ -215,6 +230,7 @@ scoreParts.writeCurrentPageZones = function () {
   scoreParts.currentZones = zones;
   scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
   scoreParts.copyAnnotationsOnAllVoices(scoreParts.currentPage);
+  scoreParts.propagateMeasureOnPage(scoreParts.currentPage);
 };
 
 scoreParts.changePage = function (newPage) {
@@ -314,6 +330,31 @@ scoreParts.commitCurrentPageZones = function (zones) {
   scoreParts.currentZones = zones;
   scoreParts.modified = true;
   scoreParts.saveZones(function () {});
+};
+
+// Choisit la page à remplir dans le spread visible : la 1re page (gauche puis
+// droite) sans zone du mouvement donné. Si toutes remplies → page courante (survol).
+scoreParts.pickAutoFillPage = function (movementName) {
+  // Flush canvas→modèle des 2 pages visibles avant de lire l'état « rempli »
+  // (mêmes raisons que assignVoicesToZones).
+  Paper.writeVisibleSpreadZones();
+  var origin = scoreParts.spreadOrigin();
+  var visiblePages = [origin];
+  if (!scoreParts.singlePage) {
+    var rightPage = origin + 1;
+    if (scoreParts.totalPages === null || rightPage < scoreParts.totalPages) {
+      visiblePages.push(rightPage);
+    }
+  }
+  for (var visibleIndex = 0; visibleIndex < visiblePages.length; visibleIndex++) {
+    var pageIndex = visiblePages[visibleIndex];
+    var pageZones = scoreParts.allPagesZones.pages[pageIndex] || [];
+    var hasMovementZones = pageZones.some(function (zone) {
+      return !movementName || zone.movement === movementName;
+    });
+    if (!hasMovementZones) return pageIndex;
+  }
+  return scoreParts.currentPage;
 };
 
 // Construit les zones d'une page à partir des systèmes détectés par l'API

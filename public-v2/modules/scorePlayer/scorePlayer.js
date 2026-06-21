@@ -141,11 +141,17 @@ function wireControls() {
   const stage = document.getElementById('stage');
   const actNewZone = document.getElementById('act-new-zone');
   const cancelNewZone = document.getElementById('cancel-new-zone');
+  const actMeasure = document.getElementById('act-measure');
 
   // Reflète le mode "pending new zone" dans l'UI (bannière + bouton actif).
   Paper.onPendingChange = (isPending) => {
     if (stage) stage.classList.toggle('pending-zone', isPending);
     if (actNewZone) actNewZone.classList.toggle('active', isPending);
+  };
+
+  // Reflète le mode "mesure" dans l'UI (bouton actif).
+  Paper.onMeasurePendingChange = (isPending) => {
+    if (actMeasure) actMeasure.classList.toggle('active', isPending);
   };
 
   if (actNewZone) {
@@ -161,6 +167,9 @@ function wireControls() {
   }
   if (cancelNewZone) {
     cancelNewZone.addEventListener('click', () => Paper.setPending(false));
+  }
+  if (actMeasure) {
+    actMeasure.addEventListener('click', () => Paper.setPendingMeasure(!Paper.pendingMeasure));
   }
 
   // Toolbar de sélection multiple.

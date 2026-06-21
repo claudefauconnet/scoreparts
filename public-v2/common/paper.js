@@ -36,6 +36,8 @@ const BASE_COLOR = '#4a7a8c';
 const ZONE_FILL = new paper.Color(0x4a / 255, 0x7a / 255, 0x8c / 255, 0.16);
 const ZONE_STROKE = new paper.Color(BASE_COLOR);
 const PILL_BG = new paper.Color(BASE_COLOR);
+// Barre + badge de numéro de mesure (contraste sur les zones bleues).
+const MEASURE_COLOR = new paper.Color('#2f855a');
 
 
 
@@ -48,6 +50,8 @@ var selectedGroups = []; // zones sélectionnées par lasso
 var lastCorrectedPoint = null; // dernier point projet corrigé (pour recalculer event.delta)
 
 Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
+Paper.pendingMeasure = false; // mode "mesure" (pose/efface un numéro de mesure au clic)
+Paper.onMeasurePendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
 Paper.activeCanvas = null; // <canvas> de la page courante
 Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
 Paper.currentZoneAction = null;
@@ -230,7 +234,52 @@ function onNativeMouseUp(nativeEvent) {
 // ============== Mode "nouvelle zone" (activable / désactivable)
 Paper.setPending = function (on) {
   Paper.pendingNewZone = on;
+  if (on && Paper.pendingMeasure) Paper.setPendingMeasure(false); // modes exclusifs
   if (Paper.onPendingChange) Paper.onPendingChange(on);
+};
+
+// ============== Mode "mesure" (pose / efface un numéro au clic) — miroir exclusif
+// du mode "nouvelle zone".
+Paper.setPendingMeasure = function (on) {
+  Paper.pendingMeasure = on;
+  if (on && Paper.pendingNewZone) Paper.setPending(false); // modes exclusifs
+  if (Paper.onMeasurePendingChange) Paper.onMeasurePendingChange(on);
+};
+
+// Groupes de zone du projet (page) actuellement actif.
+function currentZoneGroups() {
+  if (!paper || !paper.project) return [];
+  return paper.project.activeLayer.children.filter(function (item) {
+    return item.data && item.data.role === 'zoneGroup';
+  });
+}
+
+// Pose le même numéro de mesure (à l'abscisse pixel measureXpx) sur TOUTES les
+// zones de la page courante — la propagation page entière est ainsi immédiate et
+// « la dernière posée fait foi » (on écrase l'éventuelle mesure précédente).
+function setMeasureOnCurrentPage(measureXpx, number) {
+  currentZoneGroups().forEach(function (group) {
+    var rect = group.data.rect;
+    rect.data.measure = { x: measureXpx, y: rect.bounds.y, number: number };
+  });
+}
+
+function clearMeasureOnCurrentPage() {
+  currentZoneGroups().forEach(function (group) {
+    delete group.data.rect.data.measure;
+  });
+}
+
+// Translation horizontale (dx pixels) de TOUTES les barres de mesure de la page
+// (elles partagent la même abscisse) — appelé pendant le glisser d'une barre.
+Paper.moveMeasureBars = function (dx) {
+  currentZoneGroups().forEach(function (group) {
+    var measure = group.data.rect.data.measure;
+    if (!measure) return;
+    measure.x += dx;
+    if (group.data.measureBar) group.data.measureBar.position.x += dx;
+  });
+  if (paper.view) paper.view.update();
 };
 
 // ============== Sélection multiple (lasso)
@@ -344,6 +393,23 @@ function onCanvasMouseDown(event) {
   }
   var hitGroup = zoneGroupAt(event.point);
 
+  if (Paper.pendingMeasure) {
+    if (!hitGroup) return; // une mesure se pose sur une zone
+    var existing = hitGroup.data.rect.data.measure;
+    // Clic sur une barre existante → efface la mesure de toute la page.
+    if (existing && Math.abs(event.point.x - existing.x) < EDGE_GRAB) {
+      clearMeasureOnCurrentPage();
+    } else {
+      var number = window.prompt('Numéro de mesure');
+      if (number === null || number === '') return;
+      setMeasureOnCurrentPage(event.point.x, number);
+    }
+    commit(); // synchronise le modèle (+ propagation) depuis le canvas
+    Paper.redrawCurrentPage(); // redessine les barres sur toutes les zones
+    scoreParts.saveZones(function () {});
+    return;
+  }
+
   if (Paper.pendingNewZone) {
     if (!scoreParts.currentMovement) {
       alert('sélectionnez ou déclarez un mouvement');
@@ -390,7 +456,7 @@ function onCanvasMouseDown(event) {
 function onCanvasMouseMove(event) {
   correctEventCoords(event);
   if (!Paper.activeCanvas) return;
-  if (Paper.pendingNewZone) return; // curseur crosshair géré en CSS
+  if (Paper.pendingNewZone || Paper.pendingMeasure) return; // curseur crosshair géré en CSS
   var group = zoneGroupAt(event.point);
   setHoverGroup(group);
   var cursor = 'default';
@@ -405,6 +471,9 @@ function onCanvasMouseMove(event) {
       case 'resizeTop':
       case 'resizeBot':
         cursor = 'ns-resize';
+        break;
+      case 'measureBar':
+        cursor = 'ew-resize';
         break;
       default:
         cursor = 'move';
@@ -453,13 +522,15 @@ function hitRegion(group, point) {
   if (group.data.pillBounds && group.data.pillBounds.contains(point)) return 'pill';
   if (Math.abs(point.y - rect.top) < EDGE_GRAB) return 'resizeTop';
   if (Math.abs(point.y - rect.bottom) < EDGE_GRAB) return 'resizeBot';
+  var measure = group.data.rect.data.measure;
+  if (measure && Math.abs(point.x - measure.x) < EDGE_GRAB) return 'measureBar';
   return 'move';
 }
 
 // ============== Interactions sur une zone
 // Une action de zone manipule un groupe au pointeur (déplacement / redimensionnement).
 function isZoneAction(action) {
-  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot';
+  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot' || action === 'measureBar';
 }
 
 // Démarre une action sur la zone `group` au point papier `point` (déjà corrigé du
@@ -482,6 +553,11 @@ function beginZoneAction(group, point) {
   }
   if (region === 'pill') {
     // Réservé à l'affectation de voix (phase voices). Aucun effet pour l'instant.
+    return;
+  }
+  if (region === 'measureBar') {
+    // Glisser la barre ajuste l'abscisse de la mesure sur TOUTE la page.
+    Paper.currentZoneAction = 'measureBar';
     return;
   }
   if (region === 'resizeTop' || region === 'resizeBot') {
@@ -516,6 +592,8 @@ function dragZoneAction(group, delta) {
     } else {
       group.position.y += delta.y;
     }
+  } else if (Paper.currentZoneAction === 'measureBar') {
+    Paper.moveMeasureBars(delta.x);
   }
 }
 
@@ -535,6 +613,7 @@ function endZoneAction() {
 
 function hideDecorations(group) {
   if (group.data.pill) group.data.pill.visible = false;
+  if (group.data.measureBar) group.data.measureBar.visible = false;
   if (group.data.handles) {
     group.data.handles.forEach(function (h) {
       h.visible = false;
@@ -648,7 +727,12 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   path.data.page = pageIndex;
   if (zone.voice) path.data.voice = zone.voice;
   if (zone.movement) path.data.movement = zone.movement;
-  if (zone.measure) path.data.measure = zone.measure;
+  // measure est stocké en PIXELS-canvas sur le path (readZonesFromProject le
+  // re-normalise en fractions, comme bounds.x). zone.measure venant du modèle est
+  // en fractions → on dénormalise ici.
+  if (zone.measure) {
+    path.data.measure = { x: Math.round(zone.measure.x * naturalW * coefH), y: top, number: zone.measure.number };
+  }
   if (zone.text) path.data.text = zone.text;
 
   var group = new paper.Group([path]);
@@ -661,6 +745,11 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   group.addChild(pill);
   group.data.pill = pill;
   group.data.pillBounds = pill.bounds;
+
+  // Barre de mesure (si la zone en porte une) — rendue aussi sur les pages figées.
+  if (zone.measure) {
+    Paper.drawMeasure(group, Math.round(zone.measure.x * naturalW * coefH), top, bottom, zone.measure.number);
+  }
 
   // Page non courante : zone figée et lisible, sans poignées ni interactions.
   if (!interactive) {
@@ -737,6 +826,26 @@ function makeDeleteBadge(center) {
   a.strokeCap = b.strokeCap = 'round';
   return new paper.Group([circle, a, b]);
 }
+
+// Barre verticale de mesure + badge numéro, ajoutés au groupe de zone (donc ils
+// suivent déplacement / redimensionnement). measureXpx en pixels-canvas ; la barre
+// couvre la hauteur de la zone (topPx → bottomPx).
+Paper.drawMeasure = function (group, measureXpx, topPx, bottomPx, number) {
+  var bar = new paper.Path.Line(
+    new paper.Point(measureXpx, topPx),
+    new paper.Point(measureXpx, bottomPx)
+  );
+  bar.strokeColor = MEASURE_COLOR;
+  bar.strokeWidth = 1.5;
+  bar.data.role = 'measureBar';
+  var badge = makePill(String(number), measureXpx + 2, topPx, MEASURE_COLOR);
+  badge.data.role = 'measureBar';
+  var barGroup = new paper.Group([bar, badge]);
+  barGroup.data.role = 'measureBar';
+  group.addChild(barGroup);
+  group.data.measureBar = barGroup;
+  return barGroup;
+};
 
 // ============== Suppression
 Paper.deleteZones = function () {
