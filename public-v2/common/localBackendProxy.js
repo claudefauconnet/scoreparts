@@ -200,8 +200,9 @@ async function pngNaturalSize(buffer) {
 }
 
 // Génère le PDF (Uint8Array) d'une partie à partir de ses zones. Charge en amont
-// les images des pages concernées (clés de pagesZones.pages).
-async function generatePartBytes(opts) {
+// les images des pages concernées (clés de pagesZones.pages). onProgress(percent)
+// relaie l'avancement émis par le Worker (étapes 10/50/80/100).
+async function generatePartBytes(opts, onProgress) {
   const pdfName = opts.pdfName;
   const pagesZones = opts.pagesZones;
 
@@ -239,13 +240,14 @@ async function generatePartBytes(opts) {
         naturalH: naturalH,
       },
     },
-    transfer
+    transfer,
+    onProgress ? (progress) => onProgress(progress.value) : undefined
   );
 }
 
-// Génère UNE partie et la télécharge en PDF.
-export async function downloadSinglePart(opts) {
-  const pdfBytes = await generatePartBytes(opts);
+// Génère UNE partie et la télécharge en PDF. onProgress(percent) suit la génération.
+export async function downloadSinglePart(opts, onProgress) {
+  const pdfBytes = await generatePartBytes(opts, onProgress);
   const fileName = (opts.fileName || opts.part || 'partition').replace(/[ .]/g, '_') + '.pdf';
   downloadPdf(pdfBytes, fileName);
   return pdfBytes;

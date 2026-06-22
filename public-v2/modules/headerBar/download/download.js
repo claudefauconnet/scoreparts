@@ -4,6 +4,7 @@
 // seules fonctions DOM que Download déclenche, qui reste ainsi sans accès au DOM.
 import { state } from '../../partitions.state.js';
 import { Download } from '../../../common/download.js';
+import { ProgressToast } from '../../../common/progressToast.js';
 
 const dlSplit = document.getElementById('dl-split');
 const dlMenu = document.getElementById('dl-menu');
@@ -50,43 +51,8 @@ document.addEventListener('click', (event) => {
 
 // ============== Barre de progression de génération
 
-const dlToast = document.getElementById('dl-toast');
-// Rattacher au body : un ancêtre transformé du header capterait le position:fixed
-// et ancrerait le toast en haut au lieu du coin bas-droite du viewport.
-if (dlToast && dlToast.parentElement !== document.body) {
-  document.body.appendChild(dlToast);
-}
-const dlToastLabel = document.getElementById('dl-toast-label');
-const dlToastPct = document.getElementById('dl-toast-pct');
-const dlToastFill = document.getElementById('dl-toast-fill');
-
-function showProgress(label, indeterminate) {
-  dlToastLabel.textContent = label;
-  dlToast.hidden = false;
-  if (indeterminate) {
-    dlToast.classList.add('indeterminate');
-    dlToastPct.textContent = '';
-    dlToastFill.style.width = '';
-  } else {
-    dlToast.classList.remove('indeterminate');
-    setProgress(0);
-  }
-}
-
-function setProgress(percent, label) {
-  dlToast.classList.remove('indeterminate');
-  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
-  dlToastFill.style.width = clamped + '%';
-  dlToastPct.textContent = clamped + '%';
-  if (label) dlToastLabel.textContent = label;
-}
-
-function hideProgress(delay) {
-  window.setTimeout(() => {
-    dlToast.hidden = true;
-  }, delay || 0);
-}
-
+// begin/end désactivent le bouton scindé le temps de la génération (spécifique au
+// téléchargement). L'affichage de la progression est délégué au toast partagé.
 function beginDownload() {
   dlMainBtn.disabled = true;
   dlCaret.disabled = true;
@@ -97,15 +63,15 @@ function endDownload() {
   dlCaret.disabled = false;
 }
 
-// Adaptateur passé à Download : ce sont les seules fonctions DOM que la logique de
-// téléchargement déclenche. Download reste sans accès direct au DOM.
+// Adaptateur passé à Download : la logique de téléchargement reste sans accès
+// direct au DOM, elle ne déclenche que ces fonctions.
 const progressUI = {
   begin: beginDownload,
-  show: showProgress,
-  setProgress: setProgress,
-  hide: hideProgress,
+  show: ProgressToast.show,
+  setProgress: ProgressToast.setProgress,
+  hide: ProgressToast.hide,
   end: endDownload,
-  error: (msg) => alert(msg),
+  error: ProgressToast.error,
 };
 
 // ============== Download handlers

@@ -204,24 +204,6 @@ scoreParts.copyAnnotationsOnAllVoices = function (targetPage) {
   }
 };
 
-// Le numéro de mesure se propage sur TOUTE la page : une mesure posée se répète
-// sur chaque zone (même abscisse fractionnaire, ordonnée propre à chaque zone).
-// Modèle « une mesure par page » : la première mesure trouvée fait foi.
-scoreParts.propagateMeasureOnPage = function (targetPage) {
-  for (var pageKey in scoreParts.allPagesZones.pages) {
-    if (targetPage != -1 && targetPage != pageKey) continue;
-    var zones = scoreParts.allPagesZones.pages[parseInt(pageKey)];
-    var pageMeasure = null;
-    for (var zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
-      if (zones[zoneIndex].measure) { pageMeasure = zones[zoneIndex].measure; break; }
-    }
-    if (!pageMeasure) continue;
-    for (var copyIndex = 0; copyIndex < zones.length; copyIndex++) {
-      zones[copyIndex].measure = { x: pageMeasure.x, y: zones[copyIndex].y, number: pageMeasure.number };
-    }
-  }
-};
-
 scoreParts.writeCurrentPageZones = function () {
   var zones = Paper.getPageZones();
   if (zones.length == 0) {
@@ -230,7 +212,6 @@ scoreParts.writeCurrentPageZones = function () {
   scoreParts.currentZones = zones;
   scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
   scoreParts.copyAnnotationsOnAllVoices(scoreParts.currentPage);
-  scoreParts.propagateMeasureOnPage(scoreParts.currentPage);
 };
 
 scoreParts.changePage = function (newPage) {

@@ -7,6 +7,7 @@ import { scoreParts } from '../../../common/scoreParts.js';
 import { Common } from '../../../common/common.js';
 import { downloadSinglePart } from '../../../common/localBackendProxy.js';
 import { Voices } from '../../../common/voices.js';
+import { ProgressToast } from '../../../common/progressToast.js';
 
 const list = document.getElementById('voice-list');
 
@@ -99,16 +100,30 @@ function downloadVoice(voice) {
   const targetPdfName = (scoreParts.pdfName + '_' + voice.name).replace(/[ .]/g, '-');
   // POC PWA : génération + téléchargement côté client (Web Worker). Zones en
   // fractions 0→1 des dimensions naturelles du PNG, converties dans le pipeline.
-  downloadSinglePart({
-    pdfName: scoreParts.pdfName,
-    targetPdfName,
-    part: voice.name,
-    pagesZones,
-    margin: scoreParts.margin,
-    naturalW: scoreParts.naturalW,
-    naturalH: scoreParts.naturalH,
-    fileName: targetPdfName,
-  }).catch((err) => alert(err.message || err));
+  // Tâche longue → barre de progression (%) pour signaler l'avancement.
+  const progressLabel = `Génération de « ${voice.name} »…`;
+  ProgressToast.show(progressLabel, false);
+  downloadSinglePart(
+    {
+      pdfName: scoreParts.pdfName,
+      targetPdfName,
+      part: voice.name,
+      pagesZones,
+      margin: scoreParts.margin,
+      naturalW: scoreParts.naturalW,
+      naturalH: scoreParts.naturalH,
+      fileName: targetPdfName,
+    },
+    (percent) => ProgressToast.setProgress(percent, progressLabel)
+  )
+    .then(() => {
+      ProgressToast.setProgress(100, progressLabel);
+      ProgressToast.hide(800);
+    })
+    .catch((err) => {
+      ProgressToast.hide();
+      ProgressToast.error(err.message || err);
+    });
 }
 
 // Destructive-action popover anchored to the voice's × button.

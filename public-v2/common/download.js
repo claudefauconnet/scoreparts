@@ -46,18 +46,21 @@ Download.completePdf = function (ui) {
   const targetPdfName = (Download.movementDirName() + '_complet').replace(/[ .]/g, '-');
   Download.isDownloading = true;
   ui.begin();
-  ui.show('Génération de la partition complète…', true);
+  ui.show('Génération de la partition complète…', false);
 
-  downloadSinglePart({
-    pdfName: scoreParts.pdfName,
-    targetPdfName,
-    part: 'Partition complete',
-    pagesZones,
-    margin: scoreParts.margin,
-    naturalW: scoreParts.naturalW,
-    naturalH: scoreParts.naturalH,
-    fileName: targetPdfName,
-  })
+  downloadSinglePart(
+    {
+      pdfName: scoreParts.pdfName,
+      targetPdfName,
+      part: 'Partition complete',
+      pagesZones,
+      margin: scoreParts.margin,
+      naturalW: scoreParts.naturalW,
+      naturalH: scoreParts.naturalH,
+      fileName: targetPdfName,
+    },
+    (percent) => ui.setProgress(percent, 'Génération de la partition complète…')
+  )
     .then(() => {
       Download.isDownloading = false;
       ui.end();

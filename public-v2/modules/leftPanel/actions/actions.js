@@ -6,6 +6,7 @@ import { scoreParts } from '../../../common/scoreParts.js';
 import { findPageZones } from '../../../common/localBackendProxy.js';
 import { Paper } from '../../../common/paper.js';
 import { Movements } from '../../../common/movements.js';
+import { ProgressToast } from '../../../common/progressToast.js';
 
 // Pour chaque groupe de systemNumber zones détectées (= un système), garde les
 // voiceCount premières (une par voix) et supprime les suivantes (sans voix).
@@ -51,7 +52,11 @@ function autoDetectZones() {
   const targetPage = scoreParts.pickAutoFillPage(scoreParts.currentMovement);
   scoreParts.setCurrentPage(targetPage);
 
+  // Détection des portées : tâche longue (chargement du PNG + analyse dans le
+  // Worker), d'où le toast indéterminé pour signaler que ça travaille.
+  ProgressToast.show('Détection des systèmes…', true);
   findPageZones(scoreParts.pdfName, scoreParts.currentPage, function (err, data) {
+    ProgressToast.hide();
     if (err || !data || !data.topLines || data.topLines.length === 0) {
       alert('Aucun système détecté sur cette page.');
       return;

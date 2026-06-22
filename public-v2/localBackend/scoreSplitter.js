@@ -122,7 +122,13 @@ var scoreSplitter = {
         zone.xOnPage = scoreSplitter.leftMargin;
 
         if (zone.measure) {
-          zone.measure.y = offsetY;
+          // Position de sortie du badge : décalé de son offset relatif (relX, relY en
+          // fractions) depuis le coin haut-gauche de la zone, replacé à (imageBackOffset,
+          // yOnPage) sur la page composée. natW/natH = dimensions naturelles du PNG.
+          var natW = scoreSplitter.pageWidth / scaleH;
+          var natH = scoreSplitter.pageHeight / scaleV;
+          zone.measure.outX = scoreSplitter.imageBackOffset + zone.measure.relX * natW;
+          zone.measure.outY = offsetY + zone.measure.relY * natH;
         }
         if (zone.text) {
           zone.text.y = offsetY;
@@ -159,11 +165,11 @@ var scoreSplitter = {
       var targetPage = { imageBuffer: null, measures: [], texts: [] };
       var blanckImg = await createImageAsync(w, h);
 
-      var uniqueMeasures = {};
       var uniqueTexts = {};
       for (const pageZone of page) {
-        if (pageZone.measure && !uniqueMeasures[pageZone.measure.number]) {
-          uniqueMeasures[pageZone.measure.number] = 1;
+        // Chaque zone a SA mesure à sa position propre (outX, outY) → on les garde
+        // toutes (pas de dédoublonnage), pour respecter le placement individuel.
+        if (pageZone.measure) {
           targetPage.measures.push(pageZone.measure);
         }
         if (pageZone.text && !uniqueTexts[pageZone.text.text]) {
@@ -249,7 +255,20 @@ var scoreSplitter = {
 
       var measures = pagesImagesArray[pageIndex].measures || [];
       measures.forEach(function (measure) {
-        drawCenteredText(page, helvetica, measure.number, 18, left, measure.y - 5 + scoreSplitter.firstScaleY, 200);
+        // MÊME proportion que dans l'appli : fontFrac = taille du badge / hauteur du
+        // canvas (fraction de page) → police PDF = fontFrac × hauteur de la page. Repli
+        // proportionnel (ancien réglage) pour d'éventuelles mesures sans fontFrac.
+        var fontSize = measure.fontFrac
+          ? Math.round(measure.fontFrac * pageH)
+          : Math.round((18 * pageH) / scoreSplitter.pageHeight);
+        // Numéro noir à la position (outX, outY) choisie pour CETTE zone (firstScaleY =
+        // décalage de l'image composée sur la page). Repère pdf-lib (bas-gauche).
+        page.drawText(String(measure.number), {
+          x: measure.outX,
+          y: pageH - (scoreSplitter.firstScaleY + measure.outY) - fontSize,
+          size: fontSize,
+          font: helvetica,
+        });
       });
 
       var texts = pagesImagesArray[pageIndex].texts || [];
@@ -294,6 +313,13 @@ var scoreSplitter = {
       scaleV = scoreSplitter.pageHeight / naturalH;
       for (var pageKey in zones) {
         zones[pageKey].forEach(function (zone) {
+          // Offset du badge de mesure RELATIF au coin haut-gauche de sa zone, capturé
+          // en fractions AVANT le passage en points (sert à le repositionner sur la
+          // page de sortie, cf. setTargetPages).
+          if (zone.measure) {
+            zone.measure.relX = zone.measure.x - zone.x;
+            zone.measure.relY = zone.measure.y - zone.y;
+          }
           zone.x = zone.x * scoreSplitter.pageWidth;
           zone.width = zone.width * scoreSplitter.pageWidth;
           zone.y = zone.y * scoreSplitter.pageHeight;
