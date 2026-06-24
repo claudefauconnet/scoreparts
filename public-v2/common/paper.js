@@ -17,6 +17,7 @@
 //     (l'affectation réelle se fera dans la partie voices).
 import { scoreParts } from './scoreParts.js';
 import { state } from '../modules/partitions.state.js';
+import { popupMenu } from './popupMenu.js';
 
 export const Paper = {};
 
@@ -41,6 +42,10 @@ const PILL_BG = new paper.Color(BASE_COLOR);
 // Barre + badge de numéro de mesure (contraste sur les zones bleues).
 const MEASURE_COLOR = new paper.Color('#2f855a');
 const MEASURE_FONT_PX = 11; // taille du numéro dans l'espace canvas (sert aussi à dériver la police PDF)
+// Badge de texte libre (saisi au clic droit) — distinct de la couleur des mesures.
+const TEXT_COLOR = new paper.Color('#2b6cb0');
+const TEXT_FONT_PX = 13; // taille par défaut du texte dans l'espace canvas (réglable par texte)
+const MIN_TEXT_FONT_PX = 6; // plancher de taille au redimensionnement
 
 
 
@@ -382,15 +387,124 @@ function moveMeasureBadge(badge, delta) {
   if (paper.view) paper.view.update();
 }
 
-// Survol d'un badge : révèle SA croix de suppression, masque celle précédemment survolée.
+// Décorations d'un badge révélées au survol : croix de suppression (mesure ou texte)
+// et, pour le texte, la poignée de redimensionnement.
+function badgeHoverDecorations(badge) {
+  if (!badge) return [];
+  var decorations = [];
+  var cross = badge.data.measureDelete || badge.data.textDelete;
+  if (cross) decorations.push(cross);
+  if (badge.data.textResize) decorations.push(badge.data.textResize);
+  return decorations;
+}
+
+// Survol d'un badge (mesure OU texte) : révèle SES décorations, masque celles du badge
+// précédemment survolé.
 var hoveredBadge = null;
 function setBadgeHover(badge) {
   if (badge === hoveredBadge) return;
-  if (hoveredBadge && hoveredBadge.data.measureDelete) hoveredBadge.data.measureDelete.visible = false;
+  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) { decoration.visible = false; });
   hoveredBadge = badge;
-  if (hoveredBadge && hoveredBadge.data.measureDelete) hoveredBadge.data.measureDelete.visible = true;
+  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) { decoration.visible = true; });
   if (paper.view) paper.view.update();
 }
+
+// ============== Badges de texte (miroir des badges de mesure, mais PAR ZONE)
+// Un texte n'est PAS propagé : il n'existe que sur la zone où il est saisi (clic droit).
+// Chaque zone peut en porter plusieurs (group.data.textBadges) ; chaque badge référence
+// SON texte (badge.data.text) pour déplacement/suppression unitaires.
+
+// Badge de texte (rectangle OU sa croix) contenant le point, parmi TOUS les badges de
+// TOUTES les zones de la page. Renvoie { group, badge, text } ou null.
+function textBadgeAt(point) {
+  var groups = currentZoneGroups();
+  for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    var group = groups[groupIndex];
+    var badges = group.data.textBadges;
+    if (!badges) continue;
+    for (var badgeIndex = 0; badgeIndex < badges.length; badgeIndex++) {
+      var badge = badges[badgeIndex];
+      if (badge.data.textBar.bounds.contains(point)) return { group: group, badge: badge, text: badge.data.text };
+      var cross = badge.data.textDelete;
+      if (cross && point.getDistance(cross.position) < MEASURE_DELETE_GRAB) {
+        return { group: group, badge: badge, text: badge.data.text }; // croix débordant le rectangle
+      }
+    }
+  }
+  return null;
+}
+
+// Vrai si le point tombe sur la croix de suppression d'un badge de texte donné.
+function textDeleteHit(badge, point) {
+  var cross = badge && badge.data.textDelete;
+  return !!(cross && point.getDistance(cross.position) < MEASURE_DELETE_GRAB);
+}
+
+// Vrai si le point tombe sur la poignée de redimensionnement d'un badge de texte.
+function textResizeHit(badge, point) {
+  var handle = badge && badge.data.textResize;
+  return !!(handle && point.getDistance(handle.position) < MEASURE_DELETE_GRAB);
+}
+
+// Badge de texte dont la poignée de redimensionnement contient le point (la poignée
+// déborde du rectangle, d'où une recherche dédiée). Renvoie { group, badge, text }.
+function textResizeAt(point) {
+  var groups = currentZoneGroups();
+  for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    var group = groups[groupIndex];
+    var badges = group.data.textBadges;
+    if (!badges) continue;
+    for (var badgeIndex = 0; badgeIndex < badges.length; badgeIndex++) {
+      var badge = badges[badgeIndex];
+      if (textResizeHit(badge, point)) return { group: group, badge: badge, text: badge.data.text };
+    }
+  }
+  return null;
+}
+
+// Déplace UN badge de texte (delta pixels) et met à jour SON texte.
+function moveTextBadge(badge, delta) {
+  var text = badge.data.text;
+  if (!text) return;
+  text.x += delta.x;
+  text.y += delta.y;
+  badge.position = badge.position.add(delta);
+  if (paper.view) paper.view.update();
+}
+
+// Supprime UN seul texte d'UNE zone (croix d'un badge) puis persiste.
+function deleteTextFromZone(group, text) {
+  var texts = group.data.rect.data.texts;
+  if (!texts) return;
+  var textIndex = texts.indexOf(text);
+  if (textIndex === -1) return;
+  texts.splice(textIndex, 1);
+  if (texts.length === 0) delete group.data.rect.data.texts;
+  commit();
+  Paper.redrawCurrentPage();
+  scoreParts.saveZones(function () {});
+}
+
+// Ajoute un texte à UNE zone (clic droit → menu → saisie), à la position cliquée
+// (point en pixels-canvas), puis persiste. Appelé depuis popupMenu.
+Paper.addTextToZone = function (group, point, textStr) {
+  if (!group || !textStr) return;
+  var rect = group.data.rect;
+  if (!rect.data.texts) rect.data.texts = [];
+  rect.data.texts.push({ x: point.x, y: point.y, text: textStr });
+  commit();
+  Paper.redrawCurrentPage();
+  scoreParts.saveZones(function () {});
+};
+
+// Supprime une zone entière (clic droit → menu) puis persiste.
+Paper.removeZoneAndSave = function (group) {
+  if (!group) return;
+  Paper.deleteZone(group);
+  commit();
+  Paper.redrawCurrentPage();
+  scoreParts.saveZones(function () {});
+};
 
 // ============== Sélection multiple (lasso)
 function clearSelection() {
@@ -452,6 +566,22 @@ function onCanvasMouseDrag(event) {
     if (Paper.activeMeasureBadge) moveMeasureBadge(Paper.activeMeasureBadge, event.delta);
     return;
   }
+  if (Paper.currentZoneAction === 'textBadge') {
+    if (Paper.activeTextBadge) moveTextBadge(Paper.activeTextBadge, event.delta);
+    return;
+  }
+  if (Paper.currentZoneAction === 'textResize') {
+    var resizeState = Paper.activeTextResize;
+    if (resizeState) {
+      // Mise à l'échelle live du badge autour de son coin haut-gauche fixe (la taille
+      // de police réelle est recalculée au relâchement, cf. onCanvasMouseUp).
+      var currentHeight = resizeState.badge.data.textBar.bounds.height;
+      var scaleFactor = 1 + event.delta.y / Math.max(1, currentHeight);
+      if (scaleFactor > 0.2) resizeState.badge.scale(scaleFactor, resizeState.topLeft);
+      if (paper.view) paper.view.update();
+    }
+    return;
+  }
   if (isZoneAction(Paper.currentZoneAction)) {
     if (Paper.activeGroup) dragZoneAction(Paper.activeGroup, event.delta);
     return;
@@ -476,10 +606,27 @@ function onCanvasMouseDrag(event) {
 
 function onCanvasMouseUp(event) {
   correctEventCoords(event);
+  // Fin d'un redimensionnement de texte : convertit l'échelle visuelle accumulée en
+  // une nouvelle taille de police réelle (fontPx), puis persiste et redessine proprement.
+  if (Paper.currentZoneAction === 'textResize') {
+    var resizeState = Paper.activeTextResize;
+    if (resizeState) {
+      var scaleRatio = resizeState.badge.data.textBar.bounds.height / resizeState.initialHeight;
+      var baseFontPx = resizeState.text.fontPx || TEXT_FONT_PX;
+      resizeState.text.fontPx = Math.max(MIN_TEXT_FONT_PX, Math.round(baseFontPx * scaleRatio));
+      commit();
+      Paper.redrawCurrentPage();
+      scoreParts.saveZones(function () {});
+    }
+    Paper.activeTextResize = null;
+    Paper.currentZoneAction = null;
+    return;
+  }
   if (isZoneAction(Paper.currentZoneAction)) {
     endZoneAction();
     Paper.activeGroup = null;
     Paper.activeMeasureBadge = null;
+    Paper.activeTextBadge = null;
     return;
   }
   if (!Paper.isLasso) return;
@@ -509,6 +656,15 @@ function onCanvasMouseDown(event) {
   }
   var hitGroup = zoneGroupAt(event.point);
 
+  // Clic droit sur une zone → menu contextuel (Ajouter texte / Effacer zone). Le menu
+  // natif du navigateur est déjà neutralisé globalement (scoreParts.js).
+  if (event.event && event.event.button === 2) {
+    if (hitGroup) {
+      popupMenu.showForZone(hitGroup, { x: event.event.clientX, y: event.event.clientY }, event.point.clone());
+    }
+    return;
+  }
+
   // Badge de mesure interactif EN TOUT TEMPS (hors mode mesure aussi) : croix →
   // supprime CETTE mesure ; sinon → saisie pour déplacer ce badge (x, y).
   var measureHit = measureBadgeAt(event.point);
@@ -520,6 +676,33 @@ function onCanvasMouseDown(event) {
     Paper.activeMeasureBadge = measureHit.badge;
     Paper.currentZoneAction = 'measureBadge';
     clearMeasureGuide();
+    return;
+  }
+
+  // Poignée de redimensionnement d'un texte (coin bas-droit) — prioritaire sur le
+  // déplacement car elle déborde du rectangle.
+  var textResize = textResizeAt(event.point);
+  if (textResize) {
+    Paper.activeTextResize = {
+      badge: textResize.badge,
+      text: textResize.text,
+      initialHeight: textResize.badge.data.textBar.bounds.height,
+      topLeft: textResize.badge.data.textBar.bounds.topLeft.clone(),
+    };
+    Paper.currentZoneAction = 'textResize';
+    return;
+  }
+
+  // Badge de texte interactif EN TOUT TEMPS : croix → supprime CE texte ; sinon →
+  // saisie pour déplacer ce badge (x, y).
+  var textHit = textBadgeAt(event.point);
+  if (textHit) {
+    if (textDeleteHit(textHit.badge, event.point)) {
+      deleteTextFromZone(textHit.group, textHit.text);
+      return;
+    }
+    Paper.activeTextBadge = textHit.badge;
+    Paper.currentZoneAction = 'textBadge';
     return;
   }
 
@@ -590,6 +773,17 @@ function onCanvasMouseMove(event) {
     setBadgeHover(hoverHit.badge);
     clearMeasureGuide();
     Paper.activeCanvas.style.cursor = measureDeleteHit(hoverHit.badge, event.point) ? 'pointer' : 'move';
+    return;
+  }
+  var textHover = textResizeAt(event.point) || textBadgeAt(event.point);
+  if (textHover) {
+    setBadgeHover(textHover.badge);
+    clearMeasureGuide();
+    if (textResizeHit(textHover.badge, event.point)) {
+      Paper.activeCanvas.style.cursor = 'nwse-resize';
+    } else {
+      Paper.activeCanvas.style.cursor = textDeleteHit(textHover.badge, event.point) ? 'pointer' : 'move';
+    }
     return;
   }
   setBadgeHover(null);
@@ -663,7 +857,7 @@ function hitRegion(group, point) {
 // ============== Interactions sur une zone
 // Une action de zone manipule un groupe au pointeur (déplacement / redimensionnement).
 function isZoneAction(action) {
-  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot' || action === 'measureBadge';
+  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot' || action === 'measureBadge' || action === 'textBadge';
 }
 
 // Démarre une action sur la zone `group` au point papier `point` (déjà corrigé du
@@ -740,6 +934,7 @@ function endZoneAction() {
 function hideDecorations(group) {
   if (group.data.pill) group.data.pill.visible = false;
   if (group.data.measureBadges) group.data.measureBadges.forEach(function (badge) { badge.visible = false; });
+  if (group.data.textBadges) group.data.textBadges.forEach(function (badge) { badge.visible = false; });
   if (group.data.handles) {
     group.data.handles.forEach(function (h) {
       h.visible = false;
@@ -763,7 +958,7 @@ function readZonesFromProject(project) {
   project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
       var measures = item.data.measures;
-      var text = item.data.text;
+      var texts = item.data.texts;
       zones.push({
         x: item.bounds.x / canvasWval,
         y: item.bounds.y / canvasH,
@@ -777,7 +972,13 @@ function readZonesFromProject(project) {
               return { x: measure.x / canvasWval, y: measure.y / canvasH, number: measure.number, fontFrac: MEASURE_FONT_PX / canvasH };
             })
           : undefined,
-        text: text ? { x: text.x / canvasWval, y: text.y / canvasH, text: text.text } : undefined,
+        texts: texts
+          ? texts.map(function (text) {
+              // fontFrac = taille / hauteur canvas → indépendant du zoom/échelle ; sert à
+              // restaurer fontPx au rechargement et à dimensionner la police PDF.
+              return { x: text.x / canvasWval, y: text.y / canvasH, text: text.text, fontFrac: (text.fontPx || TEXT_FONT_PX) / canvasH };
+            })
+          : undefined,
       });
     }
   });
@@ -872,7 +1073,22 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
       };
     });
   }
-  if (zone.text) path.data.text = zone.text;
+  // Compat ascendante : ancien texte unique (zone.text) → promu en tableau.
+  if (zone.text && !zone.texts) zone.texts = [zone.text];
+  // texts (x, y de chaque badge) stockés en PIXELS-canvas sur le path ; même
+  // dénormalisation que les mesures. Un texte est PROPRE à sa zone (pas de propagation).
+  if (zone.texts) {
+    var canvasHpx = naturalH * coefV;
+    path.data.texts = zone.texts.map(function (text) {
+      return {
+        x: Math.round(text.x * naturalW * coefH),
+        y: Math.round(text.y * naturalH * coefV),
+        text: text.text,
+        // fontFrac (fraction de hauteur canvas) → taille en pixels canvas courants.
+        fontPx: text.fontFrac ? Math.round(text.fontFrac * canvasHpx) : TEXT_FONT_PX,
+      };
+    });
+  }
 
   var group = new paper.Group([path]);
   group.data.role = 'zoneGroup';
@@ -890,6 +1106,13 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   if (path.data.measures) {
     path.data.measures.forEach(function (measure) {
       Paper.drawMeasure(group, measure);
+    });
+  }
+
+  // Badges de texte (propres à la zone), chacun à sa position — rendus aussi figés.
+  if (path.data.texts) {
+    path.data.texts.forEach(function (text) {
+      Paper.drawText(group, text);
     });
   }
 
@@ -1010,6 +1233,65 @@ Paper.drawMeasure = function (group, measure) {
   group.data.measureBadges.push(badge);
   return badge;
 };
+
+// Badge de texte ajouté au groupe de zone — miroir de drawMeasure mais PAR ZONE.
+// Une zone peut porter plusieurs textes (group.data.textBadges) ; chaque badge référence
+// SON texte (badge.data.text) pour déplacement/suppression unitaires. Rendu : texte bleu
+// dans un rectangle transparent, ancré par son coin haut-gauche en (text.x, text.y).
+Paper.drawText = function (group, text) {
+  var fontPx = text.fontPx || TEXT_FONT_PX; // taille propre à CE texte (réglable à la poignée)
+  var label = new paper.PointText(new paper.Point(0, 0));
+  label.content = String(text.text);
+  label.fontFamily = 'Inter, system-ui, sans-serif';
+  label.fontWeight = 'bold';
+  label.fontSize = fontPx;
+  label.fillColor = 'black'; // police noire (à l'écran comme en sortie PDF)
+  var padX = 4;
+  var padY = 1;
+  var badgeW = label.bounds.width + padX * 2;
+  var badgeH = label.bounds.height + padY * 2;
+  var badgeBg = new paper.Path.Rectangle(
+    new paper.Rectangle(new paper.Point(text.x, text.y), new paper.Size(badgeW, badgeH)),
+    2
+  );
+  badgeBg.fillColor = null; // rectangle transparent (le contour bleu reste un repère d'édition)
+  badgeBg.strokeColor = TEXT_COLOR;
+  badgeBg.strokeWidth = 0.75;
+  label.position = badgeBg.bounds.center;
+
+  // Croix de suppression DÉCALÉE hors du rectangle (coin haut-droit), révélée au survol.
+  var cross = makeDeleteBadge(badgeBg.bounds.topRight.add(new paper.Point(7, -7)));
+  cross.visible = false;
+
+  // Poignée de redimensionnement (coin bas-droit) — glisser pour changer la taille du
+  // texte. Révélée au survol comme la croix.
+  var resizeHandle = makeTextResizeHandle(badgeBg.bounds.bottomRight);
+  resizeHandle.visible = false;
+
+  var badge = new paper.Group([badgeBg, label, cross, resizeHandle]);
+  badge.data.role = 'textBar';
+  badge.data.text = text; // ref vers l'objet de path.data.texts que ce badge représente
+  badge.data.textBar = badgeBg;
+  badge.data.textDelete = cross;
+  badge.data.textResize = resizeHandle;
+  group.addChild(badge);
+  if (!group.data.textBadges) group.data.textBadges = [];
+  group.data.textBadges.push(badge);
+  return badge;
+};
+
+// Petit carré plein servant de poignée de redimensionnement d'un badge de texte.
+function makeTextResizeHandle(center) {
+  var size = 7;
+  var handle = new paper.Path.Rectangle(
+    new paper.Rectangle(center.subtract(new paper.Point(size / 2, size / 2)), new paper.Size(size, size)),
+    1
+  );
+  handle.fillColor = 'white';
+  handle.strokeColor = TEXT_COLOR;
+  handle.strokeWidth = 1;
+  return handle;
+}
 
 // ============== Suppression
 Paper.deleteZones = function () {

@@ -185,25 +185,6 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
   });
 }
 
-// Propage le texte de la 1re zone d'un système sur les zones suivantes de la même
-// page (les voix d'un même système partagent l'annotation texte).
-scoreParts.copyAnnotationsOnAllVoices = function (targetPage) {
-  var numberOfVoices = scoreParts.allPagesZones.numberOfVoices;
-  var currentText = null;
-  for (var pageKey in scoreParts.allPagesZones.pages) {
-    if (targetPage == -1 || targetPage == pageKey) {
-      var zones = scoreParts.allPagesZones.pages[parseInt(pageKey)];
-      for (var zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
-        if (zoneIndex == 0 || zoneIndex == numberOfVoices) {
-          if (zones[zoneIndex].text) currentText = zones[zoneIndex].text;
-        } else {
-          if (currentText) zones[zoneIndex].text = currentText;
-        }
-      }
-    }
-  }
-};
-
 scoreParts.writeCurrentPageZones = function () {
   var zones = Paper.getPageZones();
   if (zones.length == 0) {
@@ -211,7 +192,6 @@ scoreParts.writeCurrentPageZones = function () {
   }
   scoreParts.currentZones = zones;
   scoreParts.allPagesZones.pages[scoreParts.currentPage] = zones;
-  scoreParts.copyAnnotationsOnAllVoices(scoreParts.currentPage);
 };
 
 scoreParts.changePage = function (newPage) {

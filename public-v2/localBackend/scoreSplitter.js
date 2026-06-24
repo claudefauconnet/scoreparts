@@ -121,20 +121,23 @@ var scoreSplitter = {
         zone.yOnPage = offsetY;
         zone.xOnPage = scoreSplitter.leftMargin;
 
+        // Position de sortie d'un badge (mesure OU texte) : décalé de son offset relatif
+        // (relX, relY en fractions) depuis le coin haut-gauche de la zone, replacé à
+        // (imageBackOffset, yOnPage) sur la page composée. natW/natH = dimensions
+        // naturelles du PNG.
+        var natW = scoreSplitter.pageWidth / scaleH;
+        var natH = scoreSplitter.pageHeight / scaleV;
         if (zone.measures) {
-          // Position de sortie de chaque badge : décalé de son offset relatif (relX, relY
-          // en fractions) depuis le coin haut-gauche de la zone, replacé à (imageBackOffset,
-          // yOnPage) sur la page composée. natW/natH = dimensions naturelles du PNG.
-          var natW = scoreSplitter.pageWidth / scaleH;
-          var natH = scoreSplitter.pageHeight / scaleV;
           zone.measures.forEach(function (measure) {
             measure.outX = scoreSplitter.imageBackOffset + measure.relX * natW;
             measure.outY = offsetY + measure.relY * natH;
           });
         }
-        if (zone.text) {
-          zone.text.y = offsetY;
-          zone.text.x = zone.text.x - zone.x;
+        if (zone.texts) {
+          zone.texts.forEach(function (text) {
+            text.outX = scoreSplitter.imageBackOffset + text.relX * natW;
+            text.outY = offsetY + text.relY * natH;
+          });
         }
 
         offsetY += zone.bitmap.height + vertStep;
@@ -167,18 +170,19 @@ var scoreSplitter = {
       var targetPage = { imageBuffer: null, measures: [], texts: [] };
       var blanckImg = await createImageAsync(w, h);
 
-      var uniqueTexts = {};
       for (const pageZone of page) {
-        // Chaque zone peut avoir PLUSIEURS mesures à leurs positions propres (outX, outY)
-        // → on les garde toutes (pas de dédoublonnage), pour respecter le placement individuel.
+        // Chaque zone peut avoir PLUSIEURS mesures/textes à leurs positions propres
+        // (outX, outY) → on les garde tous (pas de dédoublonnage), pour respecter le
+        // placement individuel.
         if (pageZone.measures) {
           pageZone.measures.forEach(function (measure) {
             targetPage.measures.push(measure);
           });
         }
-        if (pageZone.text && !uniqueTexts[pageZone.text.text]) {
-          uniqueTexts[pageZone.text.text] = 1;
-          targetPage.texts.push(pageZone.text);
+        if (pageZone.texts) {
+          pageZone.texts.forEach(function (text) {
+            targetPage.texts.push(text);
+          });
         }
 
         blanckImg = await blitImageAsync(
@@ -277,8 +281,18 @@ var scoreSplitter = {
 
       var texts = pagesImagesArray[pageIndex].texts || [];
       texts.forEach(function (text) {
-        var x = (text.x - left) / scaleH;
-        drawCenteredText(page, timesBold, text.text, 24, x, text.y - 5 + scoreSplitter.firstScaleY, 400);
+        // MÊME logique que les mesures : police PDF = fontFrac × hauteur de page (repli
+        // proportionnel pour d'éventuels textes legacy sans fontFrac), positionné à
+        // (outX, outY) choisi pour CETTE zone. Repère pdf-lib (bas-gauche).
+        var fontSize = text.fontFrac
+          ? Math.round(text.fontFrac * pageH)
+          : Math.round((24 * pageH) / scoreSplitter.pageHeight);
+        page.drawText(String(text.text), {
+          x: text.outX,
+          y: pageH - (scoreSplitter.firstScaleY + text.outY) - fontSize,
+          size: fontSize,
+          font: timesBold,
+        });
       });
 
       page.drawText('' + pageNumber++, {
@@ -317,15 +331,22 @@ var scoreSplitter = {
       scaleV = scoreSplitter.pageHeight / naturalH;
       for (var pageKey in zones) {
         zones[pageKey].forEach(function (zone) {
-          // Compat ascendante : ancienne mesure unique → tableau à un élément.
+          // Compat ascendante : ancienne mesure/texte unique → tableau à un élément.
           if (zone.measure && !zone.measures) zone.measures = [zone.measure];
-          // Offset de chaque badge de mesure RELATIF au coin haut-gauche de sa zone, capturé
-          // en fractions AVANT le passage en points (sert à le repositionner sur la
-          // page de sortie, cf. setTargetPages).
+          if (zone.text && !zone.texts) zone.texts = [zone.text];
+          // Offset de chaque badge (mesure ET texte) RELATIF au coin haut-gauche de sa
+          // zone, capturé en fractions AVANT le passage en points (sert à le repositionner
+          // sur la page de sortie, cf. setTargetPages).
           if (zone.measures) {
             zone.measures.forEach(function (measure) {
               measure.relX = measure.x - zone.x;
               measure.relY = measure.y - zone.y;
+            });
+          }
+          if (zone.texts) {
+            zone.texts.forEach(function (text) {
+              text.relX = text.x - zone.x;
+              text.relY = text.y - zone.y;
             });
           }
           zone.x = zone.x * scoreSplitter.pageWidth;
