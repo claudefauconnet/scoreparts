@@ -74,3 +74,8 @@ typings/
 /.serena
 .env
 .playwright-mcp/
+
+# AI agents
+.claude/
+.codex/
+AGENTS.md

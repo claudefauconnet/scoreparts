@@ -600,7 +600,7 @@ scoreParts.clearMeasures = function () {
   for (var page in scoreParts.allPagesZones.pages) {
     scoreParts.allPagesZones.pages[parseInt(page)].forEach(function (zone) {
       if (zone.movement == scoreParts.currentMovement) {
-        delete zone.measure;
+        delete zone.measures;
       }
     });
   }

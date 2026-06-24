@@ -121,14 +121,16 @@ var scoreSplitter = {
         zone.yOnPage = offsetY;
         zone.xOnPage = scoreSplitter.leftMargin;
 
-        if (zone.measure) {
-          // Position de sortie du badge : décalé de son offset relatif (relX, relY en
-          // fractions) depuis le coin haut-gauche de la zone, replacé à (imageBackOffset,
+        if (zone.measures) {
+          // Position de sortie de chaque badge : décalé de son offset relatif (relX, relY
+          // en fractions) depuis le coin haut-gauche de la zone, replacé à (imageBackOffset,
           // yOnPage) sur la page composée. natW/natH = dimensions naturelles du PNG.
           var natW = scoreSplitter.pageWidth / scaleH;
           var natH = scoreSplitter.pageHeight / scaleV;
-          zone.measure.outX = scoreSplitter.imageBackOffset + zone.measure.relX * natW;
-          zone.measure.outY = offsetY + zone.measure.relY * natH;
+          zone.measures.forEach(function (measure) {
+            measure.outX = scoreSplitter.imageBackOffset + measure.relX * natW;
+            measure.outY = offsetY + measure.relY * natH;
+          });
         }
         if (zone.text) {
           zone.text.y = offsetY;
@@ -167,10 +169,12 @@ var scoreSplitter = {
 
       var uniqueTexts = {};
       for (const pageZone of page) {
-        // Chaque zone a SA mesure à sa position propre (outX, outY) → on les garde
-        // toutes (pas de dédoublonnage), pour respecter le placement individuel.
-        if (pageZone.measure) {
-          targetPage.measures.push(pageZone.measure);
+        // Chaque zone peut avoir PLUSIEURS mesures à leurs positions propres (outX, outY)
+        // → on les garde toutes (pas de dédoublonnage), pour respecter le placement individuel.
+        if (pageZone.measures) {
+          pageZone.measures.forEach(function (measure) {
+            targetPage.measures.push(measure);
+          });
         }
         if (pageZone.text && !uniqueTexts[pageZone.text.text]) {
           uniqueTexts[pageZone.text.text] = 1;
@@ -313,12 +317,16 @@ var scoreSplitter = {
       scaleV = scoreSplitter.pageHeight / naturalH;
       for (var pageKey in zones) {
         zones[pageKey].forEach(function (zone) {
-          // Offset du badge de mesure RELATIF au coin haut-gauche de sa zone, capturé
+          // Compat ascendante : ancienne mesure unique → tableau à un élément.
+          if (zone.measure && !zone.measures) zone.measures = [zone.measure];
+          // Offset de chaque badge de mesure RELATIF au coin haut-gauche de sa zone, capturé
           // en fractions AVANT le passage en points (sert à le repositionner sur la
           // page de sortie, cf. setTargetPages).
-          if (zone.measure) {
-            zone.measure.relX = zone.measure.x - zone.x;
-            zone.measure.relY = zone.measure.y - zone.y;
+          if (zone.measures) {
+            zone.measures.forEach(function (measure) {
+              measure.relX = measure.x - zone.x;
+              measure.relY = measure.y - zone.y;
+            });
           }
           zone.x = zone.x * scoreSplitter.pageWidth;
           zone.width = zone.width * scoreSplitter.pageWidth;

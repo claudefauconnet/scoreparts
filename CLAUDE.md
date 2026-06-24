@@ -1,15 +1,24 @@
-# ScoreParts — CLAUDE.md
+﻿# Central Agent Rules
+
+Shared cross-agent rules live in:
+
+`C:\Users\kounnoughi\OneDrive - Jems\Documents\Obsidian Vault\AI\second-brain\Agent Rules\GLOBAL_AGENT_RULES.md`
+
+Read that file for global behavior. Project-specific ScoreParts rules below still apply. If Karim asks to change a global agent rule, update the central file first.
+
+---
+# ScoreParts â€” CLAUDE.md
 
 ## Stack
 
 - **Backend**: Node.js + Express, ESM modules (`type: "module"`), Jade templates (`views/`)
-- **Frontend v1**: `public/` — jQuery, vanilla JS
-- **Frontend v2**: `public-v2/` — jQuery, feature-grouped modules (`modules/scoreSelector/`), shared code in `common/`
+- **Frontend v1**: `public/` â€” jQuery, vanilla JS
+- **Frontend v2**: `public-v2/` â€” jQuery, feature-grouped modules (`modules/scoreSelector/`), shared code in `common/`
 - **API routes**: `api/pdf/` and `api/score/`, mounted in `app.js`
 
 ## Rules
 
-### Network calls → proxy.js
+### Network calls â†’ proxy.js
 
 All frontend API calls go through [`public/js/proxy.js`](public/js/proxy.js). Add new API calls there, not inline in other files.
 
@@ -29,12 +38,12 @@ Always explicit. Never single-letter or cryptic shorthands. Applies everywhere: 
 - Element params: `element` not `el`, `pageElement` not `pageEl`
 - Use same nomenclature everywhere: e.g. for route scoreInfos the infos from it should always be named `infos` across all the frontend
 
-### Architecture — no new folders without asking
+### Architecture â€” no new folders without asking
 
 Match existing structure:
 
-- New API route → file in `api/pdf/` or `api/score/`
-- New frontend module → `public-v2/modules/<feature>/` (shared code → `public-v2/common/`) or `public/js/`
+- New API route â†’ file in `api/pdf/` or `api/score/`
+- New frontend module â†’ `public-v2/modules/<feature>/` (shared code â†’ `public-v2/common/`) or `public/js/`
 - Ask before creating any new directory
 
 ### Function organisation
@@ -46,3 +55,4 @@ Match existing structure:
 ### No unreadable or non maintenable functions, html or css
 
 - Factorise, improve readability ...
+
