@@ -40,7 +40,7 @@
 <link rel="stylesheet" href="/modules/leftPanel/actions/actions.css">
 <link rel="stylesheet" href="/modules/leftPanel/voices/voices.css">
 <link rel="stylesheet" href="/modules/leftPanel/progress/progress.css">
-<link rel="stylesheet" href="/modules/leftPanel/scoreInfo/scoreInfo.css">
+<link rel="stylesheet" href="/modules/headerBar/scoreInfo/scoreInfo.css">
 <link rel="stylesheet" href="/modules/headerBar/headerBar.css">
 <link rel="stylesheet" href="/modules/headerBar/movements/movements.css">
 <link rel="stylesheet" href="/modules/headerBar/download/download.css">
@@ -93,8 +93,7 @@ $(function () {
       return $.when(
         loadInto('#lp-actions-host', '/modules/leftPanel/actions/actions.html'),
         loadInto('#lp-voices-host', '/modules/leftPanel/voices/voices.html'),
-        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html'),
-        loadInto('#lp-scoreinfo-host', '/modules/leftPanel/scoreInfo/scoreInfo.html')
+        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html')
       );
     }
   );
@@ -102,6 +101,7 @@ $(function () {
   var headerBarParts = loadInto('#headerbar-host', '/modules/headerBar/headerBar.html').then(
     function () {
       return $.when(
+        loadInto('#hb-scoreinfo-host', '/modules/headerBar/scoreInfo/scoreInfo.html'),
         loadInto('#hb-movements-host', '/modules/headerBar/movements/movements.html'),
         loadInto('#hb-reset-host', '/modules/headerBar/reset/reset.html'),
         loadInto('#hb-download-host', '/modules/headerBar/download/download.html')
@@ -133,7 +133,7 @@ $(function () {
       'leftPanel/actions/actions',
       'leftPanel/voices/voices',
       'leftPanel/progress/progress',
-      'leftPanel/scoreInfo/scoreInfo',
+      'headerBar/scoreInfo/scoreInfo',
       'headerBar/movements/movements',
       'headerBar/reset/reset',
       'headerBar/download/download',
