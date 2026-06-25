@@ -1,26 +1,40 @@
-<!-- Tweaks -->
-<button class="tweaks-pill" id="tweaks-pill" aria-label="Paramètres">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-  Paramètres
-</button>
-<div class="tweaks-panel" id="tweaks-panel">
-  <h4>Paramètres</h4>
-
-  <div class="tweak-label">Hauteur du rectangle (px)</div>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <button class="mini-step" id="rect-minus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">−</button>
-    <input id="rect-h" type="number" min="10" max="500" step="1" placeholder="auto" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;text-align:center;" />
-    <button class="mini-step" id="rect-plus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">+</button>
-  </div>
-
-  <div class="tweak-label">Débordement</div>
-  <div class="tweak-badge">auto</div>
-
-  <div class="tweak-label">Style du livre</div>
-  <div class="tweak-radio" id="tw-book-style">
-    <button data-val="realistic" class="active">Réaliste</button>
-    <button data-val="minimal">Minimaliste</button>
-    <button data-val="flat">Plat</button>
-  </div>
-
+<div class="lp-params-wrapper">
+  <button class="tweaks-pill" id="tweaks-pill" aria-label="Paramètres">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Paramètres
+  </button>
 </div>
+
+<dialog class="params-dialog" id="params-dialog">
+  <div class="params-dialog-head">
+    <h4>Paramètres</h4>
+    <button class="params-close" id="params-close" aria-label="Fermer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <div class="params-dialog-body">
+    <div class="tweak-label">Hauteur du rectangle (px)</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="mini-step" id="rect-minus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">−</button>
+      <input id="rect-h" type="number" min="10" max="500" step="1" placeholder="auto" style="flex:1;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;text-align:center;" />
+      <button class="mini-step" id="rect-plus" style="width:28px;height:28px;border:1px solid var(--line);background:white;border-radius:6px;cursor:pointer;font-size:14px;">+</button>
+    </div>
+
+    <div class="tweak-label">Débordement</div>
+    <div class="tweak-badge">auto</div>
+
+    <div class="tweak-label">Style du livre</div>
+    <div class="tweak-radio" id="tw-book-style">
+      <button data-val="realistic" class="active">Réaliste</button>
+      <button data-val="minimal">Minimaliste</button>
+      <button data-val="flat">Plat</button>
+    </div>
+
+    <div class="tweak-label">Export</div>
+    <button class="params-export-btn" id="params-export-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export complet
+    </button>
+  </div>
+</dialog>

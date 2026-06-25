@@ -1,6 +1,8 @@
 import { state, on, emit } from '../state.js';
 import { uploadRenderedScore, toScoreName } from '../../../common/proxy.js';
 import { renderPdfToImages } from '../../../common/localBackendProxy.js';
+import { putScore, putZones, putPdf, putPages } from '../../../common/localDb.js';
+import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
 
 (function importPdfModule() {
   const $preview = $('#preview');
@@ -137,7 +139,91 @@ import { renderPdfToImages } from '../../../common/localBackendProxy.js';
     }
   }
 
+  // ============== ZIP import (restore index exported from parameters)
+
+  function buildZipSuccessCardHTML(pdfName) {
+    return `
+      <div class="classify">
+        <div class="classify-head">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+          </div>
+          <div>
+            <div class="ttl">${pdfName}</div>
+            <div class="sb">Index restauré · prêt à ouvrir</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function handleZipImport(file) {
+    $preview.html(buildImportingCardHTML(file));
+    const $card = $preview.find('.importing');
+
+    function setSizeLabel(text) {
+      $card.find('.importing-size').text((file.size / 1024).toFixed(1) + ' Ko · ' + text);
+    }
+
+    try {
+      const zipArrayBuffer = await file.arrayBuffer();
+      const zipFiles = unzipSync(new Uint8Array(zipArrayBuffer));
+
+      const scoreInfoBytes = zipFiles['scoreInfo.json'];
+      const zonesBytes = zipFiles['zones.json'];
+      const pdfEntry = Object.entries(zipFiles).find(([entryName]) => entryName.endsWith('.pdf'));
+
+      if (!scoreInfoBytes || !zonesBytes || !pdfEntry) {
+        setSizeLabel('ZIP invalide : scoreInfo.json, zones.json et un .pdf requis');
+        return;
+      }
+
+      const scoreInfos = JSON.parse(new TextDecoder().decode(scoreInfoBytes));
+      const allPagesZones = JSON.parse(new TextDecoder().decode(zonesBytes));
+      const pdfBlob = new Blob([pdfEntry[1]], { type: 'application/pdf' });
+      const pdfName = scoreInfos.pdfName;
+
+      const pdfData = await pdfBlob.arrayBuffer();
+      const renderResult = await renderPdfToImages(pdfData, 'medium', function (pageNum, totalPages) {
+        setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
+        setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
+      });
+
+      const pageBlobs = renderResult.pages.map(function (page) {
+        return new Blob([page.bytes], { type: 'image/png' });
+      });
+
+      setSizeLabel('Restauration…');
+      setProgressPercent($card, 95);
+
+      await Promise.all([
+        putPdf(pdfName, pdfBlob),
+        putPages(pdfName, pageBlobs),
+        putScore(scoreInfos),
+        putZones(pdfName, allPagesZones),
+      ]);
+
+      setProgressPercent($card, 100);
+      $preview.html(buildZipSuccessCardHTML(pdfName));
+
+      const selectedNode = {
+        name: pdfName,
+        author: scoreInfos.composer || '',
+        category: scoreInfos.category || '',
+        meta: { pages: scoreInfos.totalPages },
+      };
+      state.selected = selectedNode;
+      emit('selection-changed', selectedNode);
+    } catch (error) {
+      setSizeLabel('Erreur import ZIP (' + (error.message || error) + ')');
+    }
+  }
+
   function handleImport(file) {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      handleZipImport(file);
+      return;
+    }
     $preview.html(buildImportingCardHTML(file));
     startUpload($preview.find('.importing'), file);
   }
