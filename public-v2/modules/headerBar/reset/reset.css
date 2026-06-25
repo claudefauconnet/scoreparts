@@ -1,15 +1,82 @@
-/* headerBar/reset — bouton « Tout recommencer » */
+/* headerBar/reset — bouton scindé « Tout recommencer » */
 
-#reset-btn {
+.rs-split {
+  position: relative;
+  display: inline-flex;
+}
+.rs-split .rs-main {
   padding: 6px 14px;
   font-size: 12px;
   color: var(--violon1);
   border-color: var(--line);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid var(--line);
 }
-#reset-btn svg { width: 14px; height: 14px; }
+.rs-split .rs-caret {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  min-width: 24px;
+  color: var(--violon1);
+  border-color: var(--line);
+}
+.rs-split .rs-caret svg { display: block; }
 
-/* Tighter widths: drop the long "Tout recommencer" label (icon + tooltip stay)
-   so the centered movement pill never collides with the action buttons. */
+.rs-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(40,25,10,0.2), 0 4px 10px rgba(40,25,10,0.06);
+  padding: 6px;
+  z-index: 50;
+  display: none;
+}
+.rs-menu.open { display: block; }
+
+.rs-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  color: var(--ink);
+}
+.rs-item:hover { background: #fbf7ec; }
+
+.rs-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  background: #fae3df;
+  color: var(--violon1);
+}
+.rs-icon svg { width: 18px; height: 18px; }
+
+.rs-text { min-width: 0; }
+.rs-title {
+  font-size: 13px; font-weight: 500; line-height: 1.2; color: var(--ink);
+}
+.rs-sub {
+  font-size: 11px; color: var(--muted); margin-top: 2px;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+/* Tighter widths: drop label, keep icon + tooltip */
 @media (max-width: 1500px) {
-  #reset-btn { font-size: 0 !important; gap: 0; padding: 6px 9px !important; }
+  .rs-main { font-size: 0 !important; gap: 0; padding: 6px 9px !important; }
 }

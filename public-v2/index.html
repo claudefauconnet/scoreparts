@@ -66,7 +66,6 @@
     <div class="stage-bottom" id="scoreplayer-bottom"></div>
   </section>
 </div>
-<div id="parameters-host"></div>
 
 <script>
 $(function () {
@@ -93,7 +92,8 @@ $(function () {
       return $.when(
         loadInto('#lp-actions-host', '/modules/leftPanel/actions/actions.html'),
         loadInto('#lp-voices-host', '/modules/leftPanel/voices/voices.html'),
-        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html')
+        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html'),
+        loadInto('#lp-parameters-host', '/modules/parameters/parameters.html')
       );
     }
   );
@@ -111,8 +111,7 @@ $(function () {
 
   var otherParts = $.when(
     loadInto('#stage-body', '/modules/scorePlayer/scorePlayer.html'),
-    loadInto('#scoreplayer-bottom', '/modules/scorePlayer/bottomBar.html'),
-    loadInto('#parameters-host', '/modules/parameters/parameters.html')
+    loadInto('#scoreplayer-bottom', '/modules/scorePlayer/bottomBar.html')
   );
 
   var dialogFragment = $('#dialog-host').load('/modules/scoreSelector/dialog/dialog.html', function () {

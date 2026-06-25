@@ -1,4 +1,20 @@
-<button class="btn btn-ghost" title="Tout recommencer : supprime mouvements, voix et zones" id="reset-btn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-  Tout recommencer
-</button>
+<div class="rs-split" id="rs-split">
+  <button class="btn btn-ghost rs-main" id="reset-btn" title="Tout recommencer : supprime mouvements, voix et zones">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    Tout recommencer
+  </button>
+  <button class="btn btn-ghost rs-caret" id="rs-caret" title="Plus d'options" aria-label="Plus d'options">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <div class="rs-menu" id="rs-menu">
+    <button class="rs-item" id="rs-clear-pages">
+      <span class="rs-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </span>
+      <div class="rs-text">
+        <div class="rs-title">Effacer toutes les pages</div>
+        <div class="rs-sub">supprime les zones, garde les voix et mouvements</div>
+      </div>
+    </button>
+  </div>
+</div>
