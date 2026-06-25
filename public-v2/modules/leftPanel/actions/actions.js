@@ -34,17 +34,7 @@ function autoDetectZones() {
 
   const currentMovement = state.MOVEMENTS.find((movement) => movement.name === scoreParts.currentMovement);
 
-  if (currentMovement && !currentMovement.systemNumber) {
-    const input = prompt('Combien de systèmes y a-t-il dans ce mouvement ?');
-    if (input === null) return;
-    const parsedSystemNumber = parseInt(input, 10);
-    if (!Number.isInteger(parsedSystemNumber) || parsedSystemNumber <= 0) {
-      alert('Veuillez entrer un entier positif.');
-      return;
-    }
-    currentMovement.systemNumber = parsedSystemNumber;
-    Movements.persist();
-  }
+  if (Movements.ensureSystemNumber(scoreParts.currentMovement) === null) return;
 
   // En double page, vise automatiquement la page à remplir (gauche puis droite).
   // Obligatoire AVANT findPageZones : buildAutoDetectedZones tague les zones avec

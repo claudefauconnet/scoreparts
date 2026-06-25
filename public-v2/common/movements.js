@@ -104,6 +104,26 @@ Movements.persist = function () {
   });
 };
 
+// Garantit que le mouvement nommé porte un `systemNumber` (nombre de zones par
+// système). S'il existe déjà → le renvoie. Sinon demande à l'utilisateur (même
+// libellé/validation que l'auto-détection), persiste et renvoie la valeur. Renvoie
+// null si l'utilisateur annule ou saisit une valeur invalide.
+Movements.ensureSystemNumber = function (movementName) {
+  const movement = state.MOVEMENTS.find((candidateMovement) => candidateMovement.name === movementName);
+  if (!movement) return null;
+  if (Number.isInteger(movement.systemNumber) && movement.systemNumber > 0) return movement.systemNumber;
+  const input = prompt('Combien de systèmes y a-t-il dans ce mouvement ?');
+  if (input === null) return null;
+  const parsedSystemNumber = parseInt(input, 10);
+  if (!Number.isInteger(parsedSystemNumber) || parsedSystemNumber <= 0) {
+    alert('Veuillez entrer un entier positif.');
+    return null;
+  }
+  movement.systemNumber = parsedSystemNumber;
+  Movements.persist();
+  return parsedSystemNumber;
+};
+
 // Charge la liste dans le state global et émet 'movements-changed'. Retourne
 // { needsNaming } : true si la partition est ouverte mais sans aucun mouvement →
 // la header bar forcera la saisie du nom (UI). Aucun accès DOM ici.

@@ -16,8 +16,7 @@
 //     supprimer. Une pastille de voix (placeholder) est affichée par zone
 //     (l'affectation réelle se fera dans la partie voices).
 import { scoreParts } from './scoreParts.js';
-import { state } from '../modules/partitions.state.js';
-import { popupMenu } from './popupMenu.js';
+import { state, emit } from '../modules/partitions.state.js';
 
 export const Paper = {};
 
@@ -58,8 +57,10 @@ var selectedGroups = []; // zones sélectionnées par lasso
 var lastCorrectedPoint = null; // dernier point projet corrigé (pour recalculer event.delta)
 
 Paper.pendingNewZone = false; // mode "nouvelle zone" (persistant tant qu'activé)
-Paper.pendingMeasure = false; // mode "mesure" (pose/efface un numéro de mesure au clic)
+Paper.pendingMeasure = false; // mode "mesure" (pose un numéro de mesure au clic)
+Paper.pendingText = false; // mode "texte" (pose un texte au clic — miroir du mode mesure)
 Paper.onMeasurePendingChange = null; // hook posé par scorePlayer pour rafraîchir l'UI
+Paper.onTextPendingChange = null; // idem pour le bouton "Texte"
 Paper.activeCanvas = null; // <canvas> de la page courante
 Paper.currentCanvasId = null; // id du canvas de la page courante (projet actif)
 Paper.currentZoneAction = null;
@@ -257,51 +258,99 @@ function onNativeMouseUp(nativeEvent) {
 Paper.setPending = function (on) {
   Paper.pendingNewZone = on;
   if (on && Paper.pendingMeasure) Paper.setPendingMeasure(false); // modes exclusifs
+  if (on && Paper.pendingText) Paper.setPendingText(false);
   if (Paper.onPendingChange) Paper.onPendingChange(on);
 };
 
-// ============== Mode "mesure" (pose / efface un numéro au clic) — miroir exclusif
-// du mode "nouvelle zone".
+// ============== Mode "mesure" (pose un numéro au clic) — miroir exclusif des autres modes.
 Paper.setPendingMeasure = function (on) {
   Paper.pendingMeasure = on;
   if (on && Paper.pendingNewZone) Paper.setPending(false); // modes exclusifs
+  if (on && Paper.pendingText) Paper.setPendingText(false);
   if (on) {
-    refreshMeasureGuide(); // affiche le guide dès l'entrée du mode (sans attendre un mousemove)
+    refreshPlacementGuide(); // affiche le guide dès l'entrée du mode (sans attendre un mousemove)
     if (Paper.activeCanvas) Paper.activeCanvas.style.cursor = 'crosshair';
   } else {
-    clearMeasureGuide(); // retire la barre-guide en sortie de mode
+    clearPlacementGuide(); // retire la barre-guide en sortie de mode
     if (Paper.activeCanvas) Paper.activeCanvas.style.cursor = '';
   }
   if (Paper.onMeasurePendingChange) Paper.onMeasurePendingChange(on);
 };
 
-// Barre-guide verticale (pointillés) qui suit le curseur en mode mesure : aide à
-// viser l'abscisse avant de poser. Non persistée (data.role ≠ 'zone').
-var measureGuide = null;
-var lastMeasureCursorX = null; // dernière abscisse connue du curseur en mode mesure
-function updateMeasureGuide(xpx) {
+// ============== Mode "texte" — UI identique au mode mesure (bouton + barre-guide).
+Paper.setPendingText = function (on) {
+  Paper.pendingText = on;
+  if (on && Paper.pendingNewZone) Paper.setPending(false); // modes exclusifs
+  if (on && Paper.pendingMeasure) Paper.setPendingMeasure(false);
+  if (on) {
+    refreshPlacementGuide();
+    if (Paper.activeCanvas) Paper.activeCanvas.style.cursor = 'crosshair';
+  } else {
+    clearPlacementGuide();
+    if (Paper.activeCanvas) Paper.activeCanvas.style.cursor = '';
+  }
+  if (Paper.onTextPendingChange) Paper.onTextPendingChange(on);
+};
+
+// Barre-guide en CROIX (verticale + horizontale, pointillés) qui suit le curseur en mode
+// mesure OU texte, plus une SURBRILLANCE du système visé par le Y du curseur : aide à viser
+// l'abscisse ET à voir sur quel système la pose va se propager. Non persistée (role ≠ 'zone').
+var placementGuide = null;
+var lastPlacementCursorX = null; // dernières coords connues du curseur (mode mesure/texte)
+var lastPlacementCursorY = null;
+function updatePlacementGuide(xpx, ypx) {
   if (!paper || !paper.project) return;
-  lastMeasureCursorX = xpx;
-  clearMeasureGuide();
+  lastPlacementCursorX = xpx;
+  lastPlacementCursorY = ypx;
+  clearPlacementGuide();
+  var width = (Paper.activeCanvas && Paper.activeCanvas.clientWidth) || 0;
   var height = (Paper.activeCanvas && Paper.activeCanvas.clientHeight) || 0;
-  var line = new paper.Path.Line(new paper.Point(xpx, 0), new paper.Point(xpx, height));
-  line.strokeColor = MEASURE_COLOR;
-  line.strokeWidth = 1;
-  line.dashArray = [4, 4];
-  line.data.role = 'measureGuide';
-  measureGuide = line;
+  var guide = new paper.Group();
+  guide.data.role = 'placementGuide';
+
+  // Surbrillance du système ciblé (sous le trait horizontal) — dessinée en premier pour
+  // rester derrière les traits de la croix.
+  var systemGroups = currentSystemGroupsForY(ypx);
+  if (systemGroups.length) {
+    var bandTop = Infinity;
+    var bandBottom = -Infinity;
+    systemGroups.forEach(function (group) {
+      bandTop = Math.min(bandTop, group.data.rect.bounds.top);
+      bandBottom = Math.max(bandBottom, group.data.rect.bounds.bottom);
+    });
+    var highlight = new paper.Path.Rectangle(
+      new paper.Rectangle(new paper.Point(0, bandTop), new paper.Size(width, bandBottom - bandTop))
+    );
+    highlight.fillColor = ZONE_FILL; // léger voile translucide
+    highlight.strokeColor = null;
+    guide.addChild(highlight);
+  }
+
+  // Croix : trait vertical (abscisse) + trait horizontal (ordonnée).
+  var verticalLine = new paper.Path.Line(new paper.Point(xpx, 0), new paper.Point(xpx, height));
+  var horizontalLine = new paper.Path.Line(new paper.Point(0, ypx), new paper.Point(width, ypx));
+  [verticalLine, horizontalLine].forEach(function (line) {
+    line.strokeColor = MEASURE_COLOR;
+    line.strokeWidth = 1;
+    line.dashArray = [4, 4];
+    guide.addChild(line);
+  });
+
+  placementGuide = guide;
   if (Paper.activeCanvas) Paper.activeCanvas.style.cursor = 'crosshair';
   if (paper.view) paper.view.update();
 }
-function clearMeasureGuide() {
-  if (measureGuide) { measureGuide.remove(); measureGuide = null; }
+function clearPlacementGuide() {
+  if (placementGuide) { placementGuide.remove(); placementGuide = null; }
   if (paper && paper.view) paper.view.update();
 }
-// Redessine le guide à la dernière abscisse connue : appelé après chaque redraw
-// (removeChildren l'efface) et à l'entrée du mode, pour qu'il reste visible sans
-// attendre un mouvement de souris (sinon « figé » pendant le prompt / « disparu »).
-function refreshMeasureGuide() {
-  if (Paper.pendingMeasure && lastMeasureCursorX != null) updateMeasureGuide(lastMeasureCursorX);
+// Redessine le guide aux dernières coords connues : appelé après chaque redraw
+// (removeChildren l'efface) et à l'entrée du mode, pour qu'il reste visible sans attendre
+// un mouvement de souris (sinon « figé » pendant le prompt / « disparu »).
+function refreshPlacementGuide() {
+  if ((Paper.pendingMeasure || Paper.pendingText) && lastPlacementCursorX != null && lastPlacementCursorY != null) {
+    updatePlacementGuide(lastPlacementCursorX, lastPlacementCursorY);
+  }
 }
 
 // Groupes de zone du projet (page) actuellement actif.
@@ -312,17 +361,87 @@ function currentZoneGroups() {
   });
 }
 
-// Pose INITIALE : même abscisse (measureXpx) sur TOUTES les zones de la page, le
-// badge juste au-dessus du haut de chaque zone. Ensuite chaque badge se déplace
-// individuellement (x, y) sans re-propagation (cf. moveMeasureBadge).
+// Index, dans une liste de groupes triée par `y`, du groupe dont la bande verticale
+// [top, bottom] contient `y` ; à défaut, le plus proche par distance au centre.
+function nearestGroupIndexToY(sortedGroups, y) {
+  var nearestIndex = -1;
+  var nearestDistance = Infinity;
+  for (var groupIndex = 0; groupIndex < sortedGroups.length; groupIndex++) {
+    var bounds = sortedGroups[groupIndex].data.rect.bounds;
+    if (y >= bounds.top && y <= bounds.bottom) return groupIndex;
+    var distance = Math.min(Math.abs(y - bounds.top), Math.abs(y - bounds.bottom));
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestIndex = groupIndex;
+    }
+  }
+  return nearestIndex;
+}
+
+// Groupes de zone du SYSTÈME visé par l'ordonnée y du curseur. Un système = bloc de
+// `voiceCount` zones consécutives (triées par y) du mouvement courant — voiceCount = nombre
+// de voix déclarées, la même base que l'attribution cyclique des voix
+// (zone.voice = voiceIds[index % voiceCount]). Repli : page entière si pas de voix connue ou
+// s'il n'y a qu'un système. Sert à propager mesures ET textes sur le seul système courant.
+function currentSystemGroupsForY(y) {
+  var groups = currentZoneGroups();
+  if (scoreParts.currentMovement) {
+    var movementGroups = groups.filter(function (group) {
+      return group.data.rect.data.movement === scoreParts.currentMovement;
+    });
+    if (movementGroups.length) groups = movementGroups;
+  }
+  groups.sort(function (groupA, groupB) {
+    return groupA.data.rect.bounds.top - groupB.data.rect.bounds.top;
+  });
+  var voiceCount = state.VOICES.length || scoreParts.allPagesZones.numberOfVoices;
+  if (!voiceCount || voiceCount >= groups.length) return groups;
+  var referenceIndex = nearestGroupIndexToY(groups, y);
+  if (referenceIndex < 0) return groups;
+  var systemIndex = Math.floor(referenceIndex / voiceCount);
+  return groups.slice(systemIndex * voiceCount, systemIndex * voiceCount + voiceCount);
+}
+
+// Pose INITIALE : même abscisse (point.x) sur les zones du SYSTÈME visé, le badge juste
+// au-dessus du haut de chaque zone. Ensuite chaque badge se déplace individuellement
+// (x, y) sans re-propagation (cf. moveMeasureBadge).
 var INITIAL_MEASURE_OFFSET = 16; // px au-dessus du haut de la zone à la pose
-function setMeasureOnCurrentPage(measureXpx, number) {
-  currentZoneGroups().forEach(function (group) {
+function setMeasureOnCurrentSystem(point, number) {
+  currentSystemGroupsForY(point.y).forEach(function (group) {
     var rect = group.data.rect;
     if (!rect.data.measures) rect.data.measures = [];
     // Plusieurs mesures par zone (voix/portée) : on AJOUTE, sans écraser les précédentes.
-    rect.data.measures.push({ x: measureXpx, y: rect.bounds.top - INITIAL_MEASURE_OFFSET, number: number });
+    rect.data.measures.push({ x: point.x, y: rect.bounds.top - INITIAL_MEASURE_OFFSET, number: number });
   });
+}
+
+// Pose un texte sur les zones du SYSTÈME visé (même propagation que les mesures).
+function setTextOnCurrentSystem(point, textStr) {
+  currentSystemGroupsForY(point.y).forEach(function (group) {
+    var rect = group.data.rect;
+    if (!rect.data.texts) rect.data.texts = [];
+    rect.data.texts.push({ x: point.x, y: rect.bounds.top - INITIAL_MEASURE_OFFSET, text: textStr });
+  });
+}
+
+// Le découpage en systèmes suppose des zones attribuées à une voix. Avant toute pose de
+// mesure/texte, si la page courante a des zones SANS voix → on lance l'auto-attribution
+// (même logique que le bouton Auto-attribuer), on redessine, puis on autorise la pose.
+// Renvoie false (et alerte) seulement si aucune voix active ne permet d'attribuer.
+function ensureCurrentPageVoicesAssigned() {
+  var groups = currentZoneGroups();
+  if (!groups.length) return true;
+  var anyUnassigned = groups.some(function (group) { return !group.data.rect.data.voice; });
+  if (!anyUnassigned) return true;
+  var activeVoiceIds = state.VOICES.filter(function (voice) { return voice.on; }).map(function (voice) { return voice.id; });
+  if (!activeVoiceIds.length) {
+    alert('Activez au moins une voix pour attribuer les zones.');
+    return false;
+  }
+  scoreParts.assignVoicesToZones(activeVoiceIds, scoreParts.currentMovement);
+  Paper.redrawCurrentPage(); // les groupes reflètent l'attribution avant le découpage en systèmes
+  emit('voices-changed'); // met à jour les compteurs du panneau voix
+  return true;
 }
 
 // Efface TOUTES les mesures de TOUTES les zones de la page puis persiste.
@@ -485,27 +604,6 @@ function deleteTextFromZone(group, text) {
   scoreParts.saveZones(function () {});
 }
 
-// Ajoute un texte à UNE zone (clic droit → menu → saisie), à la position cliquée
-// (point en pixels-canvas), puis persiste. Appelé depuis popupMenu.
-Paper.addTextToZone = function (group, point, textStr) {
-  if (!group || !textStr) return;
-  var rect = group.data.rect;
-  if (!rect.data.texts) rect.data.texts = [];
-  rect.data.texts.push({ x: point.x, y: point.y, text: textStr });
-  commit();
-  Paper.redrawCurrentPage();
-  scoreParts.saveZones(function () {});
-};
-
-// Supprime une zone entière (clic droit → menu) puis persiste.
-Paper.removeZoneAndSave = function (group) {
-  if (!group) return;
-  Paper.deleteZone(group);
-  commit();
-  Paper.redrawCurrentPage();
-  scoreParts.saveZones(function () {});
-};
-
 // ============== Sélection multiple (lasso)
 function clearSelection() {
   selectedGroups.forEach(function (g) { setGroupSelected(g, false); });
@@ -654,19 +752,11 @@ function onCanvasMouseDown(event) {
     Paper.currentZoneAction = null;
     return;
   }
-  var hitGroup = zoneGroupAt(event.point);
+  var hitGroup = zoneInteractiveAt(event.point);
 
-  // Clic droit sur une zone → menu contextuel (Ajouter texte / Effacer zone). Le menu
-  // natif du navigateur est déjà neutralisé globalement (scoreParts.js).
-  if (event.event && event.event.button === 2) {
-    if (hitGroup) {
-      popupMenu.showForZone(hitGroup, { x: event.event.clientX, y: event.event.clientY }, event.point.clone());
-    }
-    return;
-  }
-
-  // Badge de mesure interactif EN TOUT TEMPS (hors mode mesure aussi) : croix →
-  // supprime CETTE mesure ; sinon → saisie pour déplacer ce badge (x, y).
+  // Badges interactifs D'ABORD (détection serrée : boîte + croix proche) : croix →
+  // suppression unitaire ; poignée texte → redimensionnement ; sinon → déplacement du badge.
+  // Le badge ne prime que sur SA propre empreinte ; la zone reste accessible ailleurs.
   var measureHit = measureBadgeAt(event.point);
   if (measureHit) {
     if (measureDeleteHit(measureHit.badge, event.point)) {
@@ -675,12 +765,10 @@ function onCanvasMouseDown(event) {
     }
     Paper.activeMeasureBadge = measureHit.badge;
     Paper.currentZoneAction = 'measureBadge';
-    clearMeasureGuide();
+    clearPlacementGuide();
     return;
   }
 
-  // Poignée de redimensionnement d'un texte (coin bas-droit) — prioritaire sur le
-  // déplacement car elle déborde du rectangle.
   var textResize = textResizeAt(event.point);
   if (textResize) {
     Paper.activeTextResize = {
@@ -693,8 +781,6 @@ function onCanvasMouseDown(event) {
     return;
   }
 
-  // Badge de texte interactif EN TOUT TEMPS : croix → supprime CE texte ; sinon →
-  // saisie pour déplacer ce badge (x, y).
   var textHit = textBadgeAt(event.point);
   if (textHit) {
     if (textDeleteHit(textHit.badge, event.point)) {
@@ -707,16 +793,33 @@ function onCanvasMouseDown(event) {
   }
 
   if (Paper.pendingMeasure) {
-    // Clic ailleurs (n'importe où sur la feuille) → pose une mesure à cette abscisse
-    // sur toutes les zones (badge au-dessus de chacune), puis ajustable individuellement.
+    // Clic dans un système → pose une mesure à cette abscisse sur les zones de CE
+    // système (badge au-dessus de chacune), puis ajustable individuellement.
+    if (!ensureCurrentPageVoicesAssigned()) return; // attribution requise pour le découpage
     var number = window.prompt('Numéro de mesure');
     if (number === null || number === '') return;
-    lastMeasureCursorX = event.point.x;
-    setMeasureOnCurrentPage(event.point.x, number);
+    lastPlacementCursorX = event.point.x;
+    lastPlacementCursorY = event.point.y;
+    setMeasureOnCurrentSystem(event.point, number);
     commit();
-    Paper.redrawCurrentPage(); // redessine barres + guide (refreshMeasureGuide)
+    Paper.redrawCurrentPage(); // redessine barres + guide (refreshPlacementGuide)
     scoreParts.saveZones(function () {});
     Paper.setPendingMeasure(false); // une mesure posée → on sort du mode (badges restent ajustables)
+    return;
+  }
+
+  if (Paper.pendingText) {
+    // Miroir du mode mesure : clic dans un système → texte sur les zones de CE système.
+    if (!ensureCurrentPageVoicesAssigned()) return;
+    var textStr = window.prompt('Texte');
+    if (textStr === null || textStr === '') return;
+    lastPlacementCursorX = event.point.x;
+    lastPlacementCursorY = event.point.y;
+    setTextOnCurrentSystem(event.point, textStr);
+    commit();
+    Paper.redrawCurrentPage();
+    scoreParts.saveZones(function () {});
+    Paper.setPendingText(false);
     return;
   }
 
@@ -747,10 +850,9 @@ function onCanvasMouseDown(event) {
     return;
   }
 
-  // Clic sur une zone → démarrer une action (déplacement / redimensionnement /
-  // suppression). Tout passe par le Tool : ses coords sont remappées par
-  // correctEventCoords(), contrairement au dispatch d'event d'item de Paper.js qui
-  // utilise le point écran brut et rate les zones au zoom > 1.
+  // Clic sur une zone (aucun badge sous le curseur) → démarrer une action (déplacement /
+  // redimensionnement / suppression). zoneInteractiveAt est géométrique : il ignore les
+  // badges enfants du groupe, donc la zone reste cliquable partout sauf sous une boîte de badge.
   if (hitGroup) {
     if (!hitGroup.data.isSelected) clearSelection();
     Paper.activeGroup = hitGroup;
@@ -767,18 +869,29 @@ function onCanvasMouseDown(event) {
 function onCanvasMouseMove(event) {
   correctEventCoords(event);
   if (!Paper.activeCanvas) return;
-  // Survol d'un badge de mesure EN TOUT TEMPS → révèle sa croix + curseur déplacement.
+
+  // Mode pose : la croix-guide prime sur tout (pas de survol de badge/zone).
+  if (Paper.pendingMeasure || Paper.pendingText) {
+    setBadgeHover(null);
+    setHoverGroup(null);
+    updatePlacementGuide(event.point.x, event.point.y);
+    return;
+  }
+  if (Paper.pendingNewZone) { setBadgeHover(null); setHoverGroup(null); return; } // curseur crosshair géré en CSS
+
+  // Survol d'un badge (mesure puis texte) D'ABORD : la croix / la poignée apparaissent dès
+  // qu'on survole la BOÎTE du badge (détection serrée : boîte + croix proche).
   var hoverHit = measureBadgeAt(event.point);
   if (hoverHit) {
+    setHoverGroup(null);
     setBadgeHover(hoverHit.badge);
-    clearMeasureGuide();
     Paper.activeCanvas.style.cursor = measureDeleteHit(hoverHit.badge, event.point) ? 'pointer' : 'move';
     return;
   }
   var textHover = textResizeAt(event.point) || textBadgeAt(event.point);
   if (textHover) {
+    setHoverGroup(null);
     setBadgeHover(textHover.badge);
-    clearMeasureGuide();
     if (textResizeHit(textHover.badge, event.point)) {
       Paper.activeCanvas.style.cursor = 'nwse-resize';
     } else {
@@ -787,16 +900,14 @@ function onCanvasMouseMove(event) {
     return;
   }
   setBadgeHover(null);
-  if (Paper.pendingMeasure) { updateMeasureGuide(event.point.x); return; } // barre-guide qui suit le curseur
-  if (Paper.pendingNewZone) return; // curseur crosshair géré en CSS
-  var group = zoneGroupAt(event.point);
+
+  // Sinon → survol de la zone (test géométrique : ignore les badges enfants du groupe).
+  var group = zoneInteractiveAt(event.point);
   setHoverGroup(group);
   var cursor = 'default';
   if (group) {
     switch (hitRegion(group, event.point)) {
       case 'delete':
-        cursor = 'pointer';
-        break;
       case 'pill':
         cursor = 'pointer';
         break;
@@ -829,16 +940,22 @@ function setHoverGroup(group) {
 }
 
 // Retourne le groupe de zone sous un point (ou null).
-function zoneGroupAt(point) {
-  var hitResult = paper.project.hitTest(point, HIT_OPTIONS);
-  if (!hitResult || !hitResult.item) return null;
-  return zoneGroupOf(hitResult.item);
-}
-function zoneGroupOf(item) {
-  var node = item;
-  while (node) {
-    if (node.data && node.data.role === 'zoneGroup') return node;
-    node = node.parent;
+// Zone dont la région interactive (corps, bords haut/bas, pastille, croix) contient le
+// point — calcul GÉOMÉTRIQUE volontaire : le hitTest Paper.js capterait aussi les badges
+// (mesure/texte) enfants du groupe et « volerait » le survol/clic de la zone. Ici la zone
+// est PRIORITAIRE sur les badges qui la chevauchent près de ses bords.
+function zoneInteractiveAt(point) {
+  var groups = currentZoneGroups();
+  for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    var group = groups[groupIndex];
+    var rect = group.data.rect.bounds;
+    var withinX = point.x >= rect.left && point.x <= rect.right;
+    var overBody = withinX && point.y >= rect.top && point.y <= rect.bottom;
+    var overTopEdge = withinX && Math.abs(point.y - rect.top) < EDGE_GRAB;
+    var overBotEdge = withinX && Math.abs(point.y - rect.bottom) < EDGE_GRAB;
+    var overPill = group.data.pillBounds && group.data.pillBounds.contains(point);
+    var overDelete = point.getDistance(deleteBadgeCenter(rect)) < BADGE_GRAB;
+    if (overBody || overTopEdge || overBotEdge || overPill || overDelete) return group;
   }
   return null;
 }
@@ -1220,7 +1337,7 @@ Paper.drawMeasure = function (group, measure) {
 
   // Croix de suppression DÉCALÉE hors du carré (coin haut-droit, vers l'extérieur)
   // pour ne pas chevaucher le corps du badge, révélée au survol (cf. setBadgeHover).
-  var cross = makeDeleteBadge(badgeBg.bounds.topRight.add(new paper.Point(7, -7)));
+  var cross = makeDeleteBadge(badgeBg.bounds.topRight.add(new paper.Point(3, -3)));
   cross.visible = false;
 
   var badge = new paper.Group([badgeBg, label, cross]);
@@ -1260,7 +1377,7 @@ Paper.drawText = function (group, text) {
   label.position = badgeBg.bounds.center;
 
   // Croix de suppression DÉCALÉE hors du rectangle (coin haut-droit), révélée au survol.
-  var cross = makeDeleteBadge(badgeBg.bounds.topRight.add(new paper.Point(7, -7)));
+  var cross = makeDeleteBadge(badgeBg.bounds.topRight.add(new paper.Point(3, -3)));
   cross.visible = false;
 
   // Poignée de redimensionnement (coin bas-droit) — glisser pour changer la taille du
@@ -1338,7 +1455,7 @@ Paper.redrawCurrentPage = function () {
     scoreParts.currentZones = zones;
     Paper.drawZones(zones);
   }
-  refreshMeasureGuide(); // removeChildren a effacé le guide → on le remet en mode mesure
+  refreshPlacementGuide(); // removeChildren a effacé le guide → on le remet en mode mesure
   if (paper.view) paper.view.update();
 };
 
