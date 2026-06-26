@@ -150,3 +150,39 @@
 }
 .params-export-btn:hover { background: #f5efde; color: var(--ink); }
 .params-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- Backups select ---- */
+
+.backup-restore-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.backup-select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.backup-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.backup-restore-btn {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.backup-restore-btn:hover { background: var(--ink); color: var(--paper); }
+.backup-restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.backup-restore-btn:disabled:hover { background: white; color: var(--ink-2); }

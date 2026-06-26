@@ -1,7 +1,7 @@
 import { Paper } from './paper.js';
 import { Common } from './common.js';
 import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
-import { getPageBlob } from './localDb.js';
+import { getPageBlob, createBackup } from './localDb.js';
 import { emit } from '../modules/partitions.state.js';
 
 export const scoreParts = {};
@@ -122,6 +122,12 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
   if (!pdfName) return;
   scoreParts.pdfName = pdfName;
   scoreParts.currentPage = 0;
+
+  // Snapshot de l'état persisté actuel (infos + zones) à chaque ouverture, avant
+  // toute édition de cette session. Limité à 30 backups par partition (localDb).
+  createBackup(pdfName).catch(function (error) {
+    console.error('Erreur backup', error);
+  });
 
   // On charge les infos AVANT les pages/zones pour que scoreParts.infos (et la
   // liste des mouvements persistée) soit disponible quand 'score-loaded' est émis.

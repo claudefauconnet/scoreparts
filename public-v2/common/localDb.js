@@ -10,13 +10,20 @@
 //   zones   (key pdfName)         → { pdfName, allPagesZones }  (objet, pas string)
 //   pdfs    (key pdfName)         → { pdfName, blob }           PDF source
 //   pages   (key [pdfName, page]) → { pdfName, page, blob }     une image PNG par page
+//   backups (key id auto-incr)    → { id, pdfName, createdAt, scoreInfos,
+//                                     allPagesZones }            snapshot à l'ouverture
+//                                   index 'pdfName' ; max 30 snapshots par partition.
 
 const DB_NAME = 'scoreparts';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_SCORES = 'scores';
 const STORE_ZONES = 'zones';
 const STORE_PDFS = 'pdfs';
 const STORE_PAGES = 'pages';
+const STORE_BACKUPS = 'backups';
+
+// Nombre maximum de snapshots conservés par partition (les plus anciens sont purgés).
+const MAX_BACKUPS_PER_SCORE = 30;
 
 let dbPromise = null;
 
@@ -37,6 +44,13 @@ function openDb() {
       }
       if (!db.objectStoreNames.contains(STORE_PAGES)) {
         db.createObjectStore(STORE_PAGES, { keyPath: ['pdfName', 'page'] });
+      }
+      if (!db.objectStoreNames.contains(STORE_BACKUPS)) {
+        const backupStore = db.createObjectStore(STORE_BACKUPS, {
+          keyPath: 'id',
+          autoIncrement: true,
+        });
+        backupStore.createIndex('pdfName', 'pdfName', { unique: false });
       }
     };
     request.onsuccess = function () {
@@ -200,4 +214,81 @@ export async function getPageBuffer(pdfName, page) {
     throw new Error('page image introuvable: ' + page + ' (' + pdfName + ')');
   }
   return await blob.arrayBuffer();
+}
+
+// ---- Backups (snapshots zones + infos) ----
+
+// Capture l'état persisté actuel (infos + zones) d'une partition dans un nouvel
+// enregistrement de backup, puis purge les plus anciens au-delà de la limite.
+// Retourne null si la partition n'a encore aucune donnée à sauvegarder.
+export async function createBackup(pdfName) {
+  if (!pdfName) return null;
+  const scoreInfos = await getScore(pdfName);
+  const allPagesZones = await getZones(pdfName);
+  if (!scoreInfos && !allPagesZones) return null;
+
+  const db = await openDb();
+  const transaction = db.transaction(STORE_BACKUPS, 'readwrite');
+  transaction.objectStore(STORE_BACKUPS).add({
+    pdfName: pdfName,
+    createdAt: Date.now(),
+    scoreInfos: scoreInfos,
+    allPagesZones: allPagesZones,
+  });
+  await transactionDone(transaction);
+  await pruneBackups(pdfName);
+  return true;
+}
+
+// Conserve uniquement les MAX_BACKUPS_PER_SCORE backups les plus récents d'une
+// partition ; supprime les plus anciens.
+async function pruneBackups(pdfName) {
+  const db = await openDb();
+  const transaction = db.transaction(STORE_BACKUPS, 'readwrite');
+  const store = transaction.objectStore(STORE_BACKUPS);
+  const backups = (await requestResult(store.index('pdfName').getAll(pdfName))) || [];
+  if (backups.length > MAX_BACKUPS_PER_SCORE) {
+    backups.sort(function (firstBackup, secondBackup) {
+      return firstBackup.createdAt - secondBackup.createdAt;
+    });
+    const excessCount = backups.length - MAX_BACKUPS_PER_SCORE;
+    for (var removedIndex = 0; removedIndex < excessCount; removedIndex++) {
+      store.delete(backups[removedIndex].id);
+    }
+  }
+  await transactionDone(transaction);
+}
+
+// Tous les backups d'une partition, du plus récent au plus ancien.
+export async function getBackups(pdfName) {
+  const db = await openDb();
+  const store = db.transaction(STORE_BACKUPS, 'readonly').objectStore(STORE_BACKUPS);
+  const backups = (await requestResult(store.index('pdfName').getAll(pdfName))) || [];
+  backups.sort(function (firstBackup, secondBackup) {
+    return secondBackup.createdAt - firstBackup.createdAt;
+  });
+  return backups;
+}
+
+// Réécrit infos + zones de la partition depuis le backup choisi. Retourne le
+// backup restauré (contient pdfName pour la réouverture par l'appelant).
+export async function restoreBackup(backupId) {
+  const db = await openDb();
+  const readStore = db.transaction(STORE_BACKUPS, 'readonly').objectStore(STORE_BACKUPS);
+  const backup = await requestResult(readStore.get(backupId));
+  if (!backup) {
+    throw new Error('backup introuvable: ' + backupId);
+  }
+
+  const transaction = db.transaction([STORE_SCORES, STORE_ZONES], 'readwrite');
+  if (backup.scoreInfos) {
+    transaction.objectStore(STORE_SCORES).put(backup.scoreInfos);
+  }
+  if (backup.allPagesZones) {
+    transaction
+      .objectStore(STORE_ZONES)
+      .put({ pdfName: backup.pdfName, allPagesZones: backup.allPagesZones });
+  }
+  await transactionDone(transaction);
+  return backup;
 }

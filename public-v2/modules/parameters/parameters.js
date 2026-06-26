@@ -1,6 +1,12 @@
 import { Paper } from '../../common/paper.js';
 import { scoreParts } from '../../common/scoreParts.js';
-import { getScore, getZones, getPdf } from '../../common/localDb.js';
+import {
+  getScore,
+  getZones,
+  getPdf,
+  getBackups,
+  restoreBackup,
+} from '../../common/localDb.js';
 import { zipPdfs, downloadBytes } from '../../localBackend/downloadProcessor.js';
 
 const DEFAULT_ZONE_HEIGHT = 20;
@@ -27,7 +33,10 @@ document.getElementById('rect-plus').addEventListener('click', () => {
 
 // ============== Dialog toggle
 const dialog = document.getElementById('params-dialog');
-document.getElementById('tweaks-pill').addEventListener('click', () => dialog.showModal());
+document.getElementById('tweaks-pill').addEventListener('click', () => {
+  dialog.showModal();
+  populateBackupsSelect();
+});
 document.getElementById('params-close').addEventListener('click', () => dialog.close());
 // Clic sur le backdrop ferme le dialog
 dialog.addEventListener('click', (event) => {
@@ -69,6 +78,63 @@ async function exportScoreIndex() {
 }
 
 document.getElementById('params-export-btn').addEventListener('click', exportScoreIndex);
+
+// ============== Backups
+const backupsSelect = document.getElementById('params-backups-select');
+const backupsRestoreButton = document.getElementById('params-backups-restore');
+
+function formatBackupDate(createdAt) {
+  return new Date(createdAt).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function setBackupsPlaceholder(message) {
+  backupsSelect.innerHTML = '<option value="">' + message + '</option>';
+  backupsSelect.disabled = true;
+  backupsRestoreButton.disabled = true;
+}
+
+async function populateBackupsSelect() {
+  const pdfName = scoreParts.pdfName;
+  if (!pdfName) {
+    setBackupsPlaceholder('Aucune partition ouverte');
+    return;
+  }
+  const backups = await getBackups(pdfName);
+  if (backups.length === 0) {
+    setBackupsPlaceholder('Aucun backup');
+    return;
+  }
+  backupsSelect.innerHTML = '';
+  backups.forEach((backup) => {
+    const option = document.createElement('option');
+    option.value = String(backup.id);
+    option.textContent = formatBackupDate(backup.createdAt);
+    backupsSelect.appendChild(option);
+  });
+  backupsSelect.disabled = false;
+  backupsRestoreButton.disabled = false;
+}
+
+async function restoreSelectedBackup() {
+  const backupId = Number(backupsSelect.value);
+  if (!backupId) return;
+  const selectedLabel = backupsSelect.options[backupsSelect.selectedIndex].textContent;
+  if (!confirm('Restaurer le backup du ' + selectedLabel + ' ?')) return;
+
+  const backup = await restoreBackup(backupId);
+  // Réouvre la partition pour refléter les infos + zones restaurées.
+  scoreParts.openFirstPdfPage(backup.pdfName, false, function () {
+    dialog.close();
+  });
+}
+
+backupsRestoreButton.addEventListener('click', restoreSelectedBackup);
 
 // ============== Book style
 document.querySelectorAll('#tw-book-style button').forEach((button) => {
