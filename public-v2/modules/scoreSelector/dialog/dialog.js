@@ -1,4 +1,4 @@
-import { state, on } from '../state.js';
+import { state, on, emit, refreshMyScores } from '../state.js';
 import { saveScoreInfos } from '../../../common/proxy.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 
@@ -52,6 +52,16 @@ import { scoreParts } from '../../../common/scoreParts.js';
     }
   }
 
+  // ============== Open
+
+  function openDialog() {
+    state.selected = null;
+    emit('selection-changed', null);
+    emit('library-changed', state.activeLib);
+    refreshMyScores();
+    $('#dialog-overlay').css('display', 'grid');
+  }
+
   // ============== Events
 
   on('selection-changed', function (e) {
@@ -61,6 +71,7 @@ import { scoreParts } from '../../../common/scoreParts.js';
     updateFooterPending(e.detail);
   });
   on('open-selected-score', openScore);
+  on('open-score-dialog', openDialog);
 
   $launchBtn.on('click', openScore);
   $('.close-btn').on('click', function () {

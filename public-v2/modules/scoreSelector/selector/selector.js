@@ -1,5 +1,5 @@
-import { state, emit, on, LIB_DATA, buildTreeFromScores } from '../state.js';
-import { deleteScore, loadMyScores } from '../../../common/proxy.js';
+import { state, emit, on, LIB_DATA, refreshMyScores } from '../state.js';
+import { deleteScore } from '../../../common/proxy.js';
 
 (function selectorModule() {
   const $tree = $('#tree');
@@ -84,11 +84,7 @@ import { deleteScore, loadMyScores } from '../../../common/proxy.js';
       return;
     deleteScore(node.name, function (err) {
       if (err) return alert('Erreur lors de la suppression.');
-      loadMyScores(function (loadErr, scores) {
-        if (loadErr) return;
-        LIB_DATA.mine = buildTreeFromScores(scores);
-        emit('lib-loaded', 'mine');
-      });
+      refreshMyScores();
     });
   }
 

@@ -2,6 +2,7 @@
 // et ouvre le dialog de sélection au clic. Se rafraîchit sur 'score-loaded'.
 import { on } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
+import { emit as emitScoreSelector } from '../../scoreSelector/state.js';
 
 function renderScoreInfo() {
   const infos = scoreParts.infos || {};
@@ -18,5 +19,5 @@ on('score-loaded', renderScoreInfo);
 // Ouvre le dialog de sélection de partition.
 document.querySelector('.score-info').addEventListener('click', function (event) {
   event.preventDefault();
-  $('#dialog-overlay').css('display', 'grid');
+  emitScoreSelector('open-score-dialog');
 });

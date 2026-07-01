@@ -37,8 +37,12 @@ export function buildTreeFromScores(scores) {
   }));
 }
 
-loadMyScores(function (err, scores) {
-  if (err) return;
-  LIB_DATA.mine = buildTreeFromScores(scores);
-  emit('lib-loaded', 'mine');
-});
+export function refreshMyScores() {
+  loadMyScores(function (err, scores) {
+    if (err) return;
+    LIB_DATA.mine = buildTreeFromScores(scores);
+    emit('lib-loaded', 'mine');
+  });
+}
+
+refreshMyScores();
