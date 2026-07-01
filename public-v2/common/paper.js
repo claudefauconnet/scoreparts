@@ -150,6 +150,7 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
     Paper.currentCanvasId = canvas.id;
     hoverGroup = null;
     selectedGroups = [];
+    placementGuide = null; // removeChildren a détaché le guide → on oublie la réf morte
     if (Paper.onSelectionChange) Paper.onSelectionChange(0);
   }
   var zones = scoreParts.allPagesZones.pages[pageIndex];
@@ -227,7 +228,12 @@ function focusCanvas(canvas) {
 }
 
 function onNativeHover(nativeEvent) {
-  if (isPointerDown) return; // pendant un drag, le listener window gère le mouvement
+  // Pendant un VRAI drag (action de zone/badge ou lasso en cours), on laisse le
+  // listener window gérer le mouvement. Mais isPointerDown peut rester vrai SANS
+  // action en cours — typiquement quand un prompt natif (window.prompt) a avalé le
+  // mouseup du clic de pose : dans ce cas on laisse passer, sinon le guide de visée
+  // (croix + surbrillance) se figerait après la 1re mesure/texte posé.
+  if (isPointerDown && (Paper.currentZoneAction || Paper.isLasso)) return;
   focusCanvas(nativeEvent.currentTarget);
   onCanvasMouseMove(makeToolEvent(nativeEvent, false));
 }
@@ -1457,6 +1463,7 @@ Paper.deleteZones = function () {
   if (!paper || !paper.project) return;
   paper.project.activeLayer.removeChildren();
   hoverGroup = null;
+  placementGuide = null; // removeChildren a détaché le guide → on oublie la réf
   if (paper.view) paper.view.update();
   scoreParts.modified = true;
 };
@@ -1492,6 +1499,7 @@ Paper.redrawCurrentPage = function () {
   paper.project.activeLayer.removeChildren();
   hoverGroup = null;
   selectedGroups = [];
+  placementGuide = null; // removeChildren a détaché le guide → on oublie la réf avant refreshPlacementGuide
   var zones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
   if (zones && zones.length > 0) {
     scoreParts.currentZones = zones;
