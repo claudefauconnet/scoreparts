@@ -11,6 +11,42 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 const QUALITY_SCALE = { low: 2, medium: 4, high: 8 };
 
+// pdfjs utilise par défaut DOMCanvasFactory, qui appelle document.createElement('canvas')
+// pour ses canvases intermédiaires (patterns, masques, cache de glyphs). Dans un Web
+// Worker `document` n'existe pas → "Cannot read properties of undefined (reading
+// 'createElement')" dès qu'un PDF complexe sollicite ces canvases. On substitue une
+// factory basée sur OffscreenCanvas, disponible côté Worker. pdfjs n'exporte aucune
+// factory OffscreenCanvas : on duck-type le contrat de BaseCanvasFactory (create /
+// reset / destroy) et on la passe via l'option `CanvasFactory` (constructeur, capital
+// C — pdfjs fait `new CanvasFactory({ ownerDocument, enableHWA })`).
+class OffscreenCanvasFactory {
+  constructor({ ownerDocument, enableHWA }) {
+    this.enableHWA = enableHWA || false;
+  }
+
+  create(width, height) {
+    if (width <= 0 || height <= 0) throw new Error('Invalid canvas size');
+    const canvas = new OffscreenCanvas(width, height);
+    const context = canvas.getContext('2d', { willReadFrequently: !this.enableHWA });
+    return { canvas: canvas, context: context };
+  }
+
+  reset(instance, width, height) {
+    if (!instance.canvas) throw new Error('Canvas is not specified');
+    if (width <= 0 || height <= 0) throw new Error('Invalid canvas size');
+    instance.canvas.width = width;
+    instance.canvas.height = height;
+  }
+
+  destroy(instance) {
+    if (!instance.canvas) throw new Error('Canvas is not specified');
+    instance.canvas.width = 0;
+    instance.canvas.height = 0;
+    instance.canvas = null;
+    instance.context = null;
+  }
+}
+
 // Rend une page sur un canvas hors écran et renvoie le PNG en Uint8Array.
 async function renderPageToPng(page, scale) {
   const viewport = page.getViewport({ scale: scale });
@@ -47,7 +83,11 @@ export async function pdfToImages(pdfData, quality, onProgress, options) {
   // utilisée par défaut par pdfjs échoue et les glyphes (notes, texte) sortent en
   // .notdef (carrés vides). Forcer le rendu des contours de glyphes (paths) corrige
   // ça et fonctionne aussi bien thread principal que Worker.
-  const loadingTask = pdfjsLib.getDocument({ data: pdfData, disableFontFace: true });
+  const loadingTask = pdfjsLib.getDocument({
+    data: pdfData,
+    disableFontFace: true,
+    CanvasFactory: OffscreenCanvasFactory,
+  });
   const pdf = await loadingTask.promise;
   const totalPages = pdf.numPages;
 
