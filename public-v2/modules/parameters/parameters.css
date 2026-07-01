@@ -21,7 +21,9 @@
   text-align: left;
   transition: background 0.15s;
 }
-.tweaks-pill:hover { background: #f5efde; }
+.tweaks-pill:hover {
+  background: #f5efde;
+}
 
 /* ---- Dialog ---- */
 
@@ -29,14 +31,14 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.18);
-  width: 320px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  width: 360px;
   background: white;
   color: var(--ink);
   font-family: var(--sans);
 }
 .params-dialog::backdrop {
-  background: rgba(26,24,20,0.35);
+  background: rgba(26, 24, 20, 0.35);
   backdrop-filter: blur(2px);
 }
 
@@ -54,15 +56,27 @@
   margin: 0;
 }
 .params-close {
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  background: none; border: none;
-  border-radius: 6px; cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   color: var(--muted);
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.params-close:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
-.params-close svg { width: 16px; height: 16px; }
+.params-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink);
+}
+.params-close svg {
+  width: 16px;
+  height: 16px;
+}
 
 .params-dialog-body {
   padding: 16px 20px 20px;
@@ -78,11 +92,13 @@
   text-transform: uppercase;
   margin: 16px 0 6px;
 }
-.tweak-label:first-child { margin-top: 0; }
+.tweak-label:first-child {
+  margin-top: 0;
+}
 
 .tweak-radio {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
   gap: 4px;
   background: var(--bg-2);
   padding: 3px;
@@ -101,7 +117,7 @@
 }
 .tweak-radio button.active {
   background: white;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   color: var(--ink);
 }
 .tweak-badge {
@@ -115,7 +131,9 @@
   color: var(--muted);
 }
 .tweak-row {
-  display: flex; gap: 6px; margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
 }
 .tweak-row button {
   flex: 1;
@@ -146,10 +164,18 @@
   font-size: 12px;
   color: var(--ink-2);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.params-export-btn:hover { background: #f5efde; color: var(--ink); }
-.params-export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.params-export-btn:hover {
+  background: #f5efde;
+  color: var(--ink);
+}
+.params-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ---- Backups select ---- */
 
@@ -170,7 +196,10 @@
   color: var(--ink-2);
   cursor: pointer;
 }
-.backup-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.backup-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .backup-restore-btn {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -181,8 +210,19 @@
   color: var(--ink-2);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.backup-restore-btn:hover { background: var(--ink); color: var(--paper); }
-.backup-restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.backup-restore-btn:disabled:hover { background: white; color: var(--ink-2); }
+.backup-restore-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.backup-restore-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.backup-restore-btn:disabled:hover {
+  background: white;
+  color: var(--ink-2);
+}
