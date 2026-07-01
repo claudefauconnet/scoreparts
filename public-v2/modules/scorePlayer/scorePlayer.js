@@ -232,6 +232,19 @@ function wireControls() {
       scoreParts.saveZones(function () {});
     });
   });
+
+  // Sélectionner toutes les zones d'une page.
+  document.querySelectorAll('.select-all-zones-btn').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const pageEl = btn.closest('.page');
+      const side = pageEl.classList.contains('page-left') ? 0 : 1;
+      const origin = scoreParts.spreadOrigin();
+      const pageIndex = scoreParts.singlePage ? origin : origin + side;
+      scoreParts.setCurrentPage(pageIndex);
+      Paper.selectAllZones();
+    });
+  });
 }
 
 // ============== Navigation (flèches latérales)

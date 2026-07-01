@@ -1459,6 +1459,20 @@ Paper.redrawCurrentPage = function () {
   if (paper.view) paper.view.update();
 };
 
+// ============== Sélection de toutes les zones de la page courante
+Paper.selectAllZones = function () {
+  if (!paper || !paper.project) return;
+  activateCurrent();
+  clearSelection(); // retire toute sélection précédente
+  paper.project.activeLayer.children.forEach(function (item) {
+    if (item.data && item.data.role === 'zoneGroup') {
+      setGroupSelected(item, true);
+      selectedGroups.push(item);
+    }
+  });
+  if (Paper.onSelectionChange) Paper.onSelectionChange(selectedGroups.length);
+};
+
 // ============== Suppression multiple
 Paper.deleteSelectedZones = function () {
   if (!selectedGroups.length) return;
