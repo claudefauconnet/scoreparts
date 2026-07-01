@@ -646,27 +646,25 @@
 .clear-zones-btn {
   position: absolute;
   top: 14px;
-  right: 14px;
-  width: 30px; height: 30px;
+  left: 14px;
+  width: 34px; height: 34px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(4px);
-  border: 1px solid var(--line);
-  color: var(--muted);
+  background: white;
+  border: 2px solid var(--violon1);
+  color: var(--violon1);
   display: grid; place-items: center;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, opacity 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   z-index: 8;
-  opacity: 0.55;
+  box-shadow: 0 2px 8px rgba(201,83,75,0.35);
 }
-.page:hover .clear-zones-btn { opacity: 1; }
 .clear-zones-btn:hover {
-  background: white;
-  color: var(--violon1);
-  border-color: var(--violon1);
-  transform: scale(1.05);
+  background: var(--violon1);
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(201,83,75,0.5);
 }
-.clear-zones-btn svg { width: 14px; height: 14px; }
+.clear-zones-btn svg { width: 16px; height: 16px; }
 
 /* ============== ZOOM CONTROLS ============== */
 .zoom-controls {
