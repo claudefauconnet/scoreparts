@@ -17,16 +17,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-right: 6px;
   scrollbar-width: thin;
   scrollbar-color: var(--line-2) transparent;
 }
 .voice {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 10px 12px;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 9px;
   border: 1px solid var(--line);
   background: #fbfaf7;
   border-radius: 8px;
@@ -169,8 +169,10 @@
 .voice-main {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  width: auto;
 }
 .voice-swatch {
   width: 16px;
@@ -206,6 +208,9 @@
     border-color 0.15s,
     background 0.15s;
   min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
   cursor: text;
 }
 .voice-name:hover {
@@ -219,6 +224,7 @@
   font-family: var(--mono);
   font-size: 11px;
   color: var(--muted);
+  flex-shrink: 0;
 }
 .voice-toggle {
   width: 26px;
@@ -249,24 +255,27 @@
 }
 .voice-actions {
   display: flex;
-  gap: 4px;
-  width: 100%;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--line);
+  flex-shrink: 0;
+  gap: 2px;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 .voice-action {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  flex: 1;
-  padding: 5px 6px;
+  gap: 0;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border: 0;
   background: transparent;
   border-radius: 5px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0;
   font-family: var(--sans);
   cursor: pointer;
   transition:

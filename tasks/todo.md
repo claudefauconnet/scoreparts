@@ -9,6 +9,8 @@
 - [x] Réallouer l’espace libéré de la header bar au titre et aux mouvements
 - [x] Réduire la hauteur du téléchargement et de la progression
 - [x] Préserver l’accès aux voix sur les écrans courts
+- [x] Ramener la progression à la hauteur du téléchargement
+- [x] Compacter les lignes de voix actives et inactives
 
 ## Review
 

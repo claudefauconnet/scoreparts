@@ -29,7 +29,7 @@ function renderVoices() {
         </div>
         <div class="voice-actions">
           <button class="voice-action" data-act="erase" title="Effacer toutes les zones de cette voix">
-            <svg viewBox="0 0 24 24"><path d="M3 17l8-8 5 5-8 8H3v-5zM14 6l3-3 4 4-3 3"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
             Effacer
           </button>
           <button class="voice-action" data-act="download" title="Télécharger la voix">
