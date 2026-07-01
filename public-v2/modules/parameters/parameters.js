@@ -1,13 +1,8 @@
 import { Paper } from '../../common/paper.js';
 import { scoreParts } from '../../common/scoreParts.js';
-import {
-  getScore,
-  getZones,
-  getPdf,
-  getBackups,
-  restoreBackup,
-} from '../../common/localDb.js';
+import { getScore, getZones, getPdf, getBackups, restoreBackup } from '../../common/localDb.js';
 import { zipPdfs, downloadBytes } from '../../localBackend/downloadProcessor.js';
+import { getImportQuality, setImportQuality } from '../../common/settings.js';
 
 const DEFAULT_ZONE_HEIGHT = 20;
 
@@ -139,8 +134,29 @@ backupsRestoreButton.addEventListener('click', restoreSelectedBackup);
 // ============== Book style
 document.querySelectorAll('#tw-book-style button').forEach((button) => {
   button.addEventListener('click', () => {
-    document.querySelectorAll('#tw-book-style button').forEach((styleButton) => styleButton.classList.remove('active'));
+    document
+      .querySelectorAll('#tw-book-style button')
+      .forEach((styleButton) => styleButton.classList.remove('active'));
     button.classList.add('active');
     document.getElementById('stage').dataset.bookStyle = button.dataset.val;
   });
 });
+
+// ============== Import quality
+// Définit la qualité de rendu pdfjs (low ×2 / medium ×4 / high ×8) à l'import d'un
+// PDF ou d'un ZIP. Persistance localStorage : survit aux rechargements. Par défaut
+// high (max) ; baissable pour les machines lentes.
+const importQualityButtons = document.querySelectorAll('#tw-import-quality button');
+function syncImportQualityButtons() {
+  const currentQuality = getImportQuality();
+  importQualityButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.val === currentQuality);
+  });
+}
+importQualityButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    setImportQuality(button.dataset.val);
+    syncImportQualityButtons();
+  });
+});
+syncImportQualityButtons();

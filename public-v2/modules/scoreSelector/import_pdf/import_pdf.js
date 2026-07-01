@@ -2,6 +2,7 @@ import { state, on, emit } from '../state.js';
 import { uploadRenderedScore, toScoreName } from '../../../common/proxy.js';
 import { renderPdfToImages } from '../../../common/localBackendProxy.js';
 import { putScore, putZones, putPdf, putPages } from '../../../common/localDb.js';
+import { getImportQuality } from '../../../common/settings.js';
 import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
 
 (function importPdfModule() {
@@ -84,10 +85,14 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
 
     try {
       const pdfData = await file.arrayBuffer();
-      const result = await renderPdfToImages(pdfData, 'medium', function (pageNum, totalPages) {
-        setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
-        setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
-      });
+      const result = await renderPdfToImages(
+        pdfData,
+        getImportQuality(),
+        function (pageNum, totalPages) {
+          setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
+          setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
+        }
+      );
 
       const pageBlobs = result.pages.map(function (page) {
         return new Blob([page.bytes], { type: 'image/png' });
@@ -162,7 +167,7 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
       const pdfData = await pdfBlob.arrayBuffer();
       const renderResult = await renderPdfToImages(
         pdfData,
-        'medium',
+        getImportQuality(),
         function (pageNum, totalPages) {
           setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
           setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
