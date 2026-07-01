@@ -1,5 +1,6 @@
 // headerBar/reset — bouton scindé : « Tout recommencer » (voix+zones+mouvements)
 // et « Effacer toutes les pages » (zones uniquement).
+import { resetAll } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { saveScoreInfos } from '../../../common/proxy.js';
 
@@ -13,6 +14,10 @@ function confirmAndResetAll() {
 
   const pdfName = scoreParts.pdfName;
   if (!pdfName) return;
+
+  // Vide immédiatement le state en mémoire (voix, zones, mouvements) pour que
+  // l'UI se resynchronise tout de suite (panneau voix, badge zip, etc.).
+  resetAll();
 
   // Vide le backend (zones, voix, mouvements) puis recharge la partition par
   // le même chemin qu'à l'ouverture (openFirstPdfPage → 'score-loaded'). Tout

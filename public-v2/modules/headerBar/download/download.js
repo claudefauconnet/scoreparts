@@ -2,7 +2,7 @@
 // génération vit dans common/download.js (Download) ; ce fichier gère le menu de
 // formats, la coche, et expose un adaptateur de progression (progressUI) — les
 // seules fonctions DOM que Download déclenche, qui reste ainsi sans accès au DOM.
-import { state } from '../../partitions.state.js';
+import { state, on } from '../../partitions.state.js';
 import { Download } from '../../../common/download.js';
 import { ProgressToast } from '../../../common/progressToast.js';
 
@@ -81,7 +81,12 @@ dlMainBtn.addEventListener('click', () => Download.run(selectedFormat, progressU
 
 // Items du menu : sélectionnent le format (déplacent la coche) puis lancent.
 dlPdfItem.addEventListener('click', () => {
-  selectFormat('pdf');
+selectFormat('pdf');
+
+// Le badge de voix se met à jour automatiquement (reset, ajout/suppression voix).
+on('voices-changed', refreshZipMenuCount);
+on('score-loaded', refreshZipMenuCount);
+refreshZipMenuCount();
   dlMenu.classList.remove('open');
   Download.completePdf(progressUI);
 });
