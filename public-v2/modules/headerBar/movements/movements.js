@@ -163,8 +163,10 @@ document.getElementById('mvt-name').addEventListener('blur', () => {
 
   Movements.applyRename(nameBeforeEdit, newName);
   nameBeforeEdit = newName;
+  const wasNaming = isNamingRequired;
   unlockNaming();
   renderMvt();
+  if (wasNaming) closeMvtPop();
 });
 document.getElementById('mvt-add').addEventListener('click', () => {
   // Logique côté Movements : crée à la page courante ou bascule sur l'existant.
