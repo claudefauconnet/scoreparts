@@ -36,6 +36,7 @@ Voices.load = function () {
       name: voice.name,
       color: voice.color || Common.palette[index % Common.palette.length],
       on: voice.on !== false,
+      isNamePending: voice.isNamePending === true,
     }));
   state.VOICES.splice(0, state.VOICES.length, ...voices);
   if (!state.VOICES.find((voice) => voice.id === state.activeVoice)) {
@@ -52,6 +53,7 @@ Voices.persist = function () {
     name: voice.name,
     color: voice.color,
     on: voice.on,
+    ...(voice.isNamePending ? { isNamePending: true } : {}),
   }));
   if (scoreParts.infos) scoreParts.infos.voices = payload;
   saveScoreInfos(scoreParts.pdfName, { voices: payload }, function (err) {
@@ -60,12 +62,15 @@ Voices.persist = function () {
 };
 
 // Crée une voix avec une couleur distincte, la rend active, persiste et émet.
-Voices.add = function () {
+Voices.add = function (voiceName, shouldRequireName = false) {
+  const defaultVoiceName = 'Voix ' + (state.VOICES.length + 1);
+  const normalizedVoiceName = typeof voiceName === 'string' ? voiceName.trim() : '';
   const voice = {
     id: Voices.nextId(),
-    name: 'Voix ' + (state.VOICES.length + 1),
+    name: normalizedVoiceName || defaultVoiceName,
     color: Voices.nextColor(),
     on: true,
+    isNamePending: shouldRequireName,
   };
   state.VOICES.push(voice);
   state.activeVoice = voice.id;

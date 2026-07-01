@@ -1,5 +1,61 @@
 <div class="voices-component">
   <div class="section-label">Voix</div>
+  <section class="initial-score-setup" id="initial-score-setup" hidden aria-live="polite">
+    <div class="initial-score-setup-steps" aria-label="Configuration de la partition">
+      <span class="initial-score-setup-step done" data-setup-step="movement">
+        <span class="initial-score-setup-step-number">1</span>
+        Mouvement
+      </span>
+      <span class="initial-score-setup-step" data-setup-step="voices">
+        <span class="initial-score-setup-step-number">2</span>
+        Voix
+      </span>
+      <span class="initial-score-setup-step" data-setup-step="systems">
+        <span class="initial-score-setup-step-number">3</span>
+        Systèmes
+      </span>
+    </div>
+
+    <div class="initial-score-setup-copy">
+      <strong id="initial-score-setup-title">Ajoutez vos voix utiles</strong>
+      <p id="initial-score-setup-description">
+        Ajoutez uniquement les voix que vous voulez extraire, puis donnez un nom à chacune.
+      </p>
+    </div>
+
+    <div id="initial-score-voices-step">
+      <p class="initial-score-setup-hint" id="initial-score-setup-hint">
+        Ajoutez une voix pour continuer.
+      </p>
+      <button
+        class="initial-score-setup-next"
+        id="initial-score-voices-next"
+        type="button"
+        disabled
+      >
+        Continuer
+      </button>
+    </div>
+
+    <form id="initial-score-systems-step" hidden novalidate>
+      <label for="initial-score-system-number">Nombre total de systèmes</label>
+      <div class="initial-score-system-input-row">
+        <input
+          id="initial-score-system-number"
+          type="number"
+          min="1"
+          step="1"
+          inputmode="numeric"
+          placeholder="Ex. 12"
+          required
+        />
+        <button class="initial-score-setup-next" type="submit">Passer aux zones</button>
+      </div>
+      <p class="initial-score-setup-error" id="initial-score-setup-error" hidden>
+        Entrez un nombre entier supérieur à zéro.
+      </p>
+    </form>
+  </section>
   <div class="voice-list" id="voice-list">
     <!-- filled by JS -->
   </div>

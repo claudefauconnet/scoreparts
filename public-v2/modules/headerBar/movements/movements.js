@@ -2,7 +2,7 @@
 // renommage, suppression) vit dans common/movements.js (Movements) ; ce fichier
 // rend la pilule + le popover, et gère le verrouillage de la saisie obligatoire
 // du nom (interception de la navigation tant que le mouvement n'est pas nommé).
-import { state, on } from '../../partitions.state.js';
+import { state, on, emit } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { Common } from '../../../common/common.js';
 import { Movements } from '../../../common/movements.js';
@@ -70,6 +70,7 @@ function renderMvt() {
 // ============== Verrouillage de la saisie du nom (UI + interception navigation)
 
 let isNamingRequired = false;
+let isInitialScoreNaming = false;
 let changePageBackup = null;
 
 function closeMvtPop() {
@@ -164,9 +165,14 @@ document.getElementById('mvt-name').addEventListener('blur', () => {
   Movements.applyRename(nameBeforeEdit, newName);
   nameBeforeEdit = newName;
   const wasNaming = isNamingRequired;
+  const shouldStartInitialScoreWorkflow = wasNaming && isInitialScoreNaming;
   unlockNaming();
   renderMvt();
   if (wasNaming) closeMvtPop();
+  if (shouldStartInitialScoreWorkflow) {
+    isInitialScoreNaming = false;
+    emit('initial-movement-named', { movementName: newName });
+  }
 });
 document.getElementById('mvt-add').addEventListener('click', () => {
   // Logique côté Movements : crée à la page courante ou bascule sur l'existant.
@@ -187,8 +193,12 @@ on('movements-changed', renderMvt);
 // La page courante a changé : on rafraîchit la header bar (sous-titre « créer
 // d'ici » et plages dépendent de la page courante).
 on('page-changed', renderMvt);
-on('score-loaded', () => {
-  if (Movements.load().needsNaming) forceNameMovement();
-});
-if (Movements.load().needsNaming) forceNameMovement();
+function loadMovementsForScore() {
+  const movementLoadResult = Movements.load();
+  isInitialScoreNaming = movementLoadResult.needsNaming;
+  if (isInitialScoreNaming) forceNameMovement();
+}
+
+on('score-loaded', loadMovementsForScore);
+loadMovementsForScore();
 renderMvt();

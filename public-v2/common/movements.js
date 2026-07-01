@@ -96,7 +96,12 @@ Movements.persist = function () {
   sorted.forEach((mvt, idx) => {
     if (!mvt.name) return;
     const range = Movements.range(sorted, idx);
-    payload.push({ name: mvt.name, startPage: range.start, endPage: range.end, systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null });
+    payload.push({
+      name: mvt.name,
+      startPage: range.start,
+      endPage: range.end,
+      systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null,
+    });
   });
   if (scoreParts.infos) scoreParts.infos.movements = payload;
   saveScoreInfos(scoreParts.pdfName, { movements: payload }, function (err) {
@@ -104,24 +109,35 @@ Movements.persist = function () {
   });
 };
 
-// Garantit que le mouvement nommé porte un `systemNumber` (nombre de zones par
-// système). S'il existe déjà → le renvoie. Sinon demande à l'utilisateur (même
-// libellé/validation que l'auto-détection), persiste et renvoie la valeur. Renvoie
-// null si l'utilisateur annule ou saisit une valeur invalide.
+// Garantit que le mouvement nommé porte un `systemNumber`. Utilisé hors du
+// parcours guidé, par exemple lors d'une auto-détection lancée manuellement.
 Movements.ensureSystemNumber = function (movementName) {
-  const movement = state.MOVEMENTS.find((candidateMovement) => candidateMovement.name === movementName);
+  const movement = state.MOVEMENTS.find(
+    (candidateMovement) => candidateMovement.name === movementName
+  );
   if (!movement) return null;
-  if (Number.isInteger(movement.systemNumber) && movement.systemNumber > 0) return movement.systemNumber;
-  const input = prompt('Combien de systèmes y a-t-il dans ce mouvement ?');
-  if (input === null) return null;
-  const parsedSystemNumber = parseInt(input, 10);
-  if (!Number.isInteger(parsedSystemNumber) || parsedSystemNumber <= 0) {
+  if (Number.isInteger(movement.systemNumber) && movement.systemNumber > 0)
+    return movement.systemNumber;
+
+  const systemNumberInput = prompt('Combien de systèmes y a-t-il au total dans ce mouvement ?');
+  if (systemNumberInput === null) return null;
+  const parsedSystemNumber = Number(systemNumberInput);
+  if (!Movements.setSystemNumber(movementName, parsedSystemNumber)) {
     alert('Veuillez entrer un entier positif.');
     return null;
   }
-  movement.systemNumber = parsedSystemNumber;
-  Movements.persist();
   return parsedSystemNumber;
+};
+
+Movements.setSystemNumber = function (movementName, systemNumber) {
+  if (!Number.isInteger(systemNumber) || systemNumber <= 0) return false;
+  const movement = state.MOVEMENTS.find(
+    (candidateMovement) => candidateMovement.name === movementName
+  );
+  if (!movement) return false;
+  movement.systemNumber = systemNumber;
+  Movements.persist();
+  return true;
 };
 
 // Charge la liste dans le state global et émet 'movements-changed'. Retourne
@@ -130,7 +146,12 @@ Movements.ensureSystemNumber = function (movementName) {
 Movements.load = function () {
   const movements = Movements.merge();
   if (movements.length === 0) {
-    state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1, systemNumber: null });
+    state.MOVEMENTS.splice(0, state.MOVEMENTS.length, {
+      id: 1,
+      name: '',
+      startPage: 1,
+      systemNumber: null,
+    });
     state.activeMvt = 1;
     emit('movements-changed');
     return { needsNaming: !!scoreParts.pdfName };
