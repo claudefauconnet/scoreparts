@@ -61,6 +61,16 @@
 .mvt-name--required,
 .mvt-name--required:focus { border-bottom-color: #e05555; animation: mvt-name-pulse 1s ease infinite alternate; }
 @keyframes mvt-name-pulse { from { border-bottom-color: #e05555; } to { border-bottom-color: #ff9090; } }
+
+body.movement-naming-active #voices-host,
+body.movement-naming-active #hb-scoreinfo-host,
+body.movement-naming-active .top-actions,
+body.movement-naming-active #book,
+body.movement-naming-active #zoom-controls,
+body.movement-naming-active #multiselect-toolbar {
+  opacity: 0.38;
+  transition: opacity 0.2s;
+}
 .mvt-edit {
   width: 24px; height: 24px;
   background: transparent; border: 0;

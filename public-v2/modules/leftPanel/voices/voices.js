@@ -38,10 +38,13 @@ function hasCompletedVoiceNames() {
 function setInitialScoreSetupLock(isLocked) {
   document.body.classList.toggle('initial-score-setup-active', isLocked);
   [
-    document.getElementById('stage'),
+    document.getElementById('headerbar-host'),
     document.getElementById('lp-actions-host'),
     document.querySelector('.left-panel-footer'),
     document.getElementById('lp-parameters-host'),
+    document.getElementById('book'),
+    document.getElementById('zoom-controls'),
+    document.getElementById('multiselect-toolbar'),
   ].forEach((lockedElement) => {
     if (lockedElement) lockedElement.inert = isLocked;
   });

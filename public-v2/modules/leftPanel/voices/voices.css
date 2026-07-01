@@ -175,10 +175,13 @@
   color: #b33d36;
 }
 
-body.initial-score-setup-active #stage,
+body.initial-score-setup-active #headerbar-host,
 body.initial-score-setup-active #lp-actions-host,
 body.initial-score-setup-active .left-panel-footer,
-body.initial-score-setup-active #lp-parameters-host {
+body.initial-score-setup-active #lp-parameters-host,
+body.initial-score-setup-active #book,
+body.initial-score-setup-active #zoom-controls,
+body.initial-score-setup-active #multiselect-toolbar {
   opacity: 0.38;
   transition: opacity 0.2s;
 }

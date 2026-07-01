@@ -71,33 +71,46 @@ function renderMvt() {
 
 let isNamingRequired = false;
 let isInitialScoreNaming = false;
-let changePageBackup = null;
+
+function setMovementNamingLock(isLocked) {
+  document.body.classList.toggle('movement-naming-active', isLocked);
+  [
+    document.getElementById('voices-host'),
+    document.getElementById('hb-scoreinfo-host'),
+    document.querySelector('.top-actions'),
+    document.getElementById('book'),
+    document.getElementById('zoom-controls'),
+    document.getElementById('multiselect-toolbar'),
+  ].forEach((lockedElement) => {
+    if (lockedElement) lockedElement.inert = isLocked;
+  });
+}
+
+function isBookNavigationElement(element) {
+  return (
+    element &&
+    typeof element.closest === 'function' &&
+    element.closest('#scoreplayer-bottom, .nav-arrow')
+  );
+}
 
 function closeMvtPop() {
   if (isNamingRequired) return;
   document.getElementById('mvt-pop').classList.remove('open');
 }
 
-// Verrouille l'UI pendant la saisie obligatoire du nom : la navigation (changePage)
-// est neutralisée et ramène le focus sur le champ. Idempotent — un 2e appel ne
-// recapture PAS le changePage déjà neutralisé (sinon le déverrouillage le
-// restaurerait sur la version neutralisée → lock permanent).
+// Verrouille les actions d'édition pendant la saisie obligatoire du nom, tout en
+// laissant la navigation du livre disponible pour retrouver la page d'informations.
 function lockForNaming() {
   if (isNamingRequired) return;
   isNamingRequired = true;
-  changePageBackup = scoreParts.changePage;
-  scoreParts.changePage = function () {
-    const nameInput = document.getElementById('mvt-name');
-    nameInput.classList.add('mvt-name--required');
-    nameInput.focus();
-  };
+  setMovementNamingLock(true);
 }
 
 function unlockNaming() {
   if (!isNamingRequired) return;
   isNamingRequired = false;
-  if (changePageBackup) scoreParts.changePage = changePageBackup;
-  changePageBackup = null;
+  setMovementNamingLock(false);
   const nameInput = document.getElementById('mvt-name');
   nameInput.classList.remove('mvt-name--required');
   nameInput.placeholder = '';
@@ -145,15 +158,18 @@ document.getElementById('mvt-name').addEventListener('keydown', (event) => {
     event.target.blur();
   }
 });
-document.getElementById('mvt-name').addEventListener('blur', () => {
+document.getElementById('mvt-name').addEventListener('blur', (event) => {
   const movement = state.MOVEMENTS.find((candidate) => candidate.id === state.activeMvt);
   if (!movement) return renderMvt();
 
   const newName = movement.name.trim();
   if (!newName) {
     if (isNamingRequired) {
-      // Nom obligatoire (création en cours) : on garde le focus, reste verrouillé.
-      document.getElementById('mvt-name').focus();
+      // La navigation reste accessible pour chercher le titre dans la partition.
+      // Toute autre sortie ramène immédiatement au nom obligatoire.
+      if (!isBookNavigationElement(event.relatedTarget)) {
+        document.getElementById('mvt-name').focus();
+      }
       return;
     }
     // Édition annulée à vide : on restaure l'ancien nom.
@@ -196,7 +212,11 @@ on('page-changed', renderMvt);
 function loadMovementsForScore() {
   const movementLoadResult = Movements.load();
   isInitialScoreNaming = movementLoadResult.needsNaming;
-  if (isInitialScoreNaming) forceNameMovement();
+  if (isInitialScoreNaming) {
+    forceNameMovement();
+  } else {
+    unlockNaming();
+  }
 }
 
 on('score-loaded', loadMovementsForScore);
