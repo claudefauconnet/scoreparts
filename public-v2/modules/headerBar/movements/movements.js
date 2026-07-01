@@ -60,19 +60,10 @@ function renderMvt() {
     popList.appendChild(item);
   });
 
-  // Sous-titre « Créer un mouvement ici » : dépend de la page courante.
-  const sub = document.getElementById('mvt-add-sub');
-  if (sub) {
-    const exists = state.MOVEMENTS.find((listedMovement) => listedMovement.startPage === getCurrentPage());
-    if (exists) {
-      sub.textContent = `un mouvement commence déjà à la page ${getCurrentPage()}`;
-    } else {
-      const sorted = [...state.MOVEMENTS].sort((a, b) => a.startPage - b.startPage);
-      const nextMvt = sorted.find((listedMovement) => listedMovement.startPage > getCurrentPage());
-      const endPage = nextMvt ? nextMvt.startPage - 1 : scoreParts.totalPages;
-      const target = nextMvt ? `avant « ${nextMvt.name} »` : `jusqu'à la fin de la partition`;
-      sub.innerHTML = `pages <b>${getCurrentPage()}–${endPage}</b> — ${target}`;
-    }
+  // Titre « Créer un mouvement à la page X » : la page courante est précisée dynamiquement.
+  const title = document.getElementById('mvt-add-title');
+  if (title) {
+    title.textContent = `Créer un mouvement à la page ${getCurrentPage()}`;
   }
 }
 
