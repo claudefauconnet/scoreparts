@@ -143,10 +143,9 @@ document.querySelectorAll('#tw-book-style button').forEach((button) => {
 });
 
 // ============== Import quality
-// Définit la qualité de rendu pdfjs (low ×2 / medium ×4 / high ×8) à l'import d'un
-// PDF ou d'un ZIP. Persistance localStorage : survit aux rechargements. Par défaut
-// medium (bon compromis qualité / rapidité d'affichage) ; high pour plus de finesse,
-// low pour les machines lentes.
+// Définit la qualité de rendu pdfjs (low ×2 / medium ×4) à l'import d'un PDF ou d'un
+// ZIP. Persistance localStorage : survit aux rechargements. Par défaut medium (bon
+// compromis qualité / rapidité d'affichage) ; low pour les machines lentes.
 const importQualityButtons = document.querySelectorAll('#tw-import-quality button');
 function syncImportQualityButtons() {
   const currentQuality = getImportQuality();

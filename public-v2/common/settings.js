@@ -1,13 +1,12 @@
 // Préférences utilisateur persistées (localStorage). Pour l'instant limité à la
 // qualité d'import des PDF (rendu pdfjs → PNG) ; s'étendra si d'autres préférences
-// durables s'ajoutent. Trois paliers : low ×2, medium ×4 (défaut), high ×8. medium
-// donne une qualité très correcte tout en gardant le décodage des pages rapide à
-// l'affichage ; high reste disponible pour plus de finesse (fluidifié par le
-// préchargement du spread voisin, voir scoreParts.js). Les anciens paliers ultra ×12
-// et max ×16 ont été retirés : ils produisaient des PNG si gros que leur décodage
-// gelait l'UI à chaque changement de page.
+// durables s'ajoutent. Deux paliers : low ×2 et medium ×4 (défaut). medium donne une
+// qualité très correcte tout en gardant le décodage des pages rapide à l'affichage ;
+// low pour les machines lentes. Les paliers supérieurs (high ×8, ultra ×12, max ×16)
+// ont été retirés : ils produisaient des PNG si gros que leur décodage gelait l'UI à
+// chaque changement de page.
 const IMPORT_QUALITY_KEY = 'scoreparts.importQuality';
-const VALID_QUALITIES = ['low', 'medium', 'high'];
+const VALID_QUALITIES = ['low', 'medium'];
 const DEFAULT_IMPORT_QUALITY = 'medium';
 
 export function getImportQuality() {
