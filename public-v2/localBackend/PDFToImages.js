@@ -9,7 +9,7 @@ import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/+esm';
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
 
-const QUALITY_SCALE = { low: 2, medium: 4, high: 8, ultra: 12, max: 16 };
+const QUALITY_SCALE = { low: 2, medium: 4, high: 8 };
 
 // pdfjs utilise par défaut DOMCanvasFactory, qui appelle document.createElement('canvas')
 // pour ses canvases intermédiaires (patterns, masques, cache de glyphs). Dans un Web

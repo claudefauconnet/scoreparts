@@ -40,8 +40,9 @@ function fitCanvasToImage(canvas, img, pageElement) {
 }
 
 function whenImageReady(displayCanvas, callback) {
-  // Le canvas d'affichage est déjà dessiné quand il est inséré au DOM (le dessin
-  // est synchrone dans loadImageIntoContainer) → pas d'attente async.
+  // Le canvas d'affichage n'est inséré dans le DOM par loadImageIntoContainer
+  // qu'une fois entièrement dessiné (decode/resize async via createImageBitmap
+  // terminés en amont) → si on le trouve déjà dans le DOM, il est prêt.
   if (displayCanvas && displayCanvas._naturalWidth) {
     callback();
   } else {

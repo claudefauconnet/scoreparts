@@ -83,18 +83,10 @@ function copyBuffer(arrayBuffer) {
 // < 4 pages → 1 worker (overhead pool inutile). ≤3 logiques → 1 = séquentiel.
 const MAX_POOL = 8;
 
-// Plafond de pool par qualité : les paliers élevés (ultra ×12, max ×16) font
-// exploser la mémoire de canvas par page (~288 Mo en ×12, ~512 Mo en ×16). Sans
-// plafond, un pool de 4 workers rendant en parallèle = ~1.1 Go / ~2 Go de canvas
-// simultanés → OOM (le crash qu'on vient de fixer). On borne donc le parallélisme
-// sur ces paliers ; high et en dessous gardent le comportement d'origine.
-const MAX_POOL_BY_QUALITY = { low: MAX_POOL, medium: MAX_POOL, high: MAX_POOL, ultra: 3, max: 2 };
-
-function renderPoolSize(pageCount, quality) {
+function renderPoolSize(pageCount) {
   if (pageCount < 4) return 1;
   const cores = navigator.hardwareConcurrency || 2;
-  const poolCeiling = MAX_POOL_BY_QUALITY[quality] || MAX_POOL;
-  return Math.max(1, Math.min(Math.floor(cores / 2), poolCeiling, pageCount));
+  return Math.max(1, Math.min(Math.floor(cores / 2), MAX_POOL, pageCount));
 }
 
 // Rendu PDF→images parallélisé sur un pool de Workers (pdfjs hors thread principal
@@ -116,7 +108,7 @@ export async function renderPdfToImages(pdfData, quality, onProgress, options) {
   // options.poolSize force une taille précise (benchmark / réglage) ; sinon auto.
   const poolSize = options.poolSize
     ? Math.max(1, Math.min(options.poolSize, totalPages))
-    : renderPoolSize(totalPages, quality);
+    : renderPoolSize(totalPages);
 
   // 2. Cas mono-worker : transfert direct de pdfData (zéro-copie), pas de découpage.
   if (poolSize === 1) {
