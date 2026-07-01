@@ -236,11 +236,13 @@ function onNativeMouseDown(nativeEvent) {
   focusCanvas(nativeEvent.currentTarget);
   isPointerDown = true;
   lastCorrectedPoint = null; // repart proprement pour le calcul des deltas
-  onCanvasMouseDown(makeToolEvent(nativeEvent, false));
-  // Le drag et le relâchement sont suivis au niveau window : le pointeur peut
-  // sortir du canvas pendant un déplacement/lasso sans interrompre l'action.
+  // Listeners posés AVANT onCanvasMouseDown : un handler peut ouvrir un prompt
+  // natif (window.prompt) qui avale le mouseup du clic — il doit alors pouvoir
+  // retirer lui-même ces listeners (cf. releasePointerAfterPrompt) pour libérer
+  // le pointeur, sinon le guide de visée se fige (onNativeHover ignore les survols).
   window.addEventListener('mousemove', onNativeDrag);
   window.addEventListener('mouseup', onNativeMouseUp);
+  onCanvasMouseDown(makeToolEvent(nativeEvent, false));
 }
 
 function onNativeDrag(nativeEvent) {
@@ -252,6 +254,16 @@ function onNativeMouseUp(nativeEvent) {
   window.removeEventListener('mouseup', onNativeMouseUp);
   isPointerDown = false;
   onCanvasMouseUp(makeToolEvent(nativeEvent, true));
+}
+
+// Un prompt/alerte natif (window.prompt) avale le mouseup du clic qui l'a ouvert :
+// sans cette libération, isPointerDown resterait vrai et onNativeHover ignorerait
+// tout mouvement de survol → le guide de visée (croix) se figerait après la 1re
+// pose. À appeler dès qu'un prompt se ferme dans onCanvasMouseDown.
+function releasePointerAfterPrompt() {
+  isPointerDown = false;
+  window.removeEventListener('mousemove', onNativeDrag);
+  window.removeEventListener('mouseup', onNativeMouseUp);
 }
 
 // ============== Mode "nouvelle zone" (activable / désactivable)
@@ -795,8 +807,9 @@ function onCanvasMouseDown(event) {
   if (Paper.pendingMeasure) {
     // Clic dans un système → pose une mesure à cette abscisse sur les zones de CE
     // système (badge au-dessus de chacune), puis ajustable individuellement.
-    if (!ensureCurrentPageVoicesAssigned()) return; // attribution requise pour le découpage
+    if (!ensureCurrentPageVoicesAssigned()) { releasePointerAfterPrompt(); return; } // alerte native → mouseup avalé
     var number = window.prompt('Numéro de mesure');
+    releasePointerAfterPrompt(); // le prompt natif avale le mouseup → libère le guide
     if (number === null || number === '') return;
     lastPlacementCursorX = event.point.x;
     lastPlacementCursorY = event.point.y;
@@ -811,8 +824,9 @@ function onCanvasMouseDown(event) {
 
   if (Paper.pendingText) {
     // Miroir du mode mesure : clic dans un système → texte sur les zones de CE système.
-    if (!ensureCurrentPageVoicesAssigned()) return;
+    if (!ensureCurrentPageVoicesAssigned()) { releasePointerAfterPrompt(); return; }
     var textStr = window.prompt('Texte');
+    releasePointerAfterPrompt(); // le prompt natif avale le mouseup → libère le guide
     if (textStr === null || textStr === '') return;
     lastPlacementCursorX = event.point.x;
     lastPlacementCursorY = event.point.y;
