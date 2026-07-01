@@ -143,6 +143,11 @@ import { deleteScore, loadMyScores } from '../../../common/proxy.js';
       $row.on('click', function () {
         onScoreRowClick(node, $row);
       });
+      $row.on('dblclick', function (event) {
+        if ($(event.target).closest('.btn-delete').length) return;
+        onScoreRowClick(node, $row);
+        emit('open-selected-score');
+      });
     }
 
     return $wrap;

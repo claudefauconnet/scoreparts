@@ -40,6 +40,9 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
         </div>
       </div>
     `);
+    $preview.find('.sc-card').on('click', function () {
+      emit('open-selected-score');
+    });
   }
 
   // ============== Upload progress tracking

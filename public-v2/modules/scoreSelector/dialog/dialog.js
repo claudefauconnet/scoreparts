@@ -60,6 +60,7 @@ import { scoreParts } from '../../../common/scoreParts.js';
   on('selection-pending', function (e) {
     updateFooterPending(e.detail);
   });
+  on('open-selected-score', openScore);
 
   $launchBtn.on('click', openScore);
   $('.close-btn').on('click', function () {

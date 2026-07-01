@@ -100,3 +100,25 @@ Vérification :
 - `git diff --check` OK.
 - Recherche globale : aucune utilisation fonctionnelle restante de `category`.
 - Test navigateur non exécuté : aucune instance du navigateur intégré disponible.
+
+---
+
+# Ouverture rapide depuis le sélecteur
+
+## Tâches
+
+- [x] Centraliser l’ouverture via un événement du sélecteur
+- [x] Ouvrir sur double-clic d’une partition
+- [x] Ouvrir sur clic de la carte de prévisualisation
+- [x] Vérifier syntaxe, format et diff
+
+## Review
+
+Le double-clic d’une ligne de partition et le clic sur `.sc-card` émettent
+`open-selected-score`. Le module de dialogue reçoit cet événement et réutilise
+`openScore`, comme le bouton d’ouverture existant.
+
+Le double-clic provenant du bouton de suppression est ignoré. La carte affiche un
+curseur interactif.
+
+Vérification : `node --check`, Prettier et `git diff --check` réussis.
