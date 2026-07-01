@@ -112,7 +112,7 @@
   opacity: 1;
 }
 .dl-badge {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   background: var(--ink);
