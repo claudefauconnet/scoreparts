@@ -1,8 +1,10 @@
 /* scorePlayer — livre, pages, portées, zones, navigation, état vide */
 
-/* When in 'pending new zone' mode */
+/* ============== Bannières de mode (new zone / mesure / texte) */
+/* Même mini-fenêtre noire pour les trois modes persistants : tant que le mode
+   reste actif on peut poser plusieurs éléments à la chaîne. */
 .pending-zone .book .page { cursor: crosshair !important; }
-.pending-zone-banner {
+.pending-banner {
   position: absolute;
   top: 14px;
   left: 50%;
@@ -20,14 +22,16 @@
   gap: 8px;
   pointer-events: auto;
 }
-.pending-zone .pending-zone-banner { display: flex; }
-.pending-zone-banner svg { width: 14px; height: 14px; }
-.pending-zone-banner button {
+.pending-zone .pending-banner--zone,
+.pending-measure .pending-banner--measure,
+.pending-text .pending-banner--text { display: flex; }
+.pending-banner svg { width: 14px; height: 14px; }
+.pending-banner button {
   background: transparent; border: 1px solid rgba(255,255,255,0.25);
   color: var(--paper); padding: 3px 10px; border-radius: 999px;
   font-size: 11px; cursor: pointer;
 }
-.pending-zone-banner button:hover { background: rgba(255,255,255,0.1); }
+.pending-banner button:hover { background: rgba(255,255,255,0.1); }
 .stage-body {
   flex: 1;
   min-height: 0;

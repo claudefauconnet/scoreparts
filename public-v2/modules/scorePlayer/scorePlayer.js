@@ -142,7 +142,9 @@ function wireControls() {
   const actNewZone = document.getElementById('act-new-zone');
   const cancelNewZone = document.getElementById('cancel-new-zone');
   const actMeasure = document.getElementById('act-measure');
+  const cancelMeasure = document.getElementById('cancel-measure');
   const actText = document.getElementById('act-text');
+  const cancelText = document.getElementById('cancel-text');
 
   // Reflète le mode "pending new zone" dans l'UI (bannière + bouton actif).
   Paper.onPendingChange = (isPending) => {
@@ -150,13 +152,16 @@ function wireControls() {
     if (actNewZone) actNewZone.classList.toggle('active', isPending);
   };
 
-  // Reflète le mode "mesure" dans l'UI (bouton actif).
+  // Reflète le mode "mesure" dans l'UI (bannière noire + bouton actif). Mode
+  // persistant : on enchaîne les poses tant qu'on ne quitte pas (bouton Annuler).
   Paper.onMeasurePendingChange = (isPending) => {
+    if (stage) stage.classList.toggle('pending-measure', isPending);
     if (actMeasure) actMeasure.classList.toggle('active', isPending);
   };
 
-  // Reflète le mode "texte" dans l'UI (bouton actif).
+  // Reflète le mode "texte" dans l'UI (bannière noire + bouton actif).
   Paper.onTextPendingChange = (isPending) => {
+    if (stage) stage.classList.toggle('pending-text', isPending);
     if (actText) actText.classList.toggle('active', isPending);
   };
 
@@ -177,8 +182,14 @@ function wireControls() {
   if (actMeasure) {
     actMeasure.addEventListener('click', () => Paper.setPendingMeasure(!Paper.pendingMeasure));
   }
+  if (cancelMeasure) {
+    cancelMeasure.addEventListener('click', () => Paper.setPendingMeasure(false));
+  }
   if (actText) {
     actText.addEventListener('click', () => Paper.setPendingText(!Paper.pendingText));
+  }
+  if (cancelText) {
+    cancelText.addEventListener('click', () => Paper.setPendingText(false));
   }
 
   // Toolbar de sélection multiple.

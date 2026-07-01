@@ -802,9 +802,10 @@ function onCanvasMouseDown(event) {
     lastPlacementCursorY = event.point.y;
     setMeasureOnCurrentSystem(event.point, number);
     commit();
-    Paper.redrawCurrentPage(); // redessine barres + guide (refreshPlacementGuide)
+    Paper.redrawCurrentPage(); // redessine barres + guide (refreshPlacementGuide le remet)
     scoreParts.saveZones(function () {});
-    Paper.setPendingMeasure(false); // une mesure posée → on sort du mode (badges restent ajustables)
+    // Mode persistant : on reste en "mesure" pour enchaîner plusieurs numéros
+    // (comme le mode "new zone"). Sortie uniquement via le bouton Annuler.
     return;
   }
 
@@ -817,18 +818,22 @@ function onCanvasMouseDown(event) {
     lastPlacementCursorY = event.point.y;
     setTextOnCurrentSystem(event.point, textStr);
     commit();
-    Paper.redrawCurrentPage();
+    Paper.redrawCurrentPage(); // refreshPlacementGuide y remet la croix-guide
     scoreParts.saveZones(function () {});
-    Paper.setPendingText(false);
+    // Mode persistant : on reste en "texte" pour enchaîner plusieurs textes.
     return;
   }
 
-  if (Paper.pendingNewZone) {
+  // Mode "new zone" : seul un clic dans le VIDE crée une zone. Un clic sur une
+  // zone existante tombe dans le bloc commun ci-dessous (déplacement /
+  // redimensionnement / suppression) : l'utilisateur n'est donc pas bloqué tant
+  // qu'il est en mode pose — il crée dans le vide et ajuste les zones en place,
+  // sans avoir à quitter le mode pour corriger une zone mal placée.
+  if (Paper.pendingNewZone && !hitGroup) {
     if (!scoreParts.currentMovement) {
       alert('sélectionnez ou déclarez un mouvement');
       return;
     }
-    if (hitGroup) return; // ne pas créer par-dessus une zone existante
     var naturalW = scoreParts.naturalW || canvasW() || 1;
     var naturalH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
     var coefH = scoreParts.coefH || 1;
@@ -853,6 +858,7 @@ function onCanvasMouseDown(event) {
   // Clic sur une zone (aucun badge sous le curseur) → démarrer une action (déplacement /
   // redimensionnement / suppression). zoneInteractiveAt est géométrique : il ignore les
   // badges enfants du groupe, donc la zone reste cliquable partout sauf sous une boîte de badge.
+  // Atteint hors mode pose OU en mode pose sur une zone existante (cf. ci-dessus).
   if (hitGroup) {
     if (!hitGroup.data.isSelected) clearSelection();
     Paper.activeGroup = hitGroup;
@@ -860,7 +866,8 @@ function onCanvasMouseDown(event) {
     return;
   }
 
-  // Clic dans le vide → démarrer le lasso.
+  // Clic dans le vide hors mode pose → démarrer le lasso. En mode pose, le vide
+  // a déjà créé une zone ci-dessus.
   clearSelection();
   Paper.isLasso = true;
   Paper.lassoStart = event.point.clone();
@@ -877,7 +884,9 @@ function onCanvasMouseMove(event) {
     updatePlacementGuide(event.point.x, event.point.y);
     return;
   }
-  if (Paper.pendingNewZone) { setBadgeHover(null); setHoverGroup(null); return; } // curseur crosshair géré en CSS
+  // En mode "new zone" on laisse le survol des zones/badges actif : l'utilisateur
+  // voit qu'il peut aussi ajuster une zone existante (poignées + curseur move/resize),
+  // et seul le vide reste en croix (création). Pas de return anticipé ici.
 
   // Survol d'un badge (mesure puis texte) D'ABORD : la croix / la poignée apparaissent dès
   // qu'on survole la BOÎTE du badge (détection serrée : boîte + croix proche).
@@ -904,7 +913,8 @@ function onCanvasMouseMove(event) {
   // Sinon → survol de la zone (test géométrique : ignore les badges enfants du groupe).
   var group = zoneInteractiveAt(event.point);
   setHoverGroup(group);
-  var cursor = 'default';
+  // Vide en mode "new zone" → croix (création) ; sinon curseur par défaut.
+  var cursor = Paper.pendingNewZone ? 'crosshair' : 'default';
   if (group) {
     switch (hitRegion(group, event.point)) {
       case 'delete':
