@@ -55,7 +55,7 @@ export function resetAll() {
   state.ZONES_LEFT = [];
   state.ZONES_RIGHT = [];
   state.activeVoice = null;
-  state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: '', startPage: 1 });
+  state.MOVEMENTS.splice(0, state.MOVEMENTS.length, { id: 1, name: 'Sans titre', startPage: 1 });
   state.activeMvt = 1;
   emit('voices-changed');
   emit('zones-changed');

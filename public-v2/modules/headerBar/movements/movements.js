@@ -65,12 +65,6 @@ function renderMvt() {
   if (title) {
     title.textContent = `Créer un mouvement à la page ${getCurrentPage()}`;
   }
-
-  // Un PDF est chargé mais le mouvement actif n'a pas de nom → on force la saisie
-  // (cas du « Tout recommencer » qui crée un mouvement vierge).
-  if (scoreParts.pdfName && movement && !movement.name && !isNamingRequired) {
-    forceNameMovement();
-  }
 }
 
 // ============== Verrouillage de la saisie du nom (UI + interception navigation)
