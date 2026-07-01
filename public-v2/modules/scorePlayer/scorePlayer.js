@@ -1,6 +1,8 @@
 import { on, state } from '../partitions.state.js';
 import { scoreParts } from '../../common/scoreParts.js';
 import { Paper } from '../../common/paper.js';
+import { getPageBlob } from '../../common/localDb.js';
+import { downloadBytes } from '../../localBackend/downloadProcessor.js';
 
 // scorePlayer v2 = éditeur de zones. Paper.js (commun) est maître de la logique :
 // modèle de zones, coordonnées, lecture (getPageZones) et persistance (via
@@ -37,29 +39,31 @@ function fitCanvasToImage(canvas, img, pageElement) {
   canvas.height = box.height;
 }
 
-function whenImageReady(img, callback) {
-  if (img.complete && img.naturalWidth) {
+function whenImageReady(displayCanvas, callback) {
+  // Le canvas d'affichage est déjà dessiné quand il est inséré au DOM (le dessin
+  // est synchrone dans loadImageIntoContainer) → pas d'attente async.
+  if (displayCanvas && displayCanvas._naturalWidth) {
     callback();
   } else {
-    img.addEventListener('load', callback, { once: true });
+    setTimeout(callback, 0);
   }
 }
 
 // L'image d'une page peut être chargée de façon asynchrone (la page de droite du
-// spread n'a pas de callback). On attend qu'un <img> soit injecté ET chargé.
+// spread n'a pas de callback). On attend qu'un <canvas> soit injecté ET dessiné.
 function waitForPageImage(systemsId, callback) {
   const systems = document.getElementById(systemsId);
   if (!systems) return;
-  const existing = systems.querySelector('img');
+  const existing = systems.querySelector('canvas');
   if (existing) {
     whenImageReady(existing, () => callback(existing));
     return;
   }
   const observer = new MutationObserver(() => {
-    const img = systems.querySelector('img');
-    if (img) {
+    const displayCanvas = systems.querySelector('canvas');
+    if (displayCanvas) {
       observer.disconnect();
-      whenImageReady(img, () => callback(img));
+      whenImageReady(displayCanvas, () => callback(displayCanvas));
     }
   });
   observer.observe(systems, { childList: true });
@@ -109,10 +113,22 @@ function setupEditorForCurrentPage() {
 
   // Pages à rendre : page courante d'abord (projet actif), puis l'autre (figée).
   const descriptors = [
-    { side: 0, pageIndex: origin, canvasId: 'canvas-left', systemsId: 'systems-left', pageEl: leftPage },
+    {
+      side: 0,
+      pageIndex: origin,
+      canvasId: 'canvas-left',
+      systemsId: 'systems-left',
+      pageEl: leftPage,
+    },
   ];
   if (!single) {
-    descriptors.push({ side: 1, pageIndex: origin + 1, canvasId: 'canvas-right', systemsId: 'systems-right', pageEl: rightPage });
+    descriptors.push({
+      side: 1,
+      pageIndex: origin + 1,
+      canvasId: 'canvas-right',
+      systemsId: 'systems-right',
+      pageEl: rightPage,
+    });
   } else {
     clearCanvasPixels(document.getElementById('canvas-right'));
   }
@@ -256,6 +272,24 @@ function wireControls() {
       Paper.selectAllZones();
     });
   });
+
+  // DEBUG: télécharger le PNG de la page (diagnostic qualité de rendu).
+  document.querySelectorAll('.debug-download-png-btn').forEach((btn) => {
+    btn.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      const pageEl = btn.closest('.page');
+      const side = pageEl.classList.contains('page-left') ? 0 : 1;
+      const origin = scoreParts.spreadOrigin();
+      const pageIndex = scoreParts.singlePage ? origin : origin + side;
+      const blob = await getPageBlob(scoreParts.pdfName, pageIndex);
+      if (blob)
+        downloadBytes(
+          new Uint8Array(await blob.arrayBuffer()),
+          'page_' + (pageIndex + 1) + '.png',
+          'image/png'
+        );
+    });
+  });
 }
 
 // ============== Navigation (flèches latérales)
@@ -307,15 +341,11 @@ function fitSinglePageToImage() {
     page.style.aspectRatio = '';
     return;
   }
-  const img = document.getElementById('systems-left').querySelector('img');
-  if (!img) return;
-  const apply = () => {
-    if (img.naturalWidth && img.naturalHeight) {
-      page.style.aspectRatio = img.naturalWidth + ' / ' + img.naturalHeight;
-    }
-  };
-  if (img.complete && img.naturalWidth) apply();
-  else img.addEventListener('load', apply, { once: true });
+  const displayCanvas = document.getElementById('systems-left').querySelector('canvas');
+  if (!displayCanvas) return;
+  if (displayCanvas._naturalWidth && displayCanvas._naturalHeight) {
+    page.style.aspectRatio = displayCanvas._naturalWidth + ' / ' + displayCanvas._naturalHeight;
+  }
 }
 smallScreen.addEventListener('change', applyResponsiveMode);
 // Initialise le flag sans recharger (aucune partition chargée au boot).

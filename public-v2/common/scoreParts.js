@@ -46,6 +46,12 @@ function clearContainerImage(containerId) {
   }
 }
 
+// Cap du backing store du canvas d'affichage. Les PNG stockés font jusqu'à ~9520px
+// (max ×16) ; un backing store à cette taille = ~528 Mo de GPU memory par page.
+// 4000px = bon compromis : ~93 Mo/page, et reste net à tout zoom du book (jusqu'à
+// ×5 sur un layout ~800px = 4000px affichés).
+var DISPLAY_CANVAS_MAX_WIDTH = 4000;
+
 // Charge l'image d'une page (Blob IndexedDB → object URL) dans un container.
 // Page absente (hors limites, ex. page droite d'un spread en fin de PDF) → vide
 // le container. L'ancien object URL n'est révoqué qu'une fois la nouvelle image
@@ -72,6 +78,13 @@ function loadPageImage(page, containerId, callback) {
     });
 }
 
+// Charge le PNG d'une page dans un <canvas> haute résolution (au lieu d'un <img>).
+// Le backing store est capé à DISPLAY_CANVAS_MAX_WIDTH pour limiter la mémoire GPU,
+// mais reste bien plus grand que la taille de layout (~400-800px). Avec
+// will-change: transform (CSS), le GPU composite depuis le backing store directement
+// → net à tout zoom du book. Un <img> serait rasterisé à sa taille de layout puis
+// upscaled par le zoom CSS → flou. Les dimensions naturelles du PNG original sont
+// stockées sur le canvas (_naturalWidth/_naturalHeight) pour Paper.js.
 scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
   var container = document.getElementById(containerId);
   if (!container) {
@@ -80,16 +93,23 @@ scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
   }
   var img = new Image();
   img.onload = function () {
+    var scale = Math.min(1, DISPLAY_CANVAS_MAX_WIDTH / img.naturalWidth);
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas._naturalWidth = img.naturalWidth;
+    canvas._naturalHeight = img.naturalHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    container.innerHTML = '';
+    container.appendChild(canvas);
     if (callback) callback();
   };
   img.onerror = function () {
     if (callback) callback();
   };
-  // Vide + insère l'<img> TOUT DE SUITE (avant le chargement) : les observateurs
-  // de page (waitForPageImage) se lient à la NOUVELLE image, pas à l'ancienne
-  // restée affichée → plus de canvas calé sur l'image périmée au changement de page.
-  container.innerHTML = '';
-  container.appendChild(img);
   img.src = src;
 };
 
@@ -339,7 +359,10 @@ scoreParts.buildAutoDetectedZones = function (data, customHeightDisplayPx) {
 
   const autoOverflowPx =
     data.topLines.length > 1
-      ? Math.min(2 * interline, Math.max(0, (data.topLines[1] - data.topLines[0] - 6 * interline) / 2))
+      ? Math.min(
+          2 * interline,
+          Math.max(0, (data.topLines[1] - data.topLines[0] - 6 * interline) / 2)
+        )
       : interline;
 
   const useCustomHeight = typeof customHeightDisplayPx === 'number' && customHeightDisplayPx > 0;

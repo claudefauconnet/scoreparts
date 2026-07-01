@@ -20,8 +20,6 @@ import { state, emit } from '../modules/partitions.state.js';
 
 export const Paper = {};
 
-
-
 // ============== Constantes de style / interaction (look module)
 const ZONE_RADIUS = 8; // coins arrondis
 const EDGE_GRAB = 9; // px de proximité d'un bord (haut/bas) → redimensionnement
@@ -45,8 +43,6 @@ const MEASURE_FONT_PX = 11; // taille du numéro dans l'espace canvas (sert auss
 const TEXT_COLOR = new paper.Color('#2b6cb0');
 const TEXT_FONT_PX = 13; // taille par défaut du texte dans l'espace canvas (réglable par texte)
 const MIN_TEXT_FONT_PX = 6; // plancher de taille au redimensionnement
-
-
 
 // ============== État privé
 var projectsByCanvasId = {}; // id de canvas → projet Paper (un par page)
@@ -122,11 +118,15 @@ function ensureProject(canvas, imgEl) {
     projectsByCanvasId[canvas.id] = paper.project;
   }
   paper.view.viewSize = new paper.Size(canvas.clientWidth, canvas.clientHeight);
-  if (imgEl && imgEl.naturalWidth) {
-    scoreParts.naturalW = imgEl.naturalWidth;
-    scoreParts.naturalH = imgEl.naturalHeight;
-    scoreParts.coefV = canvas.clientHeight / imgEl.naturalHeight;
-    scoreParts.coefH = canvas.clientWidth / imgEl.naturalWidth;
+  if (imgEl) {
+    // L'élément est un <canvas> (pas un <img>) : _naturalWidth/Height portent les
+    // dimensions du PNG original, width/height celles du backing store capé.
+    var naturalW = imgEl._naturalWidth || imgEl.naturalWidth || imgEl.width;
+    var naturalH = imgEl._naturalHeight || imgEl.naturalHeight || imgEl.height;
+    scoreParts.naturalW = naturalW;
+    scoreParts.naturalH = naturalH;
+    scoreParts.coefV = canvas.clientHeight / naturalH;
+    scoreParts.coefH = canvas.clientWidth / naturalW;
   }
   wireCanvasListeners(canvas);
 }
@@ -158,7 +158,9 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
     // Migration best-effort : zones en anciens pixels canvas (y > 1) → fractions.
     // Exact seulement si le viewport courant est proche du viewport d'origine,
     // mais meilleur que de laisser les coords incohérentes.
-    var needsMigration = zones.some(function (z) { return z.y > 1 || z.height > 1; });
+    var needsMigration = zones.some(function (z) {
+      return z.y > 1 || z.height > 1;
+    });
     if (needsMigration) {
       // Ancien format : canvas pixels. Convertir en fractions 0→1 du canvas courant.
       // Exact si dessiné avec le même viewport ; best-effort sinon (user peut rédessiner).
@@ -182,7 +184,9 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
     // Clamp DU MODÈLE (fractions) une seule fois : bord droit qui dépasse la page
     // (anciennes zones width=1.0 → x+width>1). Clamper au DRAW serait relu par
     // writeVisibleSpreadZones et réécrirait le modèle → drift cumulé au zoom.
-    var needsClamp = zones.some(function (z) { return z.x < 0 || z.x + z.width > 1; });
+    var needsClamp = zones.some(function (z) {
+      return z.x < 0 || z.x + z.width > 1;
+    });
     if (needsClamp) {
       zones = zones.map(function (z) {
         var clampedX = Math.max(0, z.x);
@@ -359,14 +363,21 @@ function updatePlacementGuide(xpx, ypx) {
   if (paper.view) paper.view.update();
 }
 function clearPlacementGuide() {
-  if (placementGuide) { placementGuide.remove(); placementGuide = null; }
+  if (placementGuide) {
+    placementGuide.remove();
+    placementGuide = null;
+  }
   if (paper && paper.view) paper.view.update();
 }
 // Redessine le guide aux dernières coords connues : appelé après chaque redraw
 // (removeChildren l'efface) et à l'entrée du mode, pour qu'il reste visible sans attendre
 // un mouvement de souris (sinon « figé » pendant le prompt / « disparu »).
 function refreshPlacementGuide() {
-  if ((Paper.pendingMeasure || Paper.pendingText) && lastPlacementCursorX != null && lastPlacementCursorY != null) {
+  if (
+    (Paper.pendingMeasure || Paper.pendingText) &&
+    lastPlacementCursorX != null &&
+    lastPlacementCursorY != null
+  ) {
     updatePlacementGuide(lastPlacementCursorX, lastPlacementCursorY);
   }
 }
@@ -429,7 +440,11 @@ function setMeasureOnCurrentSystem(point, number) {
     var rect = group.data.rect;
     if (!rect.data.measures) rect.data.measures = [];
     // Plusieurs mesures par zone (voix/portée) : on AJOUTE, sans écraser les précédentes.
-    rect.data.measures.push({ x: point.x, y: rect.bounds.top - INITIAL_MEASURE_OFFSET, number: number });
+    rect.data.measures.push({
+      x: point.x,
+      y: rect.bounds.top - INITIAL_MEASURE_OFFSET,
+      number: number,
+    });
   });
 }
 
@@ -438,7 +453,11 @@ function setTextOnCurrentSystem(point, textStr) {
   currentSystemGroupsForY(point.y).forEach(function (group) {
     var rect = group.data.rect;
     if (!rect.data.texts) rect.data.texts = [];
-    rect.data.texts.push({ x: point.x, y: rect.bounds.top - INITIAL_MEASURE_OFFSET, text: textStr });
+    rect.data.texts.push({
+      x: point.x,
+      y: rect.bounds.top - INITIAL_MEASURE_OFFSET,
+      text: textStr,
+    });
   });
 }
 
@@ -449,9 +468,15 @@ function setTextOnCurrentSystem(point, textStr) {
 function ensureCurrentPageVoicesAssigned() {
   var groups = currentZoneGroups();
   if (!groups.length) return true;
-  var anyUnassigned = groups.some(function (group) { return !group.data.rect.data.voice; });
+  var anyUnassigned = groups.some(function (group) {
+    return !group.data.rect.data.voice;
+  });
   if (!anyUnassigned) return true;
-  var activeVoiceIds = state.VOICES.filter(function (voice) { return voice.on; }).map(function (voice) { return voice.id; });
+  var activeVoiceIds = state.VOICES.filter(function (voice) {
+    return voice.on;
+  }).map(function (voice) {
+    return voice.id;
+  });
   if (!activeVoiceIds.length) {
     alert('Activez au moins une voix pour attribuer les zones.');
     return false;
@@ -497,7 +522,8 @@ function measureBadgeAt(point) {
     if (!badges) continue;
     for (var badgeIndex = 0; badgeIndex < badges.length; badgeIndex++) {
       var badge = badges[badgeIndex];
-      if (badge.data.measureBar.bounds.contains(point)) return { group: group, badge: badge, measure: badge.data.measure };
+      if (badge.data.measureBar.bounds.contains(point))
+        return { group: group, badge: badge, measure: badge.data.measure };
       var cross = badge.data.measureDelete;
       if (cross && point.getDistance(cross.position) < MEASURE_DELETE_GRAB) {
         return { group: group, badge: badge, measure: badge.data.measure }; // croix débordant le carré
@@ -540,9 +566,13 @@ function badgeHoverDecorations(badge) {
 var hoveredBadge = null;
 function setBadgeHover(badge) {
   if (badge === hoveredBadge) return;
-  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) { decoration.visible = false; });
+  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) {
+    decoration.visible = false;
+  });
   hoveredBadge = badge;
-  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) { decoration.visible = true; });
+  badgeHoverDecorations(hoveredBadge).forEach(function (decoration) {
+    decoration.visible = true;
+  });
   if (paper.view) paper.view.update();
 }
 
@@ -561,7 +591,8 @@ function textBadgeAt(point) {
     if (!badges) continue;
     for (var badgeIndex = 0; badgeIndex < badges.length; badgeIndex++) {
       var badge = badges[badgeIndex];
-      if (badge.data.textBar.bounds.contains(point)) return { group: group, badge: badge, text: badge.data.text };
+      if (badge.data.textBar.bounds.contains(point))
+        return { group: group, badge: badge, text: badge.data.text };
       var cross = badge.data.textDelete;
       if (cross && point.getDistance(cross.position) < MEASURE_DELETE_GRAB) {
         return { group: group, badge: badge, text: badge.data.text }; // croix débordant le rectangle
@@ -624,7 +655,9 @@ function deleteTextFromZone(group, text) {
 
 // ============== Sélection multiple (lasso)
 function clearSelection() {
-  selectedGroups.forEach(function (g) { setGroupSelected(g, false); });
+  selectedGroups.forEach(function (g) {
+    setGroupSelected(g, false);
+  });
   selectedGroups = [];
   if (Paper.onSelectionChange) Paper.onSelectionChange(0);
 }
@@ -703,7 +736,10 @@ function onCanvasMouseDrag(event) {
     return;
   }
   if (!Paper.isLasso) return;
-  if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
+  if (Paper.lassoPath) {
+    Paper.lassoPath.remove();
+    Paper.lassoPath = null;
+  }
   var start = Paper.lassoStart;
   var end = event.point;
   var lassoRect = new paper.Rectangle(
@@ -747,13 +783,19 @@ function onCanvasMouseUp(event) {
   }
   if (!Paper.isLasso) return;
   Paper.isLasso = false;
-  if (Paper.lassoPath) { Paper.lassoPath.remove(); Paper.lassoPath = null; }
+  if (Paper.lassoPath) {
+    Paper.lassoPath.remove();
+    Paper.lassoPath = null;
+  }
   var start = Paper.lassoStart;
   Paper.lassoStart = null;
   if (!start) return;
   var dx = Math.abs(event.point.x - start.x);
   var dy = Math.abs(event.point.y - start.y);
-  if (dx < 5 && dy < 5) { if (paper.view) paper.view.update(); return; }
+  if (dx < 5 && dy < 5) {
+    if (paper.view) paper.view.update();
+    return;
+  }
   var selRect = new paper.Rectangle(
     new paper.Point(Math.min(start.x, event.point.x), Math.min(start.y, event.point.y)),
     new paper.Size(dx, dy)
@@ -813,7 +855,10 @@ function onCanvasMouseDown(event) {
   if (Paper.pendingMeasure) {
     // Clic dans un système → pose une mesure à cette abscisse sur les zones de CE
     // système (badge au-dessus de chacune), puis ajustable individuellement.
-    if (!ensureCurrentPageVoicesAssigned()) { releasePointerAfterPrompt(); return; } // alerte native → mouseup avalé
+    if (!ensureCurrentPageVoicesAssigned()) {
+      releasePointerAfterPrompt();
+      return;
+    } // alerte native → mouseup avalé
     var number = window.prompt('Numéro de mesure');
     releasePointerAfterPrompt(); // le prompt natif avale le mouseup → libère le guide
     if (number === null || number === '') return;
@@ -830,7 +875,10 @@ function onCanvasMouseDown(event) {
 
   if (Paper.pendingText) {
     // Miroir du mode mesure : clic dans un système → texte sur les zones de CE système.
-    if (!ensureCurrentPageVoicesAssigned()) { releasePointerAfterPrompt(); return; }
+    if (!ensureCurrentPageVoicesAssigned()) {
+      releasePointerAfterPrompt();
+      return;
+    }
     var textStr = window.prompt('Texte');
     releasePointerAfterPrompt(); // le prompt natif avale le mouseup → libère le guide
     if (textStr === null || textStr === '') return;
@@ -855,7 +903,8 @@ function onCanvasMouseDown(event) {
       return;
     }
     var naturalW = scoreParts.naturalW || canvasW() || 1;
-    var naturalH = scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
+    var naturalH =
+      scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
     var coefH = scoreParts.coefH || 1;
     var coefV = scoreParts.coefV || 1;
     var marginFraction = (scoreParts.margin || Paper.margin) / (naturalW * coefH);
@@ -914,7 +963,9 @@ function onCanvasMouseMove(event) {
   if (hoverHit) {
     setHoverGroup(null);
     setBadgeHover(hoverHit.badge);
-    Paper.activeCanvas.style.cursor = measureDeleteHit(hoverHit.badge, event.point) ? 'pointer' : 'move';
+    Paper.activeCanvas.style.cursor = measureDeleteHit(hoverHit.badge, event.point)
+      ? 'pointer'
+      : 'move';
     return;
   }
   var textHover = textResizeAt(event.point) || textBadgeAt(event.point);
@@ -924,7 +975,9 @@ function onCanvasMouseMove(event) {
     if (textResizeHit(textHover.badge, event.point)) {
       Paper.activeCanvas.style.cursor = 'nwse-resize';
     } else {
-      Paper.activeCanvas.style.cursor = textDeleteHit(textHover.badge, event.point) ? 'pointer' : 'move';
+      Paper.activeCanvas.style.cursor = textDeleteHit(textHover.badge, event.point)
+        ? 'pointer'
+        : 'move';
     }
     return;
   }
@@ -1004,7 +1057,13 @@ function hitRegion(group, point) {
 // ============== Interactions sur une zone
 // Une action de zone manipule un groupe au pointeur (déplacement / redimensionnement).
 function isZoneAction(action) {
-  return action === 'moveZone' || action === 'resizeTop' || action === 'resizeBot' || action === 'measureBadge' || action === 'textBadge';
+  return (
+    action === 'moveZone' ||
+    action === 'resizeTop' ||
+    action === 'resizeBot' ||
+    action === 'measureBadge' ||
+    action === 'textBadge'
+  );
 }
 
 // Démarre une action sur la zone `group` au point papier `point` (déjà corrigé du
@@ -1035,7 +1094,9 @@ function beginZoneAction(group, point) {
     // Masque les décorations pendant le redimensionnement (évite de déformer le
     // texte de la pastille) — elles sont redessinées proprement au relâchement.
     if (group.data.isSelected && selectedGroups.length > 1) {
-      selectedGroups.forEach(function (selectedGroup) { hideDecorations(selectedGroup); });
+      selectedGroups.forEach(function (selectedGroup) {
+        hideDecorations(selectedGroup);
+      });
     } else {
       hideDecorations(group);
     }
@@ -1063,19 +1124,25 @@ function dragZoneAction(group, delta) {
   var isMultiResize = group.data.isSelected && selectedGroups.length > 1;
   if (Paper.currentZoneAction === 'resizeBot') {
     if (isMultiResize) {
-      selectedGroups.forEach(function (selectedGroup) { resizeGroupHeight(selectedGroup, delta.y, false); });
+      selectedGroups.forEach(function (selectedGroup) {
+        resizeGroupHeight(selectedGroup, delta.y, false);
+      });
     } else {
       resizeGroupHeight(group, delta.y, false);
     }
   } else if (Paper.currentZoneAction === 'resizeTop') {
     if (isMultiResize) {
-      selectedGroups.forEach(function (selectedGroup) { resizeGroupHeight(selectedGroup, delta.y, true); });
+      selectedGroups.forEach(function (selectedGroup) {
+        resizeGroupHeight(selectedGroup, delta.y, true);
+      });
     } else {
       resizeGroupHeight(group, delta.y, true);
     }
   } else if (Paper.currentZoneAction === 'moveZone') {
     if (isMultiResize) {
-      selectedGroups.forEach(function (selectedGroup) { selectedGroup.position.y += delta.y; });
+      selectedGroups.forEach(function (selectedGroup) {
+        selectedGroup.position.y += delta.y;
+      });
     } else {
       group.position.y += delta.y;
     }
@@ -1098,8 +1165,14 @@ function endZoneAction() {
 
 function hideDecorations(group) {
   if (group.data.pill) group.data.pill.visible = false;
-  if (group.data.measureBadges) group.data.measureBadges.forEach(function (badge) { badge.visible = false; });
-  if (group.data.textBadges) group.data.textBadges.forEach(function (badge) { badge.visible = false; });
+  if (group.data.measureBadges)
+    group.data.measureBadges.forEach(function (badge) {
+      badge.visible = false;
+    });
+  if (group.data.textBadges)
+    group.data.textBadges.forEach(function (badge) {
+      badge.visible = false;
+    });
   if (group.data.handles) {
     group.data.handles.forEach(function (h) {
       h.visible = false;
@@ -1134,14 +1207,24 @@ function readZonesFromProject(project) {
         movement: item.data.movement,
         measures: measures
           ? measures.map(function (measure) {
-              return { x: measure.x / canvasWval, y: measure.y / canvasH, number: measure.number, fontFrac: MEASURE_FONT_PX / canvasH };
+              return {
+                x: measure.x / canvasWval,
+                y: measure.y / canvasH,
+                number: measure.number,
+                fontFrac: MEASURE_FONT_PX / canvasH,
+              };
             })
           : undefined,
         texts: texts
           ? texts.map(function (text) {
               // fontFrac = taille / hauteur canvas → indépendant du zoom/échelle ; sert à
               // restaurer fontPx au rechargement et à dimensionner la police PDF.
-              return { x: text.x / canvasWval, y: text.y / canvasH, text: text.text, fontFrac: (text.fontPx || TEXT_FONT_PX) / canvasH };
+              return {
+                x: text.x / canvasWval,
+                y: text.y / canvasH,
+                text: text.text,
+                fontFrac: (text.fontPx || TEXT_FONT_PX) / canvasH,
+              };
             })
           : undefined,
       });
@@ -1206,9 +1289,9 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   var naturalH = scoreParts.naturalH || 1;
   var coefH = scoreParts.coefH || 1;
   var coefV = scoreParts.coefV || 1;
-  var left   = Math.round(zone.x * naturalW * coefH);
-  var right  = Math.round((zone.x + zone.width) * naturalW * coefH);
-  var top    = Math.round(zone.y * naturalH * coefV);
+  var left = Math.round(zone.x * naturalW * coefH);
+  var right = Math.round((zone.x + zone.width) * naturalW * coefH);
+  var top = Math.round(zone.y * naturalH * coefV);
   var bottom = Math.round((zone.y + zone.height) * naturalH * coefV);
   var midX = (left + right) / 2;
 
@@ -1332,10 +1415,7 @@ function makePill(text, leftX, centerY, pillColor) {
 
 // Barre de préhension (poignée resize), centrée en (cx, cy).
 function makeGrip(cx, cy) {
-  var grip = new paper.Path.Line(
-    new paper.Point(cx - 14, cy),
-    new paper.Point(cx + 14, cy)
-  );
+  var grip = new paper.Path.Line(new paper.Point(cx - 14, cy), new paper.Point(cx + 14, cy));
   grip.strokeColor = ZONE_STROKE;
   grip.strokeWidth = 3;
   grip.strokeCap = 'round';
@@ -1449,7 +1529,10 @@ Paper.drawText = function (group, text) {
 function makeTextResizeHandle(center) {
   var size = 7;
   var handle = new paper.Path.Rectangle(
-    new paper.Rectangle(center.subtract(new paper.Point(size / 2, size / 2)), new paper.Size(size, size)),
+    new paper.Rectangle(
+      center.subtract(new paper.Point(size / 2, size / 2)),
+      new paper.Size(size, size)
+    ),
     1
   );
   handle.fillColor = 'white';
@@ -1484,7 +1567,7 @@ Paper.redrawSpread = function () {
   ids.forEach(function (canvasId, sideIndex) {
     var canvas = document.getElementById(canvasId);
     if (!canvas || canvas.width === 0) return;
-    var imgEl = document.querySelector('#' + sysIds[sideIndex] + ' img');
+    var imgEl = document.querySelector('#' + sysIds[sideIndex] + ' canvas');
     if (!imgEl) return;
     var pageIndex = scoreParts.singlePage ? origin : origin + sideIndex;
     var isCurrent = canvasId === Paper.currentCanvasId;
@@ -1526,7 +1609,9 @@ Paper.selectAllZones = function () {
 // ============== Suppression multiple
 Paper.deleteSelectedZones = function () {
   if (!selectedGroups.length) return;
-  selectedGroups.forEach(function (g) { Paper.deleteZone(g); });
+  selectedGroups.forEach(function (g) {
+    Paper.deleteZone(g);
+  });
   selectedGroups = [];
   commit();
   scoreParts.saveZones(function () {});

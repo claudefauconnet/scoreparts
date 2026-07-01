@@ -223,17 +223,14 @@ async function generatePartBytes(opts, onProgress) {
     transfer.push(buffer);
   }
 
-  // Fallback : si l'appelant ne fournit pas les dimensions naturelles, les déduire
-  // du premier PNG (avant transfert du buffer au Worker). Sans naturalW/H le
-  // pipeline ne saurait pas convertir les zones fractionnaires en pixels.
-  let naturalW = opts.naturalW;
-  let naturalH = opts.naturalH;
-  if (!naturalW || !naturalH) {
-    const firstIndex = pageIndexes[0];
-    const size = await pngNaturalSize(pageImageBuffers[firstIndex]);
-    naturalW = naturalW || size.w;
-    naturalH = naturalH || size.h;
-  }
+  // Dimensions naturelles : toujours lues depuis le PNG brut stocké (IndexedDB),
+  // JAMAIS depuis l'image affichée. L'image affichée peut être pré-downscalée
+  // (multi-pass) pour la qualité d'affichage → ses naturalW/H ne correspondraient
+  // pas à la résolution du PNG stocké → recadrage du scoreSplitter décalé.
+  const firstIndex = pageIndexes[0];
+  const pngSize = await pngNaturalSize(pageImageBuffers[firstIndex]);
+  const naturalW = pngSize.w;
+  const naturalH = pngSize.h;
 
   return await callWorker(
     'generatePart',
