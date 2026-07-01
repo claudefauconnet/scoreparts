@@ -8,8 +8,12 @@
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  box-shadow: 1px 0 0 rgba(0,0,0,0.02), 4px 0 24px rgba(0,0,0,0.03);
+  box-shadow:
+    1px 0 0 rgba(0, 0, 0, 0.02),
+    4px 0 24px rgba(0, 0, 0, 0.03);
   z-index: 5;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .brand {
@@ -20,17 +24,23 @@
   gap: 12px;
 }
 .brand-mark {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   color: #faf6ea;
   font-family: var(--serif);
   font-weight: 600;
   font-size: 22px;
-  box-shadow: 0 4px 12px rgba(107,58,46,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow:
+    0 4px 12px rgba(107, 58, 46, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
-.brand-text { line-height: 1.1; }
+.brand-text {
+  line-height: 1.1;
+}
 .brand-text .name {
   font-family: var(--script);
   font-size: 28px;
@@ -68,10 +78,14 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   text-transform: uppercase;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   margin-bottom: -1px;
 }
-.tab:hover { color: var(--ink-2); }
+.tab:hover {
+  color: var(--ink-2);
+}
 .tab.active {
   color: var(--accent);
   border-color: var(--accent);
@@ -79,8 +93,28 @@
 
 .panel {
   flex: 1;
-  overflow-y: auto;
-  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 22px 24px 12px;
+}
+
+#lp-voices-host {
+  flex: 1;
+  min-height: 0;
+  margin-top: 22px;
+}
+
+.left-panel-footer {
+  flex-shrink: 0;
+  padding: 8px 24px 10px;
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.left-panel-footer #lp-download-host {
+  display: block;
 }
 .panel-title {
   font-family: var(--script);
@@ -117,12 +151,16 @@
   font-family: var(--sans);
   font-size: 11.5px;
   line-height: 1.45;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.12);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.25),
+    0 4px 10px rgba(0, 0, 0, 0.12);
   max-width: 240px;
   opacity: 0;
   transition: opacity 0.15s;
 }
-.global-tooltip.show { opacity: 1; }
+.global-tooltip.show {
+  opacity: 1;
+}
 .global-tooltip strong {
   display: block;
   font-weight: 600;

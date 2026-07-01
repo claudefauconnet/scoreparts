@@ -11,6 +11,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: 0 2px 6px rgba(40,25,10,0.04);
+  width: min(100%, 560px);
   max-width: 100%;
 }
 .mvt-number {
@@ -49,7 +50,7 @@
   font-size: 22px;
   color: var(--ink);
   min-width: 0;
-  width: 240px;
+  width: 100%;
   padding: 4px 0 0;
   border-bottom: 1px dashed transparent;
   transition: border-color 0.15s;
@@ -182,5 +183,5 @@
 /* Small / short screens — tighter pill */
 @media (max-width: 1100px), (max-height: 820px) {
   .mvt { gap: 6px; padding: 4px 6px 4px 10px; }
-  .mvt-name { width: 150px; }
+  .mvt-name { width: 100%; }
 }

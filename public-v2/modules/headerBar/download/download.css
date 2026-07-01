@@ -10,7 +10,7 @@
   font-size: 12px;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  border-right: 1px solid rgba(255,255,255,0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 .dl-split .dl-caret {
   border-top-left-radius: 0;
@@ -19,7 +19,9 @@
   font-size: 12px;
   min-width: 24px;
 }
-.dl-split .dl-caret svg { display: block; }
+.dl-split .dl-caret svg {
+  display: block;
+}
 .dl-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -28,12 +30,16 @@
   background: white;
   border: 1px solid var(--line);
   border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(40,25,10,0.2), 0 4px 10px rgba(40,25,10,0.06);
+  box-shadow:
+    0 12px 32px rgba(40, 25, 10, 0.2),
+    0 4px 10px rgba(40, 25, 10, 0.06);
   padding: 6px;
   z-index: 50;
   display: none;
 }
-.dl-menu.open { display: block; }
+.dl-menu.open {
+  display: block;
+}
 .dl-item {
   width: 100%;
   display: grid;
@@ -49,33 +55,62 @@
   transition: background 0.15s;
   color: var(--ink);
 }
-.dl-item:hover { background: #fbf7ec; }
-.dl-item + .dl-item { margin-top: 2px; }
+.dl-item:hover {
+  background: #fbf7ec;
+}
+.dl-item + .dl-item {
+  margin-top: 2px;
+}
 .dl-icon {
-  width: 34px; height: 34px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
 }
-.dl-icon.pdf { background: #fae3df; color: var(--violon1); }
-.dl-icon.zip { background: #f1e6cf; color: var(--gold); }
-.dl-icon svg { width: 18px; height: 18px; }
-.dl-text { min-width: 0; }
+.dl-icon.pdf {
+  background: #fae3df;
+  color: var(--violon1);
+}
+.dl-icon.zip {
+  background: #f1e6cf;
+  color: var(--gold);
+}
+.dl-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.dl-text {
+  min-width: 0;
+}
 .dl-title {
-  font-size: 13px; font-weight: 500; line-height: 1.2; color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
 }
 .dl-sub {
-  font-size: 11px; color: var(--muted); margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
   font-style: italic;
   font-family: var(--serif);
 }
-.dl-end { display: flex; align-items: center; gap: 8px; }
+.dl-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .dl-check {
   color: var(--accent);
   opacity: 0;
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
 }
-.dl-item.default .dl-check { opacity: 1; }
+.dl-item.default .dl-check {
+  opacity: 1;
+}
 .dl-badge {
   font-family: var(--mono);
   font-size: 10px;
@@ -85,4 +120,23 @@
   padding: 3px 7px;
   border-radius: 999px;
   line-height: 1;
+}
+
+/* Panneau gauche : action de téléchargement fixe au-dessus de la progression. */
+.left-panel-footer .dl-split {
+  display: flex;
+  width: 100%;
+}
+.left-panel-footer .dl-main {
+  flex: 1;
+  padding: 7px 14px;
+}
+.left-panel-footer .dl-caret {
+  padding: 7px 10px;
+}
+.left-panel-footer .dl-menu {
+  top: auto;
+  right: 0;
+  bottom: calc(100% + 6px);
+  width: 100%;
 }

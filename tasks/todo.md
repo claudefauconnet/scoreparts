@@ -1,3 +1,34 @@
+# Restructuration du panneau gauche
+
+## Tâches
+
+- [x] Fixer la progression en bas du panneau
+- [x] Déplacer le téléchargement de la barre haute au-dessus de la progression
+- [x] Cloisonner les voix dans une zone à défilement
+- [x] Vérifier la structure, le formatage et le diff
+- [x] Réallouer l’espace libéré de la header bar au titre et aux mouvements
+- [x] Réduire la hauteur du téléchargement et de la progression
+
+## Review
+
+Le téléchargement quitte la barre haute et rejoint le pied fixe du panneau,
+directement au-dessus de la progression. Son menu s’ouvre vers le haut.
+
+Les voix conservent leur design initial : en-tête et bouton d’ajout restent visibles,
+seule la liste centrale défile quand elle devient trop longue.
+
+Téléchargement et progression sont placés avant les paramètres.
+
+Vérification :
+
+- serveur local : HTTP 200 ;
+- Prettier ciblé : OK ;
+- chargement unique des hosts et IDs : OK ;
+- `git diff --check` : OK ;
+- vérification visuelle non exécutée : navigateur intégré indisponible.
+
+---
+
 # Migration backend → IndexedDB (full client-side)
 
 But : supprimer tout le backend de traitement/stockage. Le stockage passe en IndexedDB

@@ -1,147 +1,156 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8" />
-<title>ScoreParts</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/modules/scoreSelector/dialog/dialog.css">
-<style>
-  body {
-    display: block;
-    overflow: auto;
-    background: none;
-  }
-  #dialog-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: grid;
-    place-items: center;
-    background: radial-gradient(1200px 800px at 30% 20%, #faf6ea 0%, #f5f1e8 60%, #ebe5d6 100%);
-  }
-  .launch.on {
-    position: fixed;
-    inset: 0;
-    z-index: 1001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-  }
-</style>
-<link rel="stylesheet" href="/modules/scoreSelector/selector/selector.css">
-<link rel="stylesheet" href="/modules/scoreSelector/import_pdf/import_pdf.css">
-<link rel="stylesheet" href="/common/progressToast.css">
-<link rel="stylesheet" href="/modules/partitions.css">
-<link rel="stylesheet" href="/modules/leftPanel/leftPanel.css">
-<link rel="stylesheet" href="/modules/leftPanel/actions/actions.css">
-<link rel="stylesheet" href="/modules/leftPanel/voices/voices.css">
-<link rel="stylesheet" href="/modules/leftPanel/progress/progress.css">
-<link rel="stylesheet" href="/modules/headerBar/scoreInfo/scoreInfo.css">
-<link rel="stylesheet" href="/modules/headerBar/headerBar.css">
-<link rel="stylesheet" href="/modules/headerBar/movements/movements.css">
-<link rel="stylesheet" href="/modules/headerBar/download/download.css">
-<link rel="stylesheet" href="/modules/headerBar/reset/reset.css">
-<link rel="stylesheet" href="/modules/scorePlayer/scorePlayer.css">
-<link rel="stylesheet" href="/modules/parameters/parameters.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
-</head>
-<body>
+  <head>
+    <meta charset="utf-8" />
+    <title>ScoreParts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Pinyon+Script&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/modules/scoreSelector/dialog/dialog.css" />
+    <style>
+      body {
+        display: block;
+        overflow: auto;
+        background: none;
+      }
+      #dialog-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(1200px 800px at 30% 20%, #faf6ea 0%, #f5f1e8 60%, #ebe5d6 100%);
+      }
+      .launch.on {
+        position: fixed;
+        inset: 0;
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+    </style>
+    <link rel="stylesheet" href="/modules/scoreSelector/selector/selector.css" />
+    <link rel="stylesheet" href="/modules/scoreSelector/import_pdf/import_pdf.css" />
+    <link rel="stylesheet" href="/common/progressToast.css" />
+    <link rel="stylesheet" href="/modules/partitions.css" />
+    <link rel="stylesheet" href="/modules/leftPanel/leftPanel.css" />
+    <link rel="stylesheet" href="/modules/leftPanel/actions/actions.css" />
+    <link rel="stylesheet" href="/modules/leftPanel/voices/voices.css" />
+    <link rel="stylesheet" href="/modules/leftPanel/progress/progress.css" />
+    <link rel="stylesheet" href="/modules/headerBar/scoreInfo/scoreInfo.css" />
+    <link rel="stylesheet" href="/modules/headerBar/headerBar.css" />
+    <link rel="stylesheet" href="/modules/headerBar/movements/movements.css" />
+    <link rel="stylesheet" href="/modules/headerBar/download/download.css" />
+    <link rel="stylesheet" href="/modules/headerBar/reset/reset.css" />
+    <link rel="stylesheet" href="/modules/scorePlayer/scorePlayer.css" />
+    <link rel="stylesheet" href="/modules/parameters/parameters.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/paper@0.12.18/dist/paper-full.min.js"></script>
+  </head>
+  <body>
+    <!-- Dialog overlay — visible au démarrage -->
+    <div id="dialog-overlay">
+      <div id="dialog-host"></div>
+    </div>
 
-<!-- Dialog overlay — visible au démarrage -->
-<div id="dialog-overlay">
-  <div id="dialog-host"></div>
-</div>
+    <!-- App principale — toujours dans le DOM -->
+    <div class="app">
+      <aside class="sidebar" id="voices-host"></aside>
+      <section class="stage" id="stage" data-book-style="realistic">
+        <div class="stage-top" id="headerbar-host"></div>
+        <div class="stage-body" id="stage-body"></div>
+        <div class="stage-bottom" id="scoreplayer-bottom"></div>
+      </section>
+    </div>
 
-<!-- App principale — toujours dans le DOM -->
-<div class="app">
-  <aside class="sidebar" id="voices-host"></aside>
-  <section class="stage" id="stage" data-book-style="realistic">
-    <div class="stage-top" id="headerbar-host"></div>
-    <div class="stage-body" id="stage-body"></div>
-    <div class="stage-bottom" id="scoreplayer-bottom"></div>
-  </section>
-</div>
+    <script>
+      $(function () {
+        function appendModule(modulePath) {
+          var script = document.createElement('script');
+          script.type = 'module';
+          script.src = '/modules/' + modulePath + '.js';
+          document.body.appendChild(script);
+        }
 
-<script>
-$(function () {
-  function appendModule(modulePath) {
-    var script = document.createElement('script');
-    script.type = 'module';
-    script.src = '/modules/' + modulePath + '.js';
-    document.body.appendChild(script);
-  }
+        // Charge un fragment HTML dans un host et renvoie une vraie Promise (jqXHR).
+        // $.fn.load() renvoie l'objet jQuery (non thenable) et ne s'enchaîne pas :
+        // on passe par $.get pour pouvoir composer avec .then / $.when.
+        function loadInto(selector, url) {
+          return $.get(url).then(function (html) {
+            $(selector).html(html);
+          });
+        }
 
-  // Charge un fragment HTML dans un host et renvoie une vraie Promise (jqXHR).
-  // $.fn.load() renvoie l'objet jQuery (non thenable) et ne s'enchaîne pas :
-  // on passe par $.get pour pouvoir composer avec .then / $.when.
-  function loadInto(selector, url) {
-    return $.get(url).then(function (html) {
-      $(selector).html(html);
-    });
-  }
+        // leftPanel et headerBar sont des shells : on charge d'abord leur HTML (qui
+        // contient des hosts), PUIS les fragments de leurs sous-composants dans ces hosts.
+        var leftPanelParts = loadInto('#voices-host', '/modules/leftPanel/leftPanel.html').then(
+          function () {
+            return $.when(
+              loadInto('#lp-actions-host', '/modules/leftPanel/actions/actions.html'),
+              loadInto('#lp-voices-host', '/modules/leftPanel/voices/voices.html'),
+              loadInto('#lp-download-host', '/modules/headerBar/download/download.html'),
+              loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html'),
+              loadInto('#lp-parameters-host', '/modules/parameters/parameters.html')
+            );
+          }
+        );
 
-  // leftPanel et headerBar sont des shells : on charge d'abord leur HTML (qui
-  // contient des hosts), PUIS les fragments de leurs sous-composants dans ces hosts.
-  var leftPanelParts = loadInto('#voices-host', '/modules/leftPanel/leftPanel.html').then(
-    function () {
-      return $.when(
-        loadInto('#lp-actions-host', '/modules/leftPanel/actions/actions.html'),
-        loadInto('#lp-voices-host', '/modules/leftPanel/voices/voices.html'),
-        loadInto('#lp-progress-host', '/modules/leftPanel/progress/progress.html'),
-        loadInto('#lp-parameters-host', '/modules/parameters/parameters.html')
-      );
-    }
-  );
+        var headerBarParts = loadInto('#headerbar-host', '/modules/headerBar/headerBar.html').then(
+          function () {
+            return $.when(
+              loadInto('#hb-scoreinfo-host', '/modules/headerBar/scoreInfo/scoreInfo.html'),
+              loadInto('#hb-movements-host', '/modules/headerBar/movements/movements.html'),
+              loadInto('#hb-reset-host', '/modules/headerBar/reset/reset.html')
+            );
+          }
+        );
 
-  var headerBarParts = loadInto('#headerbar-host', '/modules/headerBar/headerBar.html').then(
-    function () {
-      return $.when(
-        loadInto('#hb-scoreinfo-host', '/modules/headerBar/scoreInfo/scoreInfo.html'),
-        loadInto('#hb-movements-host', '/modules/headerBar/movements/movements.html'),
-        loadInto('#hb-reset-host', '/modules/headerBar/reset/reset.html'),
-        loadInto('#hb-download-host', '/modules/headerBar/download/download.html')
-      );
-    }
-  );
+        var otherParts = $.when(
+          loadInto('#stage-body', '/modules/scorePlayer/scorePlayer.html'),
+          loadInto('#scoreplayer-bottom', '/modules/scorePlayer/bottomBar.html')
+        );
 
-  var otherParts = $.when(
-    loadInto('#stage-body', '/modules/scorePlayer/scorePlayer.html'),
-    loadInto('#scoreplayer-bottom', '/modules/scorePlayer/bottomBar.html')
-  );
+        var dialogFragment = $('#dialog-host').load(
+          '/modules/scoreSelector/dialog/dialog.html',
+          function () {
+            $.when(
+              $('#selector-slot').load('/modules/scoreSelector/selector/selector.html'),
+              $('#import-slot').load('/modules/scoreSelector/import_pdf/import_pdf.html')
+            ).done(function () {
+              [
+                'scoreSelector/dialog/dialog',
+                'scoreSelector/selector/selector',
+                'scoreSelector/import_pdf/import_pdf',
+              ].forEach(appendModule);
+            });
+          }
+        );
 
-  var dialogFragment = $('#dialog-host').load('/modules/scoreSelector/dialog/dialog.html', function () {
-    $.when(
-      $('#selector-slot').load('/modules/scoreSelector/selector/selector.html'),
-      $('#import-slot').load('/modules/scoreSelector/import_pdf/import_pdf.html')
-    ).done(function () {
-      ['scoreSelector/dialog/dialog', 'scoreSelector/selector/selector', 'scoreSelector/import_pdf/import_pdf'].forEach(appendModule);
-    });
-  });
-
-  // Une fois tous les fragments (shells + sous-composants) dans le DOM, on charge
-  // les scripts ES modules. Le shell leftPanel.js ne porte que le tooltip global ;
-  // headerBar n'a pas de script shell (toute sa logique est dans les sous-composants).
-  $.when(leftPanelParts, headerBarParts, otherParts).done(function () {
-    [
-      'leftPanel/leftPanel',
-      'leftPanel/actions/actions',
-      'leftPanel/voices/voices',
-      'leftPanel/progress/progress',
-      'headerBar/scoreInfo/scoreInfo',
-      'headerBar/movements/movements',
-      'headerBar/reset/reset',
-      'headerBar/download/download',
-      'scorePlayer/scorePlayer',
-      'scorePlayer/bottomBar',
-      'parameters/parameters',
-    ].forEach(appendModule);
-  });
-});
-</script>
-</body>
+        // Une fois tous les fragments (shells + sous-composants) dans le DOM, on charge
+        // les scripts ES modules. Le shell leftPanel.js ne porte que le tooltip global ;
+        // headerBar n'a pas de script shell (toute sa logique est dans les sous-composants).
+        $.when(leftPanelParts, headerBarParts, otherParts).done(function () {
+          [
+            'leftPanel/leftPanel',
+            'leftPanel/actions/actions',
+            'leftPanel/voices/voices',
+            'leftPanel/progress/progress',
+            'headerBar/scoreInfo/scoreInfo',
+            'headerBar/movements/movements',
+            'headerBar/reset/reset',
+            'headerBar/download/download',
+            'scorePlayer/scorePlayer',
+            'scorePlayer/bottomBar',
+            'parameters/parameters',
+          ].forEach(appendModule);
+        });
+      });
+    </script>
+  </body>
 </html>
