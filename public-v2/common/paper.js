@@ -1004,29 +1004,47 @@ function beginZoneAction(group, point) {
     Paper.currentPath = group.data.rect;
     // Masque les décorations pendant le redimensionnement (évite de déformer le
     // texte de la pastille) — elles sont redessinées proprement au relâchement.
-    hideDecorations(group);
+    if (group.data.isSelected && selectedGroups.length > 1) {
+      selectedGroups.forEach(function (selectedGroup) { hideDecorations(selectedGroup); });
+    } else {
+      hideDecorations(group);
+    }
   } else {
     Paper.currentZoneAction = 'moveZone';
   }
+}
+
+// Redimensionne un groupe sur la hauteur d'un delta vertical. fromTop=true →
+// bord haut saisi (le bas reste fixe) ; false → bord bas saisi (le haut reste fixe).
+// Renvoie false si la hauteur cible passe sous le minimum (resize ignoré).
+function resizeGroupHeight(group, deltaY, fromTop) {
+  var groupRect = group.data.rect.bounds;
+  var targetHeight = fromTop ? groupRect.height - deltaY : groupRect.height + deltaY;
+  if (targetHeight < MIN_ZONE_HEIGHT) return false;
+  var anchor = fromTop ? groupRect.bottomLeft : groupRect.topLeft;
+  group.scale(1, targetHeight / groupRect.height, anchor);
+  return true;
 }
 
 // Applique le déplacement `delta` (déjà corrigé du zoom CSS) à la zone `group`
 // selon l'action courante. Appelé depuis onCanvasMouseDrag.
 function dragZoneAction(group, delta) {
   if (!scoreParts.currentMovement) return;
-  var rect = group.data.rect.bounds;
+  var isMultiResize = group.data.isSelected && selectedGroups.length > 1;
   if (Paper.currentZoneAction === 'resizeBot') {
-    // Bord bas : le haut reste fixe.
-    var newHeightBot = rect.height + delta.y;
-    if (newHeightBot < MIN_ZONE_HEIGHT) return;
-    group.scale(1, newHeightBot / rect.height, rect.topLeft);
+    if (isMultiResize) {
+      selectedGroups.forEach(function (selectedGroup) { resizeGroupHeight(selectedGroup, delta.y, false); });
+    } else {
+      resizeGroupHeight(group, delta.y, false);
+    }
   } else if (Paper.currentZoneAction === 'resizeTop') {
-    // Bord haut : le bas reste fixe.
-    var newHeightTop = rect.height - delta.y;
-    if (newHeightTop < MIN_ZONE_HEIGHT) return;
-    group.scale(1, newHeightTop / rect.height, rect.bottomLeft);
+    if (isMultiResize) {
+      selectedGroups.forEach(function (selectedGroup) { resizeGroupHeight(selectedGroup, delta.y, true); });
+    } else {
+      resizeGroupHeight(group, delta.y, true);
+    }
   } else if (Paper.currentZoneAction === 'moveZone') {
-    if (group.data.isSelected && selectedGroups.length > 1) {
+    if (isMultiResize) {
       selectedGroups.forEach(function (selectedGroup) { selectedGroup.position.y += delta.y; });
     } else {
       group.position.y += delta.y;
