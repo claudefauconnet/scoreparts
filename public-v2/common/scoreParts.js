@@ -33,113 +33,30 @@ scoreParts.pageStep = function () {
   return scoreParts.singlePage ? 1 : 2;
 };
 
+// Object URL courant par container — révoqué au remplacement pour ne pas fuir la
+// mémoire (chaque Blob de page lu depuis IndexedDB est exposé via createObjectURL).
+var activeObjectUrls = {};
+
 function clearContainerImage(containerId) {
   var container = document.getElementById(containerId);
   if (container) container.innerHTML = '';
+  if (activeObjectUrls[containerId]) {
+    URL.revokeObjectURL(activeObjectUrls[containerId]);
+    delete activeObjectUrls[containerId];
+  }
 }
 
-// Cap du backing store du canvas d'affichage. Les PNG stockés font jusqu'à ~5270px
-// (high ×8) ; un backing store à cette taille resterait lourd en GPU memory.
+// Cap du backing store du canvas d'affichage. Les PNG stockés font jusqu'à ~9520px
+// (max ×16) ; un backing store à cette taille = ~528 Mo de GPU memory par page.
 // 4000px = bon compromis : ~93 Mo/page, et reste net à tout zoom du book (jusqu'à
-// ×5 sur un layout ~800px = 4000px affichés). medium ×4 (~2635px) est sous ce cap
-// → aucun redimensionnement à l'affichage, seulement le décodage.
+// ×5 sur un layout ~800px = 4000px affichés).
 var DISPLAY_CANVAS_MAX_WIDTH = 4000;
 
-// ============== Cache LRU des bitmaps d'affichage (fluidité de la navigation)
-// Décoder le PNG d'une page (jusqu'à ~5270px en high) coûte 0,3-1 s ; sans cache
-// ce coût est repayé à chaque affichage. On mémorise les ImageBitmap déjà décodés
-// (et redimensionnés sous le cap) et on précharge les pages voisines : la navigation
-// séquentielle réutilise le cache (blit ~5 ms) au lieu de redécoder. Un ImageBitmap
-// reste réutilisable par plusieurs drawImage tant qu'il n'est pas .close() → on ne
-// le ferme qu'à l'éviction ou hors cache.
-var DISPLAY_BITMAP_CACHE_LIMIT = 6; // spread courant (2) + suivant (2) + précédent (2)
-var displayBitmapCache = new Map(); // clé "pdfName|page" → { bitmap, naturalWidth, naturalHeight }
-
-function displayCacheKey(page) {
-  return scoreParts.pdfName + '|' + page;
-}
-
-// Vide le cache (changement de partition) et libère les bitmaps GPU associés.
-function clearDisplayBitmapCache() {
-  displayBitmapCache.forEach(function (entry) {
-    entry.bitmap.close();
-  });
-  displayBitmapCache.clear();
-}
-
-// Insère/rafraîchit une entrée (Map itère dans l'ordre d'insertion → réinsérer = plus
-// récemment utilisé), puis évince la plus ancienne au-delà de la limite en fermant
-// son bitmap.
-function putDisplayBitmap(key, entry) {
-  if (displayBitmapCache.has(key)) displayBitmapCache.delete(key);
-  displayBitmapCache.set(key, entry);
-  while (displayBitmapCache.size > DISPLAY_BITMAP_CACHE_LIMIT) {
-    var oldestKey = displayBitmapCache.keys().next().value;
-    var evicted = displayBitmapCache.get(oldestKey);
-    displayBitmapCache.delete(oldestKey);
-    evicted.bitmap.close();
-  }
-}
-
-// Décode un Blob PNG en bitmap d'affichage, HORS thread principal (createImageBitmap,
-// comme pngNaturalSize dans localBackendProxy.js). Redimensionne sous le cap seulement
-// si le PNG le dépasse (high) ; sinon renvoie le bitmap source tel quel (medium/low).
-// Retourne { bitmap, naturalWidth, naturalHeight } — les dimensions naturelles servent
-// à Paper.js (posées sur le canvas via _naturalWidth/_naturalHeight).
-function decodeDisplayBitmap(blob) {
-  var naturalWidth, naturalHeight;
-  return createImageBitmap(blob).then(function (sourceBitmap) {
-    naturalWidth = sourceBitmap.width;
-    naturalHeight = sourceBitmap.height;
-    var scale = Math.min(1, DISPLAY_CANVAS_MAX_WIDTH / naturalWidth);
-    if (scale >= 1) {
-      return { bitmap: sourceBitmap, naturalWidth: naturalWidth, naturalHeight: naturalHeight };
-    }
-    var targetWidth = Math.round(naturalWidth * scale);
-    var targetHeight = Math.round(naturalHeight * scale);
-    return createImageBitmap(sourceBitmap, {
-      resizeWidth: targetWidth,
-      resizeHeight: targetHeight,
-      resizeQuality: 'high',
-    }).then(function (resizedBitmap) {
-      sourceBitmap.close();
-      return { bitmap: resizedBitmap, naturalWidth: naturalWidth, naturalHeight: naturalHeight };
-    });
-  });
-}
-
-// Dessine un bitmap d'affichage dans un <canvas> neuf inséré dans le container. Le
-// blit (drawImage 1:1) ne consomme pas le bitmap → il reste réutilisable en cache.
-// Avec will-change: transform (CSS), le GPU composite depuis ce backing store → net
-// à tout zoom du book (un <img> serait rasterisé à la taille de layout puis upscalé
-// par le zoom CSS → flou).
-function blitBitmapToContainer(entry, containerId) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-  var canvas = document.createElement('canvas');
-  canvas.width = entry.bitmap.width;
-  canvas.height = entry.bitmap.height;
-  canvas._naturalWidth = entry.naturalWidth;
-  canvas._naturalHeight = entry.naturalHeight;
-  canvas.getContext('2d').drawImage(entry.bitmap, 0, 0);
-  container.innerHTML = '';
-  container.appendChild(canvas);
-}
-
-// Charge l'image d'une page (Blob IndexedDB) dans un container. Cache hit → blit
-// immédiat (instantané). Miss → lecture IndexedDB + décodage hors thread, puis mise
-// en cache et blit. Page absente (hors limites, ex. page droite d'un spread en fin de
-// PDF) → vide le container. Le container n'est vidé qu'au blit → l'ancienne page reste
-// visible pendant le décodage (pas de flash de canvas vide).
+// Charge l'image d'une page (Blob IndexedDB → object URL) dans un container.
+// Page absente (hors limites, ex. page droite d'un spread en fin de PDF) → vide
+// le container. L'ancien object URL n'est révoqué qu'une fois la nouvelle image
+// chargée, pour éviter de couper l'image affichée pendant la transition.
 function loadPageImage(page, containerId, callback) {
-  var key = displayCacheKey(page);
-  var cached = displayBitmapCache.get(key);
-  if (cached) {
-    putDisplayBitmap(key, cached); // marque récemment utilisé
-    blitBitmapToContainer(cached, containerId);
-    if (callback) callback();
-    return;
-  }
   getPageBlob(scoreParts.pdfName, page)
     .then(function (blob) {
       if (!blob) {
@@ -147,9 +64,11 @@ function loadPageImage(page, containerId, callback) {
         if (callback) callback();
         return;
       }
-      return decodeDisplayBitmap(blob).then(function (entry) {
-        putDisplayBitmap(key, entry);
-        blitBitmapToContainer(entry, containerId);
+      var objectUrl = URL.createObjectURL(blob);
+      var previousUrl = activeObjectUrls[containerId];
+      activeObjectUrls[containerId] = objectUrl;
+      scoreParts.loadImageIntoContainer(objectUrl, containerId, function () {
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
         if (callback) callback();
       });
     })
@@ -159,51 +78,39 @@ function loadPageImage(page, containerId, callback) {
     });
 }
 
-// Décode en tâche de fond le PNG d'une page voisine dans le cache (sans l'afficher),
-// pour que la navigation vers elle soit instantanée. No-op si hors bornes, déjà en
-// cache, ou si une course l'a chargée entre-temps.
-function prefetchPage(page) {
-  if (page < 0) return;
-  if (scoreParts.totalPages !== null && page >= scoreParts.totalPages) return;
-  var key = displayCacheKey(page);
-  if (displayBitmapCache.has(key)) return;
-  getPageBlob(scoreParts.pdfName, page)
-    .then(function (blob) {
-      if (!blob || displayBitmapCache.has(key)) return;
-      return decodeDisplayBitmap(blob).then(function (entry) {
-        if (displayBitmapCache.has(key)) {
-          entry.bitmap.close(); // course : garder l'existant, fermer le doublon
-          return;
-        }
-        putDisplayBitmap(key, entry);
-      });
-    })
-    .catch(function () {});
-}
-
-// Précharge les pages du spread suivant et du spread précédent autour de l'origine
-// courante (mono-page : pages ±1 ; spread : paires ±2/±3 et ±2/±1).
-function prefetchAroundSpread(spreadOrigin) {
-  var neighbors = scoreParts.singlePage
-    ? [spreadOrigin + 1, spreadOrigin - 1]
-    : [spreadOrigin + 2, spreadOrigin + 3, spreadOrigin - 2, spreadOrigin - 1];
-  neighbors.forEach(function (page) {
-    prefetchPage(page);
-  });
-}
-
-// Charge un Blob PNG dans un container SANS passer par le cache (chemin public direct).
-// Conservé pour compat d'API ; les affichages internes passent par loadPageImage.
-scoreParts.loadImageIntoContainer = function (blob, containerId, callback) {
-  decodeDisplayBitmap(blob)
-    .then(function (entry) {
-      blitBitmapToContainer(entry, containerId);
-      entry.bitmap.close(); // hors cache → libérer immédiatement
-      if (callback) callback();
-    })
-    .catch(function () {
-      if (callback) callback();
-    });
+// Charge le PNG d'une page dans un <canvas> haute résolution (au lieu d'un <img>).
+// Le backing store est capé à DISPLAY_CANVAS_MAX_WIDTH pour limiter la mémoire GPU,
+// mais reste bien plus grand que la taille de layout (~400-800px). Avec
+// will-change: transform (CSS), le GPU composite depuis le backing store directement
+// → net à tout zoom du book. Un <img> serait rasterisé à sa taille de layout puis
+// upscaled par le zoom CSS → flou. Les dimensions naturelles du PNG original sont
+// stockées sur le canvas (_naturalWidth/_naturalHeight) pour Paper.js.
+scoreParts.loadImageIntoContainer = function (src, containerId, callback) {
+  var container = document.getElementById(containerId);
+  if (!container) {
+    if (callback) callback();
+    return;
+  }
+  var img = new Image();
+  img.onload = function () {
+    var scale = Math.min(1, DISPLAY_CANVAS_MAX_WIDTH / img.naturalWidth);
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas._naturalWidth = img.naturalWidth;
+    canvas._naturalHeight = img.naturalHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    if (callback) callback();
+  };
+  img.onerror = function () {
+    if (callback) callback();
+  };
+  img.src = src;
 };
 
 function updatePageIndicators() {
@@ -225,20 +132,14 @@ function loadPageSpread(pageIndex, callback) {
   loadPageImage(spreadOrigin, 'systems-left', callback);
   if (scoreParts.singlePage) {
     clearContainerImage('systems-right');
-    prefetchAroundSpread(spreadOrigin);
     return;
   }
   loadPageImage(spreadOrigin + 1, 'systems-right', null);
-  prefetchAroundSpread(spreadOrigin);
 }
 
 scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
   var pdfName = pdfname;
   if (!pdfName) return;
-  // Nouvelle partition : purge le cache d'affichage de l'ancienne (libère la GPU
-  // memory ; les clés incluent le pdfName donc aucun risque de mélange, mais on
-  // évite de garder des bitmaps d'une partition qu'on ne regarde plus).
-  clearDisplayBitmapCache();
   scoreParts.pdfName = pdfName;
   scoreParts.currentPage = 0;
 
