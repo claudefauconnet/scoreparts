@@ -2,7 +2,7 @@
 // suppression) vit dans common/voices.js (Voices) ; ce fichier rend les lignes,
 // gère les événements et les popovers (couleur, suppression). Le décompte des
 // zones par voix vient de scoreParts (couche zones).
-import { state, on, emit, resetAll } from '../../partitions.state.js';
+import { state, on, emit } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { Common } from '../../../common/common.js';
 import { downloadSinglePart } from '../../../common/localBackendProxy.js';
@@ -47,13 +47,15 @@ function renderVoices() {
     });
     row.querySelector('[data-del]').addEventListener('click', (event) => {
       event.stopPropagation();
-      openDeletePopover(event.currentTarget, row, voice);
+      Voices.remove(voice.id);
     });
     row.querySelector('[data-color]').addEventListener('click', (event) => {
       event.stopPropagation();
       openColorPopover(event.target, voice);
     });
-    row.querySelector('[data-rename]').addEventListener('click', (event) => event.stopPropagation());
+    row
+      .querySelector('[data-rename]')
+      .addEventListener('click', (event) => event.stopPropagation());
     row.querySelector('[data-rename]').addEventListener('blur', (event) => {
       const value = event.target.textContent.trim();
       voice.name = value || voice.name;
@@ -124,76 +126,6 @@ function downloadVoice(voice) {
       ProgressToast.hide();
       ProgressToast.error(err.message || err);
     });
-}
-
-// Destructive-action popover anchored to the voice's × button.
-function openDeletePopover(btn, row, voice) {
-  document.querySelectorAll('.voice-pop').forEach((popElement) => popElement.remove());
-  document
-    .querySelectorAll('.voice.has-open-pop')
-    .forEach((voiceRow) => voiceRow.classList.remove('has-open-pop'));
-  // Toggle off if same button reopened
-  if (btn.classList.contains('open')) {
-    btn.classList.remove('open');
-    return;
-  }
-  document.querySelectorAll('.voice-del.open').forEach((deleteButton) => deleteButton.classList.remove('open'));
-  btn.classList.add('open');
-  row.classList.add('has-open-pop');
-
-  const pop = document.createElement('div');
-  pop.className = 'voice-pop';
-  pop.innerHTML = `
-      <button class="voice-pop-item" data-pop-act="erase-all">
-        <span class="voice-pop-icon">
-          <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
-        </span>
-        <span class="voice-pop-text">
-          <span class="voice-pop-title">Effacer de toutes les pages</span>
-          <span class="voice-pop-sub">Supprime « ${voice.name} » et ses zones sur toutes les pages</span>
-        </span>
-      </button>
-      <button class="voice-pop-item" data-pop-act="reset-all">
-        <span class="voice-pop-icon danger">
-          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-        </span>
-        <span class="voice-pop-text">
-          <span class="voice-pop-title">Tout recommencer</span>
-          <span class="voice-pop-sub">Modèle vierge : sans mouvements, sans voix, sans zones</span>
-        </span>
-      </button>
-    `;
-  document.body.appendChild(pop);
-  const rect = btn.getBoundingClientRect();
-  // Anchor to the right edge of the × button so popover doesn't overflow viewport
-  const popWidth = pop.offsetWidth;
-  let left = rect.right - popWidth;
-  if (left < 8) left = 8;
-  pop.style.left = left + 'px';
-  pop.style.top = rect.bottom + 8 + 'px';
-
-  function closePop() {
-    pop.remove();
-    btn.classList.remove('open');
-    row.classList.remove('has-open-pop');
-    document.removeEventListener('click', onDocClick, true);
-  }
-  function onDocClick(ev) {
-    if (pop.contains(ev.target) || btn.contains(ev.target)) return;
-    closePop();
-  }
-  setTimeout(() => document.addEventListener('click', onDocClick, true), 0);
-
-  pop.querySelector('[data-pop-act="erase-all"]').addEventListener('click', (event) => {
-    event.stopPropagation();
-    Voices.remove(voice.id);
-    closePop();
-  });
-  pop.querySelector('[data-pop-act="reset-all"]').addEventListener('click', (event) => {
-    event.stopPropagation();
-    closePop();
-    resetAll();
-  });
 }
 
 // Color picker popover anchored to the voice swatch.
