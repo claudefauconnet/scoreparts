@@ -182,3 +182,23 @@
   border-top-color: transparent;
   border-bottom-color: var(--ink);
 }
+
+@media (max-height: 820px) {
+  .brand {
+    padding: 12px 24px;
+  }
+
+  .panel {
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+
+  #lp-voices-host {
+    margin-top: 12px;
+  }
+
+  .section-label {
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+}

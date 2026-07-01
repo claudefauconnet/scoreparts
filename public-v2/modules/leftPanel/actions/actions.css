@@ -27,3 +27,17 @@
 .tool-btn:hover { border-color: var(--line-2); background: #fffefa; }
 .tool-btn.active { border-color: var(--ink); background: white; }
 .tool-btn svg { width: 16px; height: 16px; stroke: currentColor; }
+
+@media (max-height: 820px) {
+  .tool-row {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+  }
+
+  .tool-btn {
+    min-width: 0;
+    padding: 9px 4px;
+    gap: 0;
+    font-size: 0;
+  }
+}
