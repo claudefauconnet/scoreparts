@@ -18,12 +18,9 @@ export function emit(eventName, detail) {
 }
 
 export function buildTreeFromScores(scores) {
-  const categoryMap = new Map();
+  const composerMap = new Map();
   for (const score of scores) {
-    const categoryName = score.category || 'Autres';
     const composerName = score.composer || 'Inconnu';
-    if (!categoryMap.has(categoryName)) categoryMap.set(categoryName, new Map());
-    const composerMap = categoryMap.get(categoryName);
     if (!composerMap.has(composerName)) composerMap.set(composerName, []);
     composerMap.get(composerName).push({
       name: score.pdfName,
@@ -33,14 +30,10 @@ export function buildTreeFromScores(scores) {
       tags: [],
     });
   }
-  return Array.from(categoryMap.entries()).map(([categoryName, composerMap]) => ({
-    name: categoryName,
+  return Array.from(composerMap.entries()).map(([composerName, scoreNodes]) => ({
+    name: composerName,
     type: 'folder',
-    children: Array.from(composerMap.entries()).map(([composerName, scoreNodes]) => ({
-      name: composerName,
-      type: 'folder',
-      children: scoreNodes,
-    })),
+    children: scoreNodes,
   }));
 }
 

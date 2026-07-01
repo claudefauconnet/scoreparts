@@ -104,7 +104,6 @@ export function uploadRenderedScore({ pdfFile, pageBlobs, onUploadProgress }, ca
     putScore({
       pdfName: pdfName,
       totalPages: pageBlobs.length,
-      category: null,
       composer: null,
       published: false,
       movements: [],

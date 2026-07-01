@@ -10,33 +10,6 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
   const $fileInput = $('#file-input');
   const $browseBtn = $('#browse-btn');
 
-  const CATEGORIES = [
-    { id: 'chamber', label: 'Musique de chambre' },
-    { id: 'symphony', label: 'Symphonie' },
-    { id: 'concerto', label: 'Concerto' },
-    { id: 'sonata', label: 'Sonate' },
-    { id: 'opera', label: 'Opéra' },
-    { id: 'lied', label: 'Lied / Mélodie' },
-    { id: 'sacred', label: 'Musique sacrée' },
-    { id: 'solo', label: 'Pièce pour soliste' },
-    { id: 'other', label: 'Autre' },
-  ];
-
-  const KNOWN_ARTISTS = [
-    'L. v. Beethoven',
-    'W. A. Mozart',
-    'J. S. Bach',
-    'F. Schubert',
-    'J. Brahms',
-    'G. Mahler',
-    'P. I. Tchaïkovski',
-    'F. Chopin',
-    'C. Debussy',
-    'M. Ravel',
-    'F. Liszt',
-    'R. Schumann',
-  ];
-
   // ============== Score preview card (shown on score-picked event)
 
   function buildScorePrivacyHTML(node) {
@@ -184,10 +157,14 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
       const pdfName = scoreInfos.pdfName;
 
       const pdfData = await pdfBlob.arrayBuffer();
-      const renderResult = await renderPdfToImages(pdfData, 'medium', function (pageNum, totalPages) {
-        setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
-        setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
-      });
+      const renderResult = await renderPdfToImages(
+        pdfData,
+        'medium',
+        function (pageNum, totalPages) {
+          setProgressPercent($card, Math.round((pageNum / totalPages) * 90));
+          setSizeLabel('Rendu ' + pageNum + '/' + totalPages + ' pages');
+        }
+      );
 
       const pageBlobs = renderResult.pages.map(function (page) {
         return new Blob([page.bytes], { type: 'image/png' });
@@ -209,7 +186,6 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
       const selectedNode = {
         name: pdfName,
         author: scoreInfos.composer || '',
-        category: scoreInfos.category || '',
         meta: { pages: scoreInfos.totalPages },
       };
       state.selected = selectedNode;
@@ -230,26 +206,6 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
 
   // ============== Classification form HTML builders
 
-  function buildCategoryOptionsHTML() {
-    return CATEGORIES.map(function (category) {
-      return `<option value="${category.id}">${category.label}</option>`;
-    }).join('');
-  }
-
-  function buildArtistDatalistHTML() {
-    return KNOWN_ARTISTS.map(function (artistName) {
-      return `<option value="${artistName}"></option>`;
-    }).join('');
-  }
-
-  function buildArtistChipsHTML() {
-    return KNOWN_ARTISTS.slice(0, 6)
-      .map(function (artistName) {
-        return `<button data-artist="${artistName}">${artistName}</button>`;
-      })
-      .join('');
-  }
-
   function buildClassifyFormHTML(file) {
     return `
       <div class="classify">
@@ -262,31 +218,11 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
             <div class="sb">${(file.size / 1024).toFixed(1)} Ko · prêt à classer dans votre bibliothèque</div>
           </div>
         </div>
-        <div class="classify-row">
-          <div class="classify-field">
-            <label>Catégorie <span class="req">*</span></label>
-            <select id="cf-cat">
-              <option value="">— Sélectionner —</option>
-              ${buildCategoryOptionsHTML()}
-            </select>
-          </div>
-          <div class="classify-field">
-            <label>Compositeur / artiste <span class="req">*</span></label>
-            <input id="cf-artist" list="cf-artists" placeholder="ex : L. v. Beethoven" />
-            <datalist id="cf-artists">
-              ${buildArtistDatalistHTML()}
-            </datalist>
-          </div>
+        <div class="classify-field">
+          <label>Compositeur / artiste <span class="req">*</span></label>
+          <input id="cf-artist" placeholder="ex : L. v. Beethoven" />
         </div>
-        <div>
-          <div class="classify-field">
-            <label>Suggestions</label>
-          </div>
-          <div class="classify-suggest" id="cf-suggest">
-            ${buildArtistChipsHTML()}
-          </div>
-        </div>
-        <div class="classify-warn" id="cf-warn">Veuillez choisir une catégorie et indiquer l'artiste pour classer la partition.</div>
+        <div class="classify-warn" id="cf-warn">Veuillez indiquer l'artiste pour classer la partition.</div>
       </div>
     `;
   }
@@ -294,23 +230,18 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
   // ============== Classification form logic
 
   function validateClassifyForm($form, file) {
-    const selectedCategoryId = $form.find('#cf-cat').val();
     const artistName = $form.find('#cf-artist').val().trim();
-    const isFormValid = selectedCategoryId && artistName;
+    const isFormValid = Boolean(artistName);
 
     if (isFormValid) {
       $form.find('#cf-warn').removeClass('show');
-      const matchedCategory = CATEGORIES.find(function (category) {
-        return category.id === selectedCategoryId;
-      });
       const selectedNode = {
         // Même normalisation que le stockage (toScoreName) : le nom est l'identité
         // utilisée pour ouvrir la partition et retrouver ses pages/zones.
         name: toScoreName(file.name),
         author: artistName,
-        category: matchedCategory.label,
         meta: { mvts: 1, pages: '?', key: '—', published: false },
-        tags: [matchedCategory.label, 'Importé'],
+        tags: ['Importé'],
         _isNewImport: true,
       };
       state.selected = selectedNode;
@@ -325,14 +256,6 @@ import { unzipSync } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/+esm';
     $preview.html(buildClassifyFormHTML(file));
     const $form = $preview.find('.classify');
 
-    $form.find('#cf-suggest button').on('click', function () {
-      $form.find('#cf-artist').val($(this).data('artist'));
-      validateClassifyForm($form, file);
-    });
-
-    $form.find('#cf-cat').on('change', function () {
-      validateClassifyForm($form, file);
-    });
     $form.find('#cf-artist').on('input', function () {
       validateClassifyForm($form, file);
     });

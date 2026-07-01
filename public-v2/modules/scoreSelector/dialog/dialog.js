@@ -18,16 +18,12 @@ import { scoreParts } from '../../../common/scoreParts.js';
       return;
     }
     $launchBtn.prop('disabled', false);
-    if (node.category) {
-      $footInfo.html(`Import : <b>${node.name}</b> · ${node.author} · ${node.category}`);
-    } else {
-      $footInfo.html(`Sélection : <b>${node.name}</b> · ${node.author}`);
-    }
+    $footInfo.html(`Sélection : <b>${node.name}</b> · ${node.author}`);
   }
 
   function updateFooterPending(message) {
     $launchBtn.prop('disabled', true);
-    $footInfo.html(message || "<i>Renseignez la catégorie et l'artiste pour valider l'import</i>");
+    $footInfo.html(message || "<i>Renseignez l'artiste pour valider l'import</i>");
   }
 
   // ============== Launch
@@ -46,7 +42,7 @@ import { scoreParts } from '../../../common/scoreParts.js';
   function openScore() {
     if (!state.selected) return;
     if (state.selected._isNewImport) {
-      const infos = { category: state.selected.category, composer: state.selected.author };
+      const infos = { composer: state.selected.author };
       saveScoreInfos(state.selected.name, infos, function (err) {
         if (err) console.error('Erreur saveScoreInfos', err);
         showLaunchAndOpen();

@@ -5,7 +5,7 @@
 //
 // Stores (DB « scoreparts », v1) :
 //   scores  (key pdfName)         → infos de la partition
-//                                   { pdfName, totalPages, category, composer,
+//                                   { pdfName, totalPages, composer,
 //                                     published, movements, voices }
 //   zones   (key pdfName)         → { pdfName, allPagesZones }  (objet, pas string)
 //   pdfs    (key pdfName)         → { pdfName, blob }           PDF source
@@ -15,7 +15,7 @@
 //                                   index 'pdfName' ; max 30 snapshots par partition.
 
 const DB_NAME = 'scoreparts';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_SCORES = 'scores';
 const STORE_ZONES = 'zones';
 const STORE_PDFS = 'pdfs';
@@ -26,6 +26,13 @@ const STORE_BACKUPS = 'backups';
 const MAX_BACKUPS_PER_SCORE = 30;
 
 let dbPromise = null;
+
+function withoutCategory(scoreInfos) {
+  if (!scoreInfos) return scoreInfos;
+  const sanitizedScoreInfos = Object.assign({}, scoreInfos);
+  delete sanitizedScoreInfos.category;
+  return sanitizedScoreInfos;
+}
 
 function openDb() {
   if (dbPromise) return dbPromise;
@@ -52,6 +59,15 @@ function openDb() {
         });
         backupStore.createIndex('pdfName', 'pdfName', { unique: false });
       }
+      const scoreStore = request.transaction.objectStore(STORE_SCORES);
+      scoreStore.openCursor().onsuccess = function (event) {
+        const cursor = event.target.result;
+        if (!cursor) return;
+        if (Object.prototype.hasOwnProperty.call(cursor.value, 'category')) {
+          cursor.update(withoutCategory(cursor.value));
+        }
+        cursor.continue();
+      };
     };
     request.onsuccess = function () {
       resolve(request.result);
@@ -103,31 +119,37 @@ function pagesRangeFor(pdfName) {
 export async function getAllScores() {
   const db = await openDb();
   const store = db.transaction(STORE_SCORES, 'readonly').objectStore(STORE_SCORES);
-  return (await requestResult(store.getAll())) || [];
+  const scores = (await requestResult(store.getAll())) || [];
+  return scores.map(withoutCategory);
 }
 
 export async function getScore(pdfName) {
   const db = await openDb();
   const store = db.transaction(STORE_SCORES, 'readonly').objectStore(STORE_SCORES);
-  return (await requestResult(store.get(pdfName))) || null;
+  return withoutCategory((await requestResult(store.get(pdfName))) || null);
 }
 
 export async function putScore(scoreInfos) {
   const db = await openDb();
   const transaction = db.transaction(STORE_SCORES, 'readwrite');
-  transaction.objectStore(STORE_SCORES).put(scoreInfos);
+  const sanitizedScoreInfos = withoutCategory(scoreInfos);
+  transaction.objectStore(STORE_SCORES).put(sanitizedScoreInfos);
   await transactionDone(transaction);
-  return scoreInfos;
+  return sanitizedScoreInfos;
 }
 
 // Fusion partielle des infos (équivalent de l'ancien PUT /scoreInfos, qui ne
-// modifiait que les champs fournis : category, composer, movements, voices).
+// modifiait que les champs fournis : composer, movements, voices).
 export async function updateScore(pdfName, partialInfos) {
   const db = await openDb();
   const transaction = db.transaction(STORE_SCORES, 'readwrite');
   const store = transaction.objectStore(STORE_SCORES);
-  const existing = (await requestResult(store.get(pdfName))) || { pdfName: pdfName };
-  const merged = Object.assign({}, existing, partialInfos, { pdfName: pdfName });
+  const existing = withoutCategory(
+    (await requestResult(store.get(pdfName))) || {
+      pdfName: pdfName,
+    }
+  );
+  const merged = withoutCategory(Object.assign({}, existing, partialInfos, { pdfName: pdfName }));
   store.put(merged);
   await transactionDone(transaction);
   return merged;
@@ -282,7 +304,7 @@ export async function restoreBackup(backupId) {
 
   const transaction = db.transaction([STORE_SCORES, STORE_ZONES], 'readwrite');
   if (backup.scoreInfos) {
-    transaction.objectStore(STORE_SCORES).put(backup.scoreInfos);
+    transaction.objectStore(STORE_SCORES).put(withoutCategory(backup.scoreInfos));
   }
   if (backup.allPagesZones) {
     transaction
