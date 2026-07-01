@@ -1,9 +1,7 @@
 // headerBar/reset — bouton scindé : « Tout recommencer » (voix+zones+mouvements)
 // et « Effacer toutes les pages » (zones uniquement).
-import { emit, resetAll } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { saveScoreInfos } from '../../../common/proxy.js';
-import { Voices } from '../../../common/voices.js';
 
 function confirmAndResetAll() {
   if (
@@ -12,21 +10,23 @@ function confirmAndResetAll() {
     )
   )
     return;
-  resetAll();
-  const pages = scoreParts.allPagesZones.pages;
-  Object.keys(pages).forEach((pageNum) => {
-    pages[pageNum] = [];
-  });
+
+  const pdfName = scoreParts.pdfName;
+  if (!pdfName) return;
+
+  // Vide le backend (zones, voix, mouvements) puis recharge la partition par
+  // le même chemin qu'à l'ouverture (openFirstPdfPage → 'score-loaded'). Tout
+  // se resynchronise ainsi : compteur de voix, mouvements, zones, exports zip,
+  // etc. — aucun risque d'oubli d'un composant.
+  scoreParts.modified = true;
+  if (scoreParts.allPagesZones) scoreParts.allPagesZones.pages = {};
   scoreParts.currentZones = [];
   scoreParts.saveZones(function () {});
-  Voices.persist();
-  if (scoreParts.pdfName) {
-    if (scoreParts.infos) scoreParts.infos.movements = [];
-    saveScoreInfos(scoreParts.pdfName, { movements: [] }, function (error) {
-      if (error) console.error('Erreur saveScoreInfos (reset movements)', error);
-    });
-  }
-  emit('page-changed');
+
+  saveScoreInfos(pdfName, { voices: [], movements: [] }, function (error) {
+    if (error) console.error('Erreur saveScoreInfos (reset)', error);
+    scoreParts.openFirstPdfPage(pdfName, true, null);
+  });
 }
 
 function confirmAndClearAllPages() {
