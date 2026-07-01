@@ -75,6 +75,7 @@ Voices.add = function (voiceName, shouldRequireName = false) {
   state.VOICES.push(voice);
   state.activeVoice = voice.id;
   Voices.persist();
+  scoreParts.autoAssignActiveVoices();
   emit('voices-changed');
   return voice;
 };

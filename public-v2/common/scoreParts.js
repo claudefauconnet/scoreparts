@@ -2,7 +2,7 @@ import { Paper } from './paper.js';
 import { Common } from './common.js';
 import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
 import { getPageBlob, createBackup } from './localDb.js';
-import { emit } from '../modules/partitions.state.js';
+import { state, emit } from '../modules/partitions.state.js';
 
 export const scoreParts = {};
 
@@ -514,6 +514,20 @@ scoreParts.assignVoicesToZones = function (voiceIds, movementName) {
   }
   // Le redraw visuel du spread est délégué à zones-changed (Paper.redrawSpread).
   scoreParts.saveZones();
+};
+
+// Réattribue les voix actives aux zones du mouvement courant, déclenché
+// automatiquement à la création d'une nouvelle zone ou d'une nouvelle voix
+// (plus de bouton "Auto-attribuer" manuel). Silencieux si aucune voix active.
+scoreParts.autoAssignActiveVoices = function () {
+  const activeVoices = state.VOICES.filter((voice) => voice.on);
+  if (activeVoices.length === 0) return;
+  scoreParts.assignVoicesToZones(
+    activeVoices.map((voice) => voice.id),
+    scoreParts.currentMovement
+  );
+  emit('voices-changed');
+  emit('zones-changed');
 };
 
 // Nombre de zones affectées à une voix (toutes pages). Lecture seule sur le

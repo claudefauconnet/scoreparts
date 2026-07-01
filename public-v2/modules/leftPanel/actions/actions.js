@@ -61,6 +61,7 @@ function autoDetectZones() {
     const voiceCount = state.VOICES.length;
     const zones = filterZonesBySystemNumber(detectedZones, systemNumber, voiceCount);
     scoreParts.commitCurrentPageZones(zones);
+    scoreParts.autoAssignActiveVoices();
     Paper.redrawCurrentPage();
     emit('zones-changed');
   });
@@ -86,28 +87,6 @@ function duplicatePreviousPage() {
   emit('zones-changed');
 }
 
-// Auto-attribue les voix actives aux zones du mouvement courant.
-function autoAssignVoices() {
-  if (!scoreParts.pdfName) return;
-  if (state.VOICES.length === 0) {
-    alert('Renseignez au moins une voix avant d’attribuer les zones.');
-    return;
-  }
-  const activeVoices = state.VOICES.filter((voice) => voice.on);
-  if (activeVoices.length === 0) {
-    alert('Aucune voix active. Activez au moins une voix avant d\'attribuer les zones.');
-    return;
-  }
-  scoreParts.assignVoicesToZones(
-    activeVoices.map((voice) => voice.id),
-    scoreParts.currentMovement
-  );
-  emit('voices-changed');
-  emit('zones-changed');
-}
-
-const autoAssignBtn = document.getElementById('act-auto-assign');
-if (autoAssignBtn) autoAssignBtn.addEventListener('click', autoAssignVoices);
 const autoDetectBtn = document.getElementById('act-auto-detect');
 if (autoDetectBtn) autoDetectBtn.addEventListener('click', autoDetectZones);
 const duplicateBtn = document.getElementById('act-duplicate');

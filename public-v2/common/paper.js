@@ -920,6 +920,8 @@ function onCanvasMouseDown(event) {
     };
     Paper.drawZone(zone, scoreParts.currentPage, true);
     commit();
+    scoreParts.autoAssignActiveVoices();
+    Paper.redrawCurrentPage();
     scoreParts.saveZones(function () {});
     return;
   }
