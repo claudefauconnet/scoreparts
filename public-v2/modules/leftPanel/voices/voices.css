@@ -140,6 +140,17 @@
   opacity: 0.32;
   cursor: not-allowed;
 }
+.initial-score-setup-next.setup-pulse {
+  animation: setup-continue-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes setup-continue-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.85);
+  }
+  to {
+    box-shadow: 0 0 0 6px rgba(255, 200, 0, 0);
+  }
+}
 #initial-score-systems-step label {
   display: block;
   margin: 9px 0 5px;
@@ -175,11 +186,10 @@
   color: #b33d36;
 }
 
-body.initial-score-setup-active #headerbar-host,
+body.initial-score-setup-active #hb-movements-host,
 body.initial-score-setup-active #lp-actions-host,
 body.initial-score-setup-active .left-panel-footer,
 body.initial-score-setup-active #lp-parameters-host,
-body.initial-score-setup-active #book,
 body.initial-score-setup-active #zoom-controls,
 body.initial-score-setup-active #multiselect-toolbar {
   opacity: 0.38;
@@ -465,6 +475,23 @@ body.initial-score-setup-active .add-voice {
   color: var(--accent);
   border-color: var(--accent);
   background: rgba(107, 58, 46, 0.04);
+}
+body.initial-score-setup-active .add-voice.setup-pulse {
+  animation: setup-add-voice-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes setup-add-voice-pulse {
+  from {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(107, 58, 46, 0.04);
+    box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.7);
+  }
+  to {
+    color: #2a2200;
+    border-color: #f5c400;
+    background: #fff2b8;
+    box-shadow: 0 0 0 8px rgba(255, 200, 0, 0);
+  }
 }
 
 @media (max-height: 820px) {

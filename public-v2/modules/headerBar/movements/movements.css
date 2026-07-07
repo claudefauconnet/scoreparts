@@ -63,9 +63,6 @@
 @keyframes mvt-name-pulse { from { border-bottom-color: #e05555; } to { border-bottom-color: #ff9090; } }
 
 body.movement-naming-active #voices-host,
-body.movement-naming-active #hb-scoreinfo-host,
-body.movement-naming-active .top-actions,
-body.movement-naming-active #book,
 body.movement-naming-active #zoom-controls,
 body.movement-naming-active #multiselect-toolbar {
   opacity: 0.38;

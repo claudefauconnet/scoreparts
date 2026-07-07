@@ -27,6 +27,7 @@ const initialScoreSystemNumber = document.getElementById('initial-score-system-n
 const initialScoreSetupError = document.getElementById('initial-score-setup-error');
 const initialScoreVoicesIndicator = initialScoreSetup.querySelector('[data-setup-step="voices"]');
 const initialScoreSystemsIndicator = initialScoreSetup.querySelector('[data-setup-step="systems"]');
+const addVoiceBtn = document.querySelector('.add-voice');
 
 let initialScoreSetupStep = null;
 let initialMovementName = '';
@@ -38,11 +39,10 @@ function hasCompletedVoiceNames() {
 function setInitialScoreSetupLock(isLocked) {
   document.body.classList.toggle('initial-score-setup-active', isLocked);
   [
-    document.getElementById('headerbar-host'),
+    document.getElementById('hb-movements-host'),
     document.getElementById('lp-actions-host'),
     document.querySelector('.left-panel-footer'),
     document.getElementById('lp-parameters-host'),
-    document.getElementById('book'),
     document.getElementById('zoom-controls'),
     document.getElementById('multiselect-toolbar'),
   ].forEach((lockedElement) => {
@@ -62,7 +62,11 @@ function renderInitialScoreSetup() {
   const isSetupActive = initialScoreSetupStep !== null;
   initialScoreSetup.hidden = !isSetupActive;
   setInitialScoreSetupLock(isSetupActive);
-  if (!isSetupActive) return;
+  if (!isSetupActive) {
+    addVoiceBtn.classList.remove('setup-pulse');
+    initialScoreVoicesNext.classList.remove('setup-pulse');
+    return;
+  }
 
   const isVoicesStep = initialScoreSetupStep === INITIAL_SCORE_SETUP_VOICES;
   initialScoreVoicesStep.hidden = !isVoicesStep;
@@ -82,10 +86,13 @@ function renderInitialScoreSetup() {
     initialScoreSetupTitle.textContent = 'Ajoutez vos voix utiles';
     initialScoreSetupDescription.textContent =
       'Ajoutez uniquement les voix que vous voulez extraire, puis donnez un nom à chacune.';
-    initialScoreVoicesNext.disabled = !hasCompletedVoiceNames();
+    const isReadyToContinue = hasCompletedVoiceNames();
+    initialScoreVoicesNext.disabled = !isReadyToContinue;
+    addVoiceBtn.classList.toggle('setup-pulse', state.VOICES.length === 0);
+    initialScoreVoicesNext.classList.toggle('setup-pulse', isReadyToContinue);
     if (state.VOICES.length === 0) {
       initialScoreSetupHint.textContent = 'Cliquez sur « Ajouter une voix » pour commencer.';
-    } else if (!hasCompletedVoiceNames()) {
+    } else if (!isReadyToContinue) {
       initialScoreSetupHint.textContent =
         'Renommez chaque nouvelle voix, puis validez avec Entrée.';
     } else {
@@ -97,6 +104,8 @@ function renderInitialScoreSetup() {
     return;
   }
 
+  addVoiceBtn.classList.remove('setup-pulse');
+  initialScoreVoicesNext.classList.remove('setup-pulse');
   initialScoreSetupTitle.textContent = 'Comptez les systèmes';
   initialScoreSetupDescription.textContent = `Indiquez le nombre total de systèmes du mouvement « ${initialMovementName} ».`;
 }
@@ -119,12 +128,11 @@ function focusVoiceName(voiceId) {
 }
 
 function addVoiceFromInterface() {
-  const shouldRequireName = initialScoreSetupStep !== null;
   if (initialScoreSetupStep === INITIAL_SCORE_SETUP_SYSTEMS) {
     setInitialScoreSetupStep(INITIAL_SCORE_SETUP_VOICES);
   }
-  const voice = Voices.add(undefined, shouldRequireName);
-  if (shouldRequireName) focusVoiceName(voice.id);
+  const voice = Voices.add(undefined, true);
+  focusVoiceName(voice.id);
 }
 
 function startInitialScoreWorkflow(event) {
@@ -329,7 +337,6 @@ on('voices-changed', renderVoices);
 on('voices-changed', renderInitialScoreSetup);
 on('initial-movement-named', startInitialScoreWorkflow);
 on('score-loaded', loadVoicesForScore);
-const addVoiceBtn = document.querySelector('.add-voice');
 if (addVoiceBtn) addVoiceBtn.addEventListener('click', addVoiceFromInterface);
 initialScoreVoicesNext.addEventListener('click', () => {
   if (!hasCompletedVoiceNames()) return;

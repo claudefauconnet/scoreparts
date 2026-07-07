@@ -76,9 +76,6 @@ function setMovementNamingLock(isLocked) {
   document.body.classList.toggle('movement-naming-active', isLocked);
   [
     document.getElementById('voices-host'),
-    document.getElementById('hb-scoreinfo-host'),
-    document.querySelector('.top-actions'),
-    document.getElementById('book'),
     document.getElementById('zoom-controls'),
     document.getElementById('multiselect-toolbar'),
   ].forEach((lockedElement) => {
