@@ -248,24 +248,6 @@
   bottom: 8px;
 }
 
-.stage[data-book-style='flat'] {
-  --cover-opacity: 0;
-  --spine-opacity: 0;
-  --spine-band-opacity: 0;
-}
-.stage[data-book-style='flat'] .page-left {
-  display: none;
-}
-.stage[data-book-style='flat'] .page-right {
-  border-radius: 4px;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 0 0 1px var(--line);
-}
-.stage[data-book-style='flat'] .spine {
-  display: none;
-}
-
 /* Single-page mode (petits écrans) — une seule page à la fois. MÊME modèle que le
    spread : le livre garde sa largeur calc(100% × --book-zoom) et la page de gauche
    la remplit via le flex de base → fit-largeur, zoom et défilement natif marchent
