@@ -1,6 +1,6 @@
 import { Paper } from './paper.js';
 import { Common } from './common.js';
-import { saveZones, loadZones, loadScoreInfos } from './proxy.js';
+import { saveZones, loadZones, loadScoreInfos, saveScoreInfos } from './proxy.js';
 import { getPageBlob, createBackup } from './localDb.js';
 import { state, emit } from '../modules/partitions.state.js';
 
@@ -26,6 +26,22 @@ scoreParts.getTotalPages = function () {
 // (un par page). Dans les deux cas Paper.js pilote les zones et la persistance.
 scoreParts.isEditorContext = function () {
   return !!document.getElementById('myCanvas') || !!document.querySelector('.zone-canvas');
+};
+
+// Marque-page : index (0-based) de la dernière page ouverte, persisté dans les
+// infos de la partition. Retourne un index valide, ou 0 si absent/hors bornes.
+function validBookmarkPage(bookmark, totalPages) {
+  if (typeof bookmark !== 'number' || !Number.isInteger(bookmark) || bookmark < 0) return 0;
+  if (totalPages !== null && bookmark >= totalPages) return 0;
+  return bookmark;
+}
+
+// Enregistre la page courante comme marque-page dans les infos de la partition
+// (fusion partielle : ne touche que le champ bookmark).
+scoreParts.saveBookmark = function () {
+  if (!scoreParts.pdfName) return;
+  if (scoreParts.infos) scoreParts.infos.bookmark = scoreParts.currentPage;
+  saveScoreInfos(scoreParts.pdfName, { bookmark: scoreParts.currentPage }, function () {});
 };
 
 // Pages advanced per navigation step: 1 in single-page mode, 2 for a spread.
@@ -163,15 +179,19 @@ scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
       scoreParts.totalPages = scoreParts.infos.totalPages;
       $('#page-total').text('/ ' + scoreParts.infos.totalPages);
     }
-    loadPdfPages(pdfName, clearAll, onBothSettled);
+    var startPage = validBookmarkPage(scoreParts.infos.bookmark, scoreParts.totalPages);
+    loadPdfPages(pdfName, clearAll, onBothSettled, startPage);
   });
 };
 
-function loadPdfPages(pdfName, clearAll, onBothSettled) {
+function loadPdfPages(pdfName, clearAll, onBothSettled, startPage) {
   var isEditorContext = scoreParts.isEditorContext();
+  var firstPage = startPage || 0;
 
   if (!isEditorContext) {
-    loadPageSpread(0, function () {
+    scoreParts.currentPage = firstPage;
+    loadPageSpread(firstPage, function () {
+      updatePageIndicators();
       emit('score-loaded');
       if (onBothSettled) onBothSettled();
     });
@@ -199,11 +219,11 @@ function loadPdfPages(pdfName, clearAll, onBothSettled) {
     }
 
     scoreParts.voices = [];
-    scoreParts.currentPage = 0;
+    scoreParts.currentPage = firstPage;
     // 'score-loaded' DOIT être émis une fois l'image présente dans le DOM
     // (l'éditeur y attache le canvas Paper). On émet donc dans le callback de
     // chargement d'image, pas de façon synchrone.
-    loadPageSpread(0, function () {
+    loadPageSpread(firstPage, function () {
       updatePageIndicators();
       emit('score-loaded');
       if (onBothSettled) onBothSettled();
@@ -232,6 +252,7 @@ scoreParts.changePage = function (newPage) {
     saveZones(scoreParts, function (err) {
       if (err) alert(err.responseText || err);
       scoreParts.currentPage = newPage;
+      scoreParts.saveBookmark();
       loadPageSpread(newPage, function () {
         updatePageIndicators();
         emit('page-changed');
@@ -239,6 +260,7 @@ scoreParts.changePage = function (newPage) {
     });
   } else {
     scoreParts.currentPage = newPage;
+    scoreParts.saveBookmark();
     loadPageSpread(newPage, null);
     updatePageIndicators();
     emit('page-changed');
@@ -261,6 +283,7 @@ scoreParts.setCurrentPage = function (pageIndex) {
   // Si la page cible n'est pas dans le spread affiché, on recharge le spread.
   var sameSpread = scoreParts.spreadOrigin(pageIndex) === scoreParts.spreadOrigin();
   scoreParts.currentPage = pageIndex;
+  scoreParts.saveBookmark();
   if (!sameSpread) loadPageSpread(pageIndex, null);
   updatePageIndicators();
   emit('page-changed');
