@@ -49,35 +49,64 @@
   flex: 1;
   min-height: 0;
   position: relative;
-  display: grid;
-  grid-template-rows: 1fr;
-  place-items: center;
-  /* Padding minimal : les flèches de navigation et la barre de pages flottent
-     au-dessus du livre (absolute), seul le bas réserve la place de la barre. */
-  padding: 8px 16px 42px;
+  display: block;
+  /* Les flèches de navigation, la barre de pages et les contrôles de zoom flottent
+     au-dessus (absolute) ; #book-scroll remplit toute la surface et gère le
+     défilement natif. */
   overflow: hidden;
 }
+/* ============== BOOK-SCROLL (défilement natif, barres fines toujours visibles) */
+.book-scroll {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* auto : chaque barre n'apparaît que si SON axe déborde (partition plus haute /
+     plus large que la zone visible). Rien à défiler → pas de barre. */
+  overflow: auto;
+  overscroll-behavior: contain;
+  /* Padding : réserve la place du liseré de couverture (inset négatif de .book)
+     et dégage le bas pour ne pas coller le contenu sous la barre de pages. */
+  padding: 12px 16px 44px;
+  /* Firefox : barres fines, teinte discrète accordée au papier. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(60, 45, 20, 0.35) transparent;
+}
+/* WebKit / Chromium : barres fines toujours visibles. */
+.book-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.book-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.book-scroll::-webkit-scrollbar-thumb {
+  background: rgba(60, 45, 20, 0.28);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.book-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(60, 45, 20, 0.45);
+  background-clip: padding-box;
+}
+.book-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
 /* ============== BOOK ============== */
-/* Le livre épouse les pages : chaque .page reçoit l'aspect-ratio de son image
-   (JS, fitPagesToImages) → largeur déduite de la hauteur, papier vide minimal. */
+/* Fit par LARGEUR × zoom : le livre occupe 100 % de la largeur visible à zoom 1
+   (→ pas de barre horizontale), et grandit avec --book-zoom (posé par le JS) → il
+   déborde et les barres natives assurent la navigation. La hauteur suit
+   l'aspect-ratio des pages (JS, fitPagesToImages). margin auto : centré tant qu'il
+   est plus étroit que la zone visible (mode mono-page). */
 .book {
   position: relative;
   display: flex;
   justify-content: center;
-  width: auto;
-  max-width: 100%;
-  height: 100%;
+  align-items: flex-start;
+  width: calc(100% * var(--book-zoom, 1));
+  height: auto;
   min-height: 0;
-  perspective: 2400px;
-  /* zoom/pan: JS sets translate + scale; origin top-left for cursor anchoring */
-  transform-origin: 0 0;
-  will-change: transform;
-}
-.stage.zoomed .book {
-  cursor: grab;
-}
-.stage.zoomed .book.panning {
-  cursor: grabbing;
+  margin: 0 auto;
 }
 
 /* Outer cover/shadow plate */
@@ -116,9 +145,12 @@
 
 .page {
   position: relative;
-  flex: 0 1 auto;
-  height: 100%;
+  /* flex-basis 0 → les deux pages se partagent la largeur du livre à parts
+     égales ; height auto découle de l'aspect-ratio (largeur / ratio image). */
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 0;
+  height: auto;
   /* Ratio A4 portrait par défaut avant chargement ; JS pose le ratio réel de
      l'image de chaque page (fitPagesToImages). */
   aspect-ratio: 210 / 297;
@@ -241,7 +273,8 @@
   display: flex;
   justify-content: center;
   align-items: stretch;
-  /* shrink to the single page so the cover plate hugs the image */
+  /* mono-page = fit hauteur (page portrait unique) : height fixe, largeur suit */
+  height: 100%;
   width: auto;
   max-width: 100%;
 }
@@ -755,7 +788,8 @@
 .stage.empty .nav-arrow {
   display: none;
 }
-.stage.empty .stage-body {
+.stage.empty .book-scroll {
+  overflow: hidden; /* état vide : rien à défiler, pas de barres */
   padding-bottom: 120px;
 }
 
@@ -989,7 +1023,7 @@
    the priority. Nav arrows + page bar float over the spread (absolute),
    so they don't need reserved gutters here. */
 @media (max-width: 1100px), (max-height: 820px) {
-  .stage-body {
+  .book-scroll {
     padding: 6px 12px 40px;
   }
   .sheet {

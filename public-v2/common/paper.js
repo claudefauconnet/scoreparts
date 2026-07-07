@@ -69,13 +69,6 @@ Paper.onSelectionChange = null; // hook(count) posé par scorePlayer pour la too
 Paper.isLasso = false;
 Paper.lassoStart = null;
 Paper.lassoPath = null;
-// Reflète zoom > 1 (posé par scorePlayer.applyTransform). Sert de discriminant sur
-// un clic dans le vide : zoomé → pan (se déplacer dans la partition) ; à zoom 1 →
-// lasso (multisélection). Les deux gestes sont ainsi mutuellement exclusifs.
-Paper.zoomed = false;
-// hook(nativeEvent) posé par scorePlayer : démarre un pan depuis un clic dans le
-// vide de la page (quand zoomé), sans conflit avec le lasso ni le drag de zone.
-Paper.onEmptyPan = null;
 // Centre de la croix de suppression d'après le rectangle (path) d'une zone.
 function deleteBadgeCenter(rectBounds) {
   return rectBounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
@@ -944,14 +937,9 @@ function onCanvasMouseDown(event) {
     return;
   }
 
-  // Clic dans le vide hors mode pose. Zoomé, ce geste sert à se DÉPLACER dans la
-  // partition (pan) car l'espace vide autour du livre est minime ; on délègue à
-  // scorePlayer. À zoom 1 (vue d'ensemble), le vide démarre le lasso de
-  // multisélection. Les deux ne peuvent donc jamais se déclencher en même temps.
-  if (Paper.zoomed && Paper.onEmptyPan) {
-    Paper.onEmptyPan(event.event);
-    return;
-  }
+  // Clic dans le vide hors mode pose → lasso de multisélection, à TOUT niveau de
+  // zoom. La navigation dans la partition passe par les barres de défilement
+  // natives (#book-scroll), pas par un glissé — donc aucun conflit avec le lasso.
   clearSelection();
   Paper.isLasso = true;
   Paper.lassoStart = event.point.clone();

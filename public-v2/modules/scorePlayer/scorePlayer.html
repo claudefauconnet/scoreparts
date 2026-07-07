@@ -3,7 +3,7 @@
     <rect x="3" y="4" width="14" height="12" rx="1" stroke-dasharray="3 2" />
     <path d="M19 14v6M16 17h6" />
   </svg>
-  Clic dans le vide : nouvelle zone
+  Clic sur la partition pour tracer une nouvelle zone
   <button id="cancel-new-zone">Annuler</button>
 </div>
 <div class="pending-banner pending-banner--measure">
@@ -23,6 +23,12 @@
 </div>
 
 <!-- ===================== BOOK (loaded state) ===================== -->
+<!-- #book-scroll : conteneur à défilement NATIF (barres fines). Chaque barre
+     n'apparaît que si son axe déborde (overflow:auto). La navigation verticale ET
+     horizontale passe par ces barres, à tout niveau de zoom. Le zoom agit sur la
+     largeur de mise en page du livre (var --book-zoom), pas par transform → le
+     contenu déborde réellement et les barres apparaissent au besoin. -->
+<div class="book-scroll" id="book-scroll">
 <div class="book" id="book">
   <!-- Left page -->
   <div class="page page-left" data-side="0">
@@ -78,6 +84,7 @@
   </div>
 
   <div class="spine"></div>
+</div>
 </div>
 
 <!-- Lateral arrows -->

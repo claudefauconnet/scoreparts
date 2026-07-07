@@ -380,22 +380,25 @@ stageEl.classList.toggle('single-page', smallScreen.matches);
   });
 })();
 
-// ============== Zoom & pan on the book
-// Transform model: book transform-origin is 0 0, transform = translate(pan) scale(zoom).
-// Cursor-anchored wheel zoom keeps the point under the pointer fixed.
+// ============== Zoom (par la largeur de mise en page) + défilement natif
+// Le livre vit dans #book-scroll (overflow natif). Le zoom agit sur la LARGEUR de
+// mise en page du livre via la variable CSS --book-zoom : à zoom 1 il occupe 100 %
+// de la zone visible, au-delà il déborde et les barres natives (verticale ET
+// horizontale) assurent la navigation. Pas de translate/pan manuel : le
+// déplacement = scrollLeft/scrollTop natifs. Conséquence : un glissé sur la
+// partition reste TOUJOURS le lasso (multisélection), à tout niveau de zoom.
 const bookEl = document.getElementById('book');
+const scrollEl = document.getElementById('book-scroll');
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 5;
 let zoom = 1;
-let panX = 0;
-let panY = 0;
 // Origine du spread (index de page de gauche) pour lequel le zoom courant a été
 // posé. Sert à ne réinitialiser le zoom que lors d'un vrai changement de spread
 // (navigation), pas quand on bascule seulement la page éditable du même spread.
 let zoomSpreadOrigin = 0;
 
-function applyTransform() {
-  bookEl.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+function applyZoom() {
+  bookEl.style.setProperty('--book-zoom', zoom);
   stageEl.classList.toggle('zoomed', zoom > 1);
   const reset = document.getElementById('zoom-reset');
   if (reset) reset.textContent = Math.round(zoom * 100) + '%';
@@ -403,80 +406,47 @@ function applyTransform() {
 
 function resetZoom() {
   zoom = 1;
-  panX = 0;
-  panY = 0;
-  applyTransform();
+  applyZoom();
+  scrollEl.scrollTo(0, 0);
   zoomSpreadOrigin = scoreParts.spreadOrigin();
 }
 
-// Zoom toward a screen point (clientX/clientY). Keeps that point stationary.
-function zoomAt(clientX, clientY, nextZoom) {
+// Zoom ancré sous le pointeur : le point de la partition sous le curseur reste
+// fixe. Le livre grandit proportionnellement (largeur × zoom), donc on remet le
+// scroll à la même échelle autour du pointeur (ratio = nouveauZoom / ancienZoom).
+function zoomAtClient(clientX, clientY, nextZoom) {
   nextZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextZoom));
   if (nextZoom === zoom) return;
-  // book's untransformed top-left origin: measured left minus current pan.
-  const rect = bookEl.getBoundingClientRect();
-  const originX = rect.left - panX;
-  const originY = rect.top - panY;
-  const localX = clientX - originX;
-  const localY = clientY - originY;
+  const rect = scrollEl.getBoundingClientRect();
+  const pointerX = clientX - rect.left;
+  const pointerY = clientY - rect.top;
   const ratio = nextZoom / zoom;
-  panX = localX - ratio * (localX - panX);
-  panY = localY - ratio * (localY - panY);
+  const nextScrollLeft = (scrollEl.scrollLeft + pointerX) * ratio - pointerX;
+  const nextScrollTop = (scrollEl.scrollTop + pointerY) * ratio - pointerY;
   zoom = nextZoom;
-  if (zoom === ZOOM_MIN) {
-    panX = 0;
-    panY = 0;
-  }
-  applyTransform();
+  applyZoom();
+  scrollEl.scrollLeft = nextScrollLeft;
+  scrollEl.scrollTop = nextScrollTop;
 }
 
 function zoomFromCenter(nextZoom) {
-  const rect = bookEl.getBoundingClientRect();
-  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, nextZoom);
+  const rect = scrollEl.getBoundingClientRect();
+  zoomAtClient(rect.left + rect.width / 2, rect.top + rect.height / 2, nextZoom);
 }
 
-// Wheel / trackpad pinch (ctrlKey) zoom
-document.getElementById('stage-body').addEventListener(
+// Molette = défilement natif (les barres de #book-scroll) ; Ctrl+molette / pincée
+// trackpad = zoom ancré au curseur — convention navigateur. On n'intercepte QUE le
+// cas Ctrl : la molette nue laisse le conteneur défiler nativement.
+scrollEl.addEventListener(
   'wheel',
   (event) => {
+    if (!event.ctrlKey) return; // molette nue → défilement natif
     if (event.target.closest('.zoom-controls')) return;
     event.preventDefault();
     const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
-    zoomAt(event.clientX, event.clientY, zoom * factor);
+    zoomAtClient(event.clientX, event.clientY, zoom * factor);
   },
   { passive: false }
-);
-
-// Drag to pan (only while zoomed). Capture phase so it pre-empts zone drag.
-document.getElementById('stage-body').addEventListener(
-  'mousedown',
-  (event) => {
-    if (zoom <= 1) return;
-    if (Paper.pendingNewZone) return;
-    if (event.target.closest('.zone-canvas.editing') || event.target.closest('[data-act]')) return;
-    if (event.target.closest('.page.editing .zone-canvas')) return;
-    if (event.target.closest('.zoom-controls') || event.target.closest('.nav-arrow')) return;
-    event.preventDefault();
-    event.stopPropagation();
-    bookEl.classList.add('panning');
-    const startX = event.clientX;
-    const startY = event.clientY;
-    const startPanX = panX;
-    const startPanY = panY;
-    function move(ev) {
-      panX = startPanX + (ev.clientX - startX);
-      panY = startPanY + (ev.clientY - startY);
-      applyTransform();
-    }
-    function up() {
-      bookEl.classList.remove('panning');
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-    }
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-  },
-  true
 );
 
 document.getElementById('zoom-in').addEventListener('click', () => zoomFromCenter(zoom * 1.25));
@@ -494,4 +464,4 @@ on('score-loaded', resetZoom);
 on('page-changed', fitPagesToImages);
 on('score-loaded', fitPagesToImages);
 
-applyTransform();
+applyZoom();
