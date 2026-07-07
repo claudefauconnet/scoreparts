@@ -64,7 +64,6 @@ Movements.merge = function () {
         name: mvt.name,
         startPage: range ? range.startPage : mvt.startPage,
         endPage: range ? range.endPage : undefined,
-        systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null,
       };
     });
 };
@@ -100,44 +99,12 @@ Movements.persist = function () {
       name: mvt.name,
       startPage: range.start,
       endPage: range.end,
-      systemNumber: mvt.systemNumber !== undefined ? mvt.systemNumber : null,
     });
   });
   if (scoreParts.infos) scoreParts.infos.movements = payload;
   saveScoreInfos(scoreParts.pdfName, { movements: payload }, function (err) {
     if (err) console.error('Erreur saveScoreInfos (movements)', err);
   });
-};
-
-// Garantit que le mouvement nommé porte un `systemNumber`. Utilisé hors du
-// parcours guidé, par exemple lors d'une auto-détection lancée manuellement.
-Movements.ensureSystemNumber = function (movementName) {
-  const movement = state.MOVEMENTS.find(
-    (candidateMovement) => candidateMovement.name === movementName
-  );
-  if (!movement) return null;
-  if (Number.isInteger(movement.systemNumber) && movement.systemNumber > 0)
-    return movement.systemNumber;
-
-  const systemNumberInput = prompt('Combien de systèmes y a-t-il au total dans ce mouvement ?');
-  if (systemNumberInput === null) return null;
-  const parsedSystemNumber = Number(systemNumberInput);
-  if (!Movements.setSystemNumber(movementName, parsedSystemNumber)) {
-    alert('Veuillez entrer un entier positif.');
-    return null;
-  }
-  return parsedSystemNumber;
-};
-
-Movements.setSystemNumber = function (movementName, systemNumber) {
-  if (!Number.isInteger(systemNumber) || systemNumber <= 0) return false;
-  const movement = state.MOVEMENTS.find(
-    (candidateMovement) => candidateMovement.name === movementName
-  );
-  if (!movement) return false;
-  movement.systemNumber = systemNumber;
-  Movements.persist();
-  return true;
 };
 
 // Charge la liste dans le state global et émet 'movements-changed'. Retourne
@@ -150,7 +117,6 @@ Movements.load = function () {
       id: 1,
       name: '',
       startPage: 1,
-      systemNumber: null,
     });
     state.activeMvt = 1;
     emit('movements-changed');
@@ -175,7 +141,7 @@ Movements.add = function (currentPage) {
     return { created: false };
   }
   const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
-  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage, systemNumber: null });
+  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage });
   state.activeMvt = newId;
   emit('movements-changed');
   return { created: true };

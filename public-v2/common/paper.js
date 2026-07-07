@@ -1084,6 +1084,7 @@ function beginZoneAction(group, point) {
     // indispensable pour supprimer la DERNIÈRE zone.
     scoreParts.allPagesZones.pages[scoreParts.currentPage] = Paper.getPageZones();
     scoreParts.currentZones = scoreParts.allPagesZones.pages[scoreParts.currentPage];
+    scoreParts.autoAssignActiveVoices(); // recale les voix (round-robin par page) sur les zones restantes
     scoreParts.saveZones(function () {}); // enregistrement immédiat
     return;
   }
@@ -1639,6 +1640,7 @@ Paper.deleteSelectedZones = function () {
   });
   selectedGroups = [];
   commit();
+  scoreParts.autoAssignActiveVoices(); // recale les voix (round-robin par page) sur les zones restantes
   scoreParts.saveZones(function () {});
   if (Paper.onSelectionChange) Paper.onSelectionChange(0);
 };

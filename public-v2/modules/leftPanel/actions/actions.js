@@ -1,26 +1,11 @@
 // leftPanel/actions — UI de la rangée d'outils. Délègue le calcul des zones à
 // scoreParts (couche zones) ; ne gère ici que l'entrée DOM, le redessin et les
 // événements. Le bouton « New zone » (#act-new-zone) est câblé côté scorePlayer.
-import { state, emit } from '../../partitions.state.js';
+import { emit } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { findPageZones } from '../../../common/localBackendProxy.js';
 import { Paper } from '../../../common/paper.js';
-import { Movements } from '../../../common/movements.js';
 import { ProgressToast } from '../../../common/progressToast.js';
-
-// Pour chaque groupe de systemNumber zones détectées (= un système), garde les
-// voiceCount premières (une par voix) et supprime les suivantes (sans voix).
-function filterZonesBySystemNumber(zones, systemNumber, voiceCount) {
-  if (!systemNumber || voiceCount === 0) return zones;
-  const filteredZones = [];
-  const groupCount = Math.ceil(zones.length / systemNumber);
-  for (let groupIndex = 0; groupIndex < groupCount; groupIndex++) {
-    const groupStartIndex = groupIndex * systemNumber;
-    const groupZones = zones.slice(groupStartIndex, groupStartIndex + systemNumber);
-    filteredZones.push(...groupZones.slice(0, voiceCount));
-  }
-  return filteredZones;
-}
 
 // Détecte les systèmes de la page courante via l'API puis confie le calcul des
 // zones (géométrie) à scoreParts ; ce handler ne gère que l'entrée DOM (hauteur
@@ -31,10 +16,6 @@ function autoDetectZones() {
     alert('Sélectionnez ou déclarez un mouvement.');
     return;
   }
-
-  const currentMovement = state.MOVEMENTS.find((movement) => movement.name === scoreParts.currentMovement);
-
-  if (Movements.ensureSystemNumber(scoreParts.currentMovement) === null) return;
 
   // En double page, vise automatiquement la page à remplir (gauche puis droite).
   // Obligatoire AVANT findPageZones : buildAutoDetectedZones tague les zones avec
@@ -57,10 +38,7 @@ function autoDetectZones() {
     const customHeightDisplayPx = isNaN(heightInputDisplayPx) ? null : heightInputDisplayPx;
 
     const detectedZones = scoreParts.buildAutoDetectedZones(data, customHeightDisplayPx);
-    const systemNumber = currentMovement ? currentMovement.systemNumber : null;
-    const voiceCount = state.VOICES.length;
-    const zones = filterZonesBySystemNumber(detectedZones, systemNumber, voiceCount);
-    scoreParts.commitCurrentPageZones(zones);
+    scoreParts.commitCurrentPageZones(detectedZones);
     scoreParts.autoAssignActiveVoices();
     Paper.redrawCurrentPage();
     emit('zones-changed');

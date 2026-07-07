@@ -10,12 +10,8 @@
         <span class="initial-score-setup-step-number">2</span>
         Voix
       </span>
-      <span class="initial-score-setup-step" data-setup-step="systems">
-        <span class="initial-score-setup-step-number">3</span>
-        Systèmes
-      </span>
       <span class="initial-score-setup-step" data-setup-step="zones">
-        <span class="initial-score-setup-step-number">4</span>
+        <span class="initial-score-setup-step-number">3</span>
         Zones
       </span>
     </div>
@@ -40,31 +36,6 @@
         Continuer
       </button>
     </div>
-
-    <form id="initial-score-systems-step" hidden novalidate>
-      <label for="initial-score-system-number">Nombre total de systèmes</label>
-      <div class="initial-score-system-input-row">
-        <input
-          id="initial-score-system-number"
-          type="number"
-          min="1"
-          step="1"
-          inputmode="numeric"
-          placeholder="Ex. 12"
-          required
-        />
-        <button
-          class="initial-score-setup-next"
-          id="initial-score-systems-next"
-          type="submit"
-        >
-          Passer aux zones
-        </button>
-      </div>
-      <p class="initial-score-setup-error" id="initial-score-setup-error" hidden>
-        Entrez un nombre entier supérieur à zéro.
-      </p>
-    </form>
 
     <div id="initial-score-zones-step" hidden>
       <button class="initial-score-setup-next" id="initial-score-zones-next" type="button">
