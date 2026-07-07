@@ -197,6 +197,9 @@ body.initial-score-setup-active #multiselect-toolbar {
 }
 
 .voice-list {
+  /* flex:1 → absorbe l'espace restant et défile en interne, sans jamais pousser
+     le bouton « Ajouter une voix » hors du cadre. */
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   display: flex;
@@ -496,14 +499,32 @@ body.initial-score-setup-active .add-voice.setup-pulse {
 
 @media (max-height: 820px) {
   .initial-score-setup {
+    /* Plafonne le guide et le rend défilable en interne : sur écran court il ne
+       peut plus repousser la liste + le bouton « Ajouter une voix » hors du cadre. */
+    max-height: 46vh;
+    overflow-y: auto;
     padding: 9px 10px;
   }
   .initial-score-setup-steps {
     margin-bottom: 7px;
   }
+  .initial-score-setup-copy strong {
+    font-size: 14px;
+  }
   .initial-score-setup-copy p,
   .initial-score-setup-hint {
     font-size: 10px;
+  }
+  .initial-score-setup-hint {
+    margin: 6px 0;
+  }
+}
+
+/* Écran très court : on masque le paragraphe descriptif (l'info reste portée par
+   le titre + les étapes), pour garantir la visibilité du bouton d'ajout. */
+@media (max-height: 680px) {
+  .initial-score-setup-copy p {
+    display: none;
   }
 }
 
