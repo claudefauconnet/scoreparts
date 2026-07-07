@@ -30,7 +30,7 @@ Voices.nextId = function () {
 Voices.load = function () {
   const stored = (scoreParts.infos && scoreParts.infos.voices) || [];
   const voices = stored
-    .filter((voice) => voice && voice.name)
+    .filter((voice) => voice && (voice.name || voice.isNamePending))
     .map((voice, index) => ({
       id: voice.id || 'v' + (index + 1),
       name: voice.name,
@@ -67,7 +67,7 @@ Voices.add = function (voiceName, shouldRequireName = false) {
   const normalizedVoiceName = typeof voiceName === 'string' ? voiceName.trim() : '';
   const voice = {
     id: Voices.nextId(),
-    name: normalizedVoiceName || defaultVoiceName,
+    name: normalizedVoiceName || (shouldRequireName ? '' : defaultVoiceName),
     color: Voices.nextColor(),
     on: true,
     isNamePending: shouldRequireName,
