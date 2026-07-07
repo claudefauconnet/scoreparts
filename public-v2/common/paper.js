@@ -26,7 +26,7 @@ const EDGE_GRAB = 9; // px de proximité d'un bord (haut/bas) → redimensionnem
 const MEASURE_GRAB = 14; // px de proximité de l'abscisse d'une mesure → saisie/déplacement
 const MEASURE_DELETE_GRAB = 8; // px de proximité du centre de la croix d'un badge → suppression
 const BADGE_INSET = 12; // décalage de la croix depuis le coin haut-droit du rect
-const BADGE_GRAB = 12; // px de proximité au centre de la croix → suppression
+const BADGE_GRAB = 16; // px de proximité au centre de la croix → suppression (cible clic généreuse)
 const MIN_ZONE_HEIGHT = 8;
 const HIT_OPTIONS = { fill: true, stroke: true, tolerance: 4 };
 
@@ -70,8 +70,12 @@ Paper.isLasso = false;
 Paper.lassoStart = null;
 Paper.lassoPath = null;
 // Centre de la croix de suppression d'après le rectangle (path) d'une zone.
+// L'inset est borné à la demi-taille du rect : sur une zone courte/étroite, la croix
+// reste ancrée près du coin haut-droit au lieu de dériver vers le milieu/le bas.
 function deleteBadgeCenter(rectBounds) {
-  return rectBounds.topRight.add(new paper.Point(-BADGE_INSET, BADGE_INSET));
+  var insetX = Math.min(BADGE_INSET, rectBounds.width / 2);
+  var insetY = Math.min(BADGE_INSET, rectBounds.height / 2);
+  return rectBounds.topRight.add(new paper.Point(-insetX, insetY));
 }
 // Couleurs + libellé d'une zone selon la voix affectée (zone.voice = id de voix).
 // Voix inconnue / non affectée → couleur neutre de base et libellé générique.
@@ -102,6 +106,25 @@ function zoneColors(zone) {
 // Largeur de dessin = taille CSS du canvas actif (espace de coordonnées du projet).
 function canvasW() {
   return Paper.activeCanvas ? Paper.activeCanvas.clientWidth : 0;
+}
+
+// Dimensions en pixels-canvas d'un canvas donné = son espace de coordonnées Paper.
+// D'après ensureProject : naturalW*coefH == clientWidth et naturalH*coefV == clientHeight.
+// Lire le canvas CIBLE (pas les coefs GLOBAUX) est obligatoire sur un spread 2 pages :
+// les coefs globaux reflètent le DERNIER canvas rendu (droite) ; les réutiliser pour
+// lire/dessiner la page de gauche (largeur différente si ratios distincts) rétrécit les
+// zones à chaque navigation (drift cumulé). Fallback coefs globaux si canvas masqué (0).
+function canvasPixelSize(canvas) {
+  var width = canvas ? canvas.clientWidth : 0;
+  var height = canvas ? canvas.clientHeight : 0;
+  return {
+    width: width || (scoreParts.naturalW || 1) * (scoreParts.coefH || 1),
+    height: height || (scoreParts.naturalH || 1) * (scoreParts.coefV || 1),
+  };
+}
+// Canvas d'un projet Paper (project.view.element) → ses dimensions pixels.
+function projectPixelSize(project) {
+  return canvasPixelSize(project && project.view ? project.view.element : null);
 }
 
 // ============== Projets Paper (un par canvas / page)
@@ -204,6 +227,20 @@ Paper.renderPage = function (canvas, imgEl, pageIndex, interactive) {
   if (paper.view) paper.view.update();
   // Garde le projet de la page courante actif (rendu de l'autre page après).
   if (!interactive) activateCurrent();
+};
+
+// Efface IMMÉDIATEMENT (synchrone) les zones dessinées sur un canvas, sans attendre
+// le rendu async (waitForPageImage). Le rendu du spread attend l'image de chaque page
+// (celle de droite arrive souvent après) : sans ce vidage, le calque de droite garde
+// les zones de la page précédente jusqu'au rendu → « zones page droite sur la page
+// suivante ». Vider d'abord garantit qu'on ne voit jamais de zones périmées.
+Paper.clearCanvasZones = function (canvasId) {
+  var project = projectsByCanvasId[canvasId];
+  if (!project) return;
+  project.activate();
+  project.activeLayer.removeChildren();
+  if (project.view) project.view.update();
+  activateCurrent();
 };
 
 // On N'utilise PAS paper.Tool : Paper.js filtre les events à la viewSize du canvas.
@@ -902,17 +939,15 @@ function onCanvasMouseDown(event) {
       alert('sélectionnez ou déclarez un mouvement');
       return;
     }
-    var naturalW = scoreParts.naturalW || canvasW() || 1;
-    var naturalH =
-      scoreParts.naturalH || (Paper.activeCanvas ? Paper.activeCanvas.clientHeight : 1) || 1;
-    var coefH = scoreParts.coefH || 1;
-    var coefV = scoreParts.coefV || 1;
-    var marginFraction = (scoreParts.margin || Paper.margin) / (naturalW * coefH);
+    // Fractions calculées sur le canvas ACTIF (page courante), cohérentes avec
+    // drawZone qui dénormalise sur ce même canvas (cf. canvasPixelSize).
+    var activeSize = canvasPixelSize(Paper.activeCanvas);
+    var marginFraction = (scoreParts.margin || Paper.margin) / activeSize.width;
     var zone = {
       x: marginFraction,
-      y: event.point.y / (naturalH * coefV),
+      y: event.point.y / activeSize.height,
       width: 1.0 - 2 * marginFraction, // marge droite = marge gauche → reste dans la page
-      height: Paper.defaultZoneHeight / (naturalH * coefV),
+      height: Paper.defaultZoneHeight / activeSize.height,
       page: scoreParts.currentPage,
       type: 'zone',
       voice: '',
@@ -1212,12 +1247,12 @@ function hideDecorations(group) {
 // stored_y = canvas_y / canvasH → drawZone: top = stored_y * canvasH ✓
 // PDF backend: png_y = stored_y * naturalH (avec coefV=1/naturalH depuis leftPanel.js).
 function readZonesFromProject(project) {
-  var naturalW = scoreParts.naturalW || 1;
-  var naturalH = scoreParts.naturalH || 1;
-  var coefH = scoreParts.coefH || 1;
-  var coefV = scoreParts.coefV || 1;
-  var canvasH = naturalH * coefV;
-  var canvasWval = naturalW * coefH;
+  // Normaliser avec les dimensions du canvas DE CE projet, pas les coefs globaux
+  // (cf. canvasPixelSize) : sinon la page de gauche du spread est lue avec la largeur
+  // de la page de droite → fractions rétrécies → drift à chaque navigation.
+  var canvasSize = projectPixelSize(project);
+  var canvasWval = canvasSize.width;
+  var canvasH = canvasSize.height;
   var zones = [];
   project.getItems({ recursive: true }).forEach(function (item) {
     if (item.data && item.data.type === 'zone') {
@@ -1309,16 +1344,16 @@ Paper.drawZones = function (zones) {
 // zone figée (visible sur une page non courante).
 Paper.drawZone = function (zone, pageIndex, interactive) {
   if (pageIndex == null) pageIndex = scoreParts.currentPage;
-  // Dénormaliser les fractions stockées vers des pixels canvas courants.
-  // naturalW * coefH = canvasW, naturalH * coefV = canvasH.
-  var naturalW = scoreParts.naturalW || 1;
-  var naturalH = scoreParts.naturalH || 1;
-  var coefH = scoreParts.coefH || 1;
-  var coefV = scoreParts.coefV || 1;
-  var left = Math.round(zone.x * naturalW * coefH);
-  var right = Math.round((zone.x + zone.width) * naturalW * coefH);
-  var top = Math.round(zone.y * naturalH * coefV);
-  var bottom = Math.round((zone.y + zone.height) * naturalH * coefV);
+  // Dénormaliser les fractions stockées vers les pixels du canvas CIBLE (le projet
+  // actif reçoit le dessin) — pas les coefs globaux, qui reflètent le dernier canvas
+  // rendu du spread (droite) et déformeraient la page de gauche (cf. canvasPixelSize).
+  var canvasSize = projectPixelSize(paper.project);
+  var canvasWpx = canvasSize.width;
+  var canvasHpx = canvasSize.height;
+  var left = Math.round(zone.x * canvasWpx);
+  var right = Math.round((zone.x + zone.width) * canvasWpx);
+  var top = Math.round(zone.y * canvasHpx);
+  var bottom = Math.round((zone.y + zone.height) * canvasHpx);
   var midX = (left + right) / 2;
 
   // Rectangle de la zone (corps).
@@ -1341,8 +1376,8 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   if (zone.measures) {
     path.data.measures = zone.measures.map(function (measure) {
       return {
-        x: Math.round(measure.x * naturalW * coefH),
-        y: Math.round(measure.y * naturalH * coefV),
+        x: Math.round(measure.x * canvasWpx),
+        y: Math.round(measure.y * canvasHpx),
         number: measure.number,
       };
     });
@@ -1352,11 +1387,10 @@ Paper.drawZone = function (zone, pageIndex, interactive) {
   // texts (x, y de chaque badge) stockés en PIXELS-canvas sur le path ; même
   // dénormalisation que les mesures. Un texte est PROPRE à sa zone (pas de propagation).
   if (zone.texts) {
-    var canvasHpx = naturalH * coefV;
     path.data.texts = zone.texts.map(function (text) {
       return {
-        x: Math.round(text.x * naturalW * coefH),
-        y: Math.round(text.y * naturalH * coefV),
+        x: Math.round(text.x * canvasWpx),
+        y: Math.round(text.y * canvasHpx),
         text: text.text,
         // fontFrac (fraction de hauteur canvas) → taille en pixels canvas courants.
         fontPx: text.fontFrac ? Math.round(text.fontFrac * canvasHpx) : TEXT_FONT_PX,
@@ -1449,16 +1483,18 @@ function makeGrip(cx, cy) {
   return grip;
 }
 
-// Pastille croix (cercle blanc + ×) centrée sur `center`.
+// Pastille croix (cercle blanc + ×) centrée sur `center`. Rayon = BADGE_GRAB - 4
+// pour que la cible visible reste proche de la zone cliquable (BADGE_GRAB).
 function makeDeleteBadge(center) {
-  var circle = new paper.Path.Circle(center, 8);
+  var circle = new paper.Path.Circle(center, BADGE_GRAB - 4);
   circle.fillColor = 'white';
   circle.strokeColor = ZONE_STROKE;
-  circle.strokeWidth = 1;
-  var a = new paper.Path.Line(center.add([-3, -3]), center.add([3, 3]));
-  var b = new paper.Path.Line(center.add([3, -3]), center.add([-3, 3]));
+  circle.strokeWidth = 1.5;
+  var arm = 4;
+  var a = new paper.Path.Line(center.add([-arm, -arm]), center.add([arm, arm]));
+  var b = new paper.Path.Line(center.add([arm, -arm]), center.add([-arm, arm]));
   a.strokeColor = b.strokeColor = ZONE_STROKE;
-  a.strokeWidth = b.strokeWidth = 1.5;
+  a.strokeWidth = b.strokeWidth = 2;
   a.strokeCap = b.strokeCap = 'round';
   return new paper.Group([circle, a, b]);
 }

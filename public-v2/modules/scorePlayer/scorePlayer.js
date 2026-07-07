@@ -134,6 +134,12 @@ function setupEditorForCurrentPage() {
   }
   descriptors.sort((a, b) => (b.side === side) - (a.side === side)); // courante en premier
 
+  // Vide les calques MAINTENANT (synchrone) : le rendu de chaque page est async
+  // (attend son image). Sans ce vidage préalable, le calque de droite garderait les
+  // zones de la page précédente jusqu'à l'arrivée de sa nouvelle image → zones
+  // fantômes. Pire visible qu'un bref calque vide, jamais de zones de la mauvaise page.
+  descriptors.forEach((descriptor) => Paper.clearCanvasZones(descriptor.canvasId));
+
   descriptors.forEach((descriptor) => {
     const canvas = document.getElementById(descriptor.canvasId);
     if (!canvas) return;
@@ -314,6 +320,10 @@ wireControls();
 on('score-loaded', setupEditorForCurrentPage);
 on('page-changed', setupEditorForCurrentPage);
 on('zones-changed', setupEditorForCurrentPage);
+// L'image de droite du spread arrive après 'page-changed' : on re-rend une fois
+// la nouvelle image en place pour que le calque de droite ne garde pas les zones
+// de la page précédente (rendu initial fait sur l'ancienne image).
+on('spread-right-loaded', setupEditorForCurrentPage);
 
 // ============== Responsive single-page mode (small / short screens)
 // On small screens the 2-page spread is unreadable, so we show one page at a

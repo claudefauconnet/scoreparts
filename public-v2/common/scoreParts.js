@@ -150,7 +150,14 @@ function loadPageSpread(pageIndex, callback) {
     clearContainerImage('systems-right');
     return;
   }
-  loadPageImage(spreadOrigin + 1, 'systems-right', null);
+  // 'page-changed' est émis depuis le callback de GAUCHE : l'image de droite arrive
+  // souvent après. Sans ce signal, l'éditeur rendrait le calque de droite sur
+  // l'ANCIENNE image (waitForPageImage capte le vieux <canvas> encore présent), et
+  // les zones de la page droite précédente resteraient affichées sur la page suivante.
+  // On re-déclenche donc le rendu une fois la NOUVELLE image droite dans le DOM.
+  loadPageImage(spreadOrigin + 1, 'systems-right', function () {
+    emit('spread-right-loaded');
+  });
 }
 
 scoreParts.openFirstPdfPage = function (pdfname, clearAll, onBothSettled) {
