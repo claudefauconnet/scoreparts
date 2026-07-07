@@ -42,7 +42,7 @@ body {
 /* ============== LAYOUT ============== */
 .app {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: clamp(280px, 17%, 340px) 1fr;
   height: 100vh;
   width: 100vw;
   overflow: hidden;

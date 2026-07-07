@@ -52,18 +52,22 @@
   display: grid;
   grid-template-rows: 1fr;
   place-items: center;
-  padding: 24px 80px 80px;
+  /* Padding minimal : les flèches de navigation et la barre de pages flottent
+     au-dessus du livre (absolute), seul le bas réserve la place de la barre. */
+  padding: 8px 16px 42px;
   overflow: hidden;
 }
 /* ============== BOOK ============== */
+/* Le livre épouse les pages : chaque .page reçoit l'aspect-ratio de son image
+   (JS, fitPagesToImages) → largeur déduite de la hauteur, papier vide minimal. */
 .book {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 100%;
+  display: flex;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
   height: 100%;
   min-height: 0;
-  max-width: 1600px;
   perspective: 2400px;
   /* zoom/pan: JS sets translate + scale; origin top-left for cursor anchoring */
   transform-origin: 0 0;
@@ -80,7 +84,7 @@
 .book::before {
   content: '';
   position: absolute;
-  inset: -22px -32px -10px;
+  inset: -8px -12px -5px;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.01) 40%),
     linear-gradient(135deg, #4a3526, #2c1f15);
@@ -99,7 +103,7 @@
 .book::after {
   content: '';
   position: absolute;
-  inset: -22px -32px -10px;
+  inset: -8px -12px -5px;
   border-radius: 6px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -112,7 +116,12 @@
 
 .page {
   position: relative;
+  flex: 0 1 auto;
+  height: 100%;
   min-height: 0;
+  /* Ratio A4 portrait par défaut avant chargement ; JS pose le ratio réel de
+     l'image de chaque page (fitPagesToImages). */
+  aspect-ratio: 210 / 297;
   background: var(--paper);
   box-shadow:
     inset 0 0 60px rgba(120, 90, 40, 0.06),
@@ -147,7 +156,7 @@
   top: 0;
   bottom: 0;
   right: 0;
-  width: 60px;
+  width: 28px;
   background: linear-gradient(90deg, transparent, rgba(80, 55, 20, 0.18));
   pointer-events: none;
   opacity: var(--spine-opacity, 1);
@@ -159,7 +168,7 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 60px;
+  width: 28px;
   background: linear-gradient(-90deg, transparent, rgba(80, 55, 20, 0.18));
   pointer-events: none;
   opacity: var(--spine-opacity, 1);
@@ -211,9 +220,6 @@
   --cover-opacity: 0;
   --spine-opacity: 0;
   --spine-band-opacity: 0;
-}
-.stage[data-book-style='flat'] .book {
-  grid-template-columns: 1fr;
 }
 .stage[data-book-style='flat'] .page-left {
   display: none;
@@ -273,17 +279,17 @@
 .sheet {
   height: 100%;
   min-height: 0;
-  padding: 36px 40px 28px;
+  padding: 14px 16px 12px;
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
 }
 .page-left .sheet {
-  padding-right: 30px;
+  padding-right: 10px;
 }
 .page-right .sheet {
-  padding-left: 30px;
+  padding-left: 10px;
 }
 
 .sheet-head {
@@ -693,7 +699,7 @@
 .stage-bottom {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: 8px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -984,16 +990,16 @@
    so they don't need reserved gutters here. */
 @media (max-width: 1100px), (max-height: 820px) {
   .stage-body {
-    padding: 12px 20px 58px;
+    padding: 6px 12px 40px;
   }
   .sheet {
-    padding: 12px;
+    padding: 8px;
   }
   .page-left .sheet {
-    padding-right: 8px;
+    padding-right: 6px;
   }
   .page-right .sheet {
-    padding-left: 8px;
+    padding-left: 6px;
   }
   .nav-arrow.prev {
     left: 6px;

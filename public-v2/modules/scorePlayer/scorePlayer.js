@@ -141,7 +141,10 @@ function setupEditorForCurrentPage() {
     // Attend l'<img> de la page (chargement async possible pour la page de droite).
     waitForPageImage(descriptor.systemsId, (img) => {
       if (token !== renderToken) return; // changement de page survenu entre-temps
-      // setTimeout(0) : laisse les handlers synchrones (aspect-ratio mono-page,
+      // Cale les boîtes de page sur le ratio des images AVANT la mesure du canvas
+      // (l'image de droite peut arriver après les handlers page-changed).
+      fitPagesToImages();
+      // setTimeout(0) : laisse les handlers synchrones (aspect-ratio des pages,
       // resetZoom) s'appliquer avant de mesurer la boîte de l'image.
       setTimeout(() => {
         if (token !== renderToken) return;
@@ -329,23 +332,30 @@ function applyResponsiveMode() {
   // Re-render (not navigate) so the right page is dropped/added for the new mode.
   scoreParts.reloadCurrentPage();
   resetZoom();
-  fitSinglePageToImage();
+  fitPagesToImages();
 }
 
-// In single-page mode, size the page box to the image's natural ratio so it
-// hugs the score (no wide empty paper). Cleared in spread mode.
-function fitSinglePageToImage() {
-  const page = document.querySelector('.page-left');
-  if (!page) return;
-  if (!scoreParts.singlePage) {
-    page.style.aspectRatio = '';
-    return;
-  }
-  const displayCanvas = document.getElementById('systems-left').querySelector('canvas');
-  if (!displayCanvas) return;
-  if (displayCanvas._naturalWidth && displayCanvas._naturalHeight) {
+// Size each page box to its image's natural ratio so the paper hugs the score
+// (minimal empty margins around the canvas), in spread AND single-page modes.
+function fitPageToImage(pageSelector, systemsId, fallbackRatio) {
+  const page = document.querySelector(pageSelector);
+  const systems = document.getElementById(systemsId);
+  if (!page || !systems) return null;
+  const displayCanvas = systems.querySelector('canvas');
+  if (displayCanvas && displayCanvas._naturalWidth && displayCanvas._naturalHeight) {
     page.style.aspectRatio = displayCanvas._naturalWidth + ' / ' + displayCanvas._naturalHeight;
+    return page.style.aspectRatio;
   }
+  if (fallbackRatio) page.style.aspectRatio = fallbackRatio;
+  return null;
+}
+
+function fitPagesToImages() {
+  const leftRatio = fitPageToImage('.page-left', 'systems-left', null);
+  if (scoreParts.singlePage) return;
+  // Page de droite vide (fin de partition) : reprend le ratio de gauche pour
+  // garder un spread symétrique.
+  fitPageToImage('.page-right', 'systems-right', leftRatio);
 }
 smallScreen.addEventListener('change', applyResponsiveMode);
 // Initialise le flag sans recharger (aucune partition chargée au boot).
@@ -480,8 +490,8 @@ on('page-changed', () => {
 });
 on('score-loaded', resetZoom);
 
-// Keep the single-page box hugging the current image.
-on('page-changed', fitSinglePageToImage);
-on('score-loaded', fitSinglePageToImage);
+// Keep the page boxes hugging the current images.
+on('page-changed', fitPagesToImages);
+on('score-loaded', fitPagesToImages);
 
 applyTransform();
