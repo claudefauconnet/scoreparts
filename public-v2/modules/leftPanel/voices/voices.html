@@ -14,6 +14,10 @@
         <span class="initial-score-setup-step-number">3</span>
         Systèmes
       </span>
+      <span class="initial-score-setup-step" data-setup-step="zones">
+        <span class="initial-score-setup-step-number">4</span>
+        Zones
+      </span>
     </div>
 
     <div class="initial-score-setup-copy">
@@ -49,12 +53,24 @@
           placeholder="Ex. 12"
           required
         />
-        <button class="initial-score-setup-next" type="submit">Passer aux zones</button>
+        <button
+          class="initial-score-setup-next"
+          id="initial-score-systems-next"
+          type="submit"
+        >
+          Passer aux zones
+        </button>
       </div>
       <p class="initial-score-setup-error" id="initial-score-setup-error" hidden>
         Entrez un nombre entier supérieur à zéro.
       </p>
     </form>
+
+    <div id="initial-score-zones-step" hidden>
+      <button class="initial-score-setup-next" id="initial-score-zones-next" type="button">
+        Continuer
+      </button>
+    </div>
   </section>
   <div class="voice-list" id="voice-list">
     <!-- filled by JS -->

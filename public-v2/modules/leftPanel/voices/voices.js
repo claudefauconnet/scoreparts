@@ -14,6 +14,7 @@ import { ProgressToast } from '../../../common/progressToast.js';
 const INITIAL_SCORE_SETUP_FIELD = 'initialSetupStep';
 const INITIAL_SCORE_SETUP_VOICES = 'voices';
 const INITIAL_SCORE_SETUP_SYSTEMS = 'systems';
+const INITIAL_SCORE_SETUP_ZONES = 'zones';
 
 const list = document.getElementById('voice-list');
 const initialScoreSetup = document.getElementById('initial-score-setup');
@@ -25,8 +26,12 @@ const initialScoreVoicesNext = document.getElementById('initial-score-voices-nex
 const initialScoreSystemsStep = document.getElementById('initial-score-systems-step');
 const initialScoreSystemNumber = document.getElementById('initial-score-system-number');
 const initialScoreSetupError = document.getElementById('initial-score-setup-error');
+const initialScoreSystemsNext = document.getElementById('initial-score-systems-next');
+const initialScoreZonesStep = document.getElementById('initial-score-zones-step');
+const initialScoreZonesNext = document.getElementById('initial-score-zones-next');
 const initialScoreVoicesIndicator = initialScoreSetup.querySelector('[data-setup-step="voices"]');
 const initialScoreSystemsIndicator = initialScoreSetup.querySelector('[data-setup-step="systems"]');
+const initialScoreZonesIndicator = initialScoreSetup.querySelector('[data-setup-step="zones"]');
 const addVoiceBtn = document.querySelector('.add-voice');
 
 let initialScoreSetupStep = null;
@@ -65,22 +70,29 @@ function renderInitialScoreSetup() {
   if (!isSetupActive) {
     addVoiceBtn.classList.remove('setup-pulse');
     initialScoreVoicesNext.classList.remove('setup-pulse');
+    initialScoreSystemsNext.classList.remove('setup-pulse');
+    initialScoreZonesNext.classList.remove('setup-pulse');
     return;
   }
 
   const isVoicesStep = initialScoreSetupStep === INITIAL_SCORE_SETUP_VOICES;
+  const isSystemsStep = initialScoreSetupStep === INITIAL_SCORE_SETUP_SYSTEMS;
+  const isZonesStep = initialScoreSetupStep === INITIAL_SCORE_SETUP_ZONES;
   initialScoreVoicesStep.hidden = !isVoicesStep;
-  initialScoreSystemsStep.hidden = isVoicesStep;
-  initialScoreVoicesIndicator.classList.toggle('active', isVoicesStep);
-  initialScoreVoicesIndicator.classList.toggle('done', !isVoicesStep);
-  initialScoreSystemsIndicator.classList.toggle('active', !isVoicesStep);
-  if (isVoicesStep) {
-    initialScoreVoicesIndicator.setAttribute('aria-current', 'step');
-    initialScoreSystemsIndicator.removeAttribute('aria-current');
-  } else {
-    initialScoreVoicesIndicator.removeAttribute('aria-current');
-    initialScoreSystemsIndicator.setAttribute('aria-current', 'step');
-  }
+  initialScoreSystemsStep.hidden = !isSystemsStep;
+  initialScoreZonesStep.hidden = !isZonesStep;
+
+  [
+    [initialScoreVoicesIndicator, isVoicesStep],
+    [initialScoreSystemsIndicator, isSystemsStep],
+    [initialScoreZonesIndicator, isZonesStep],
+  ].forEach(([indicator, isActive], indicatorIndex, indicators) => {
+    const isDone = indicators.findIndex(([, active]) => active) > indicatorIndex;
+    indicator.classList.toggle('active', isActive);
+    indicator.classList.toggle('done', isDone);
+    if (isActive) indicator.setAttribute('aria-current', 'step');
+    else indicator.removeAttribute('aria-current');
+  });
 
   if (isVoicesStep) {
     initialScoreSetupTitle.textContent = 'Ajoutez vos voix utiles';
@@ -106,6 +118,16 @@ function renderInitialScoreSetup() {
 
   addVoiceBtn.classList.remove('setup-pulse');
   initialScoreVoicesNext.classList.remove('setup-pulse');
+  initialScoreSystemsNext.classList.toggle('setup-pulse', isSystemsStep);
+  initialScoreZonesNext.classList.toggle('setup-pulse', isZonesStep);
+
+  if (isZonesStep) {
+    initialScoreSetupTitle.textContent = 'Tracez vos zones';
+    initialScoreSetupDescription.textContent =
+      'Cliquez sur la partition pour dessiner une zone : elle correspond à une découpe qui sera affectée à une voix.';
+    return;
+  }
+
   initialScoreSetupTitle.textContent = 'Comptez les systèmes';
   initialScoreSetupDescription.textContent = `Indiquez le nombre total de systèmes du mouvement « ${initialMovementName} ».`;
 }
@@ -144,7 +166,8 @@ function resumeInitialScoreWorkflow() {
   const storedSetupStep = scoreParts.infos && scoreParts.infos[INITIAL_SCORE_SETUP_FIELD];
   if (
     storedSetupStep !== INITIAL_SCORE_SETUP_VOICES &&
-    storedSetupStep !== INITIAL_SCORE_SETUP_SYSTEMS
+    storedSetupStep !== INITIAL_SCORE_SETUP_SYSTEMS &&
+    storedSetupStep !== INITIAL_SCORE_SETUP_ZONES
   ) {
     return;
   }
@@ -361,6 +384,9 @@ initialScoreSystemsStep.addEventListener('submit', (event) => {
   initialScoreSetupError.hidden = true;
   initialScoreSystemNumber.removeAttribute('aria-invalid');
   initialScoreSystemNumber.value = '';
+  setInitialScoreSetupStep(INITIAL_SCORE_SETUP_ZONES);
+});
+initialScoreZonesNext.addEventListener('click', () => {
   setInitialScoreSetupStep(null);
   const newZoneButton = document.getElementById('act-new-zone');
   if (newZoneButton && !newZoneButton.classList.contains('active')) newZoneButton.click();
