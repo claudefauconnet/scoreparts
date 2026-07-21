@@ -44,8 +44,8 @@ Movements.buildFromZones = function () {
 Movements.merge = function () {
   const inferred = Movements.buildFromZones();
   const inferredByName = {};
-  inferred.forEach((mvt) => {
-    inferredByName[mvt.name] = mvt;
+  inferred.forEach((inferredMovement) => {
+    inferredByName[inferredMovement.name] = inferredMovement;
   });
 
   let stored = (scoreParts.infos && scoreParts.infos.movements) || [];
@@ -56,14 +56,15 @@ Movements.merge = function () {
   }
 
   return stored
-    .filter((mvt) => mvt.name)
-    .map((mvt, idx) => {
-      const range = inferredByName[mvt.name];
+    .filter((storedMovement) => storedMovement.name)
+    .map((storedMovement, movementIndex) => {
+      const range = inferredByName[storedMovement.name];
       return {
-        id: idx + 1,
-        name: mvt.name,
-        startPage: range ? range.startPage : mvt.startPage,
+        id: movementIndex + 1,
+        name: storedMovement.name,
+        startPage: range ? range.startPage : storedMovement.startPage,
         endPage: range ? range.endPage : undefined,
+        stavesPerSystem: storedMovement.stavesPerSystem || storedMovement.systemNumber || null,
       };
     });
 };
@@ -90,21 +91,60 @@ Movements.persist = function () {
   // Pages écrites = mêmes que l'affichage (range) sur une liste triée : zones
   // maître si présentes, sinon plage contiguë. Garde le fichier cohérent avec les
   // zones et évite des endPage=startPage incohérents pour les mouvements sans zone.
-  const sorted = [...state.MOVEMENTS].sort((a, b) => a.startPage - b.startPage);
+  const sorted = [...state.MOVEMENTS].sort(
+    (firstMovement, secondMovement) => firstMovement.startPage - secondMovement.startPage
+  );
   const payload = [];
-  sorted.forEach((mvt, idx) => {
-    if (!mvt.name) return;
-    const range = Movements.range(sorted, idx);
+  sorted.forEach((movement, movementIndex) => {
+    if (!movement.name) return;
+    const range = Movements.range(sorted, movementIndex);
     payload.push({
-      name: mvt.name,
+      name: movement.name,
       startPage: range.start,
       endPage: range.end,
+      stavesPerSystem: movement.stavesPerSystem || null,
     });
   });
   if (scoreParts.infos) scoreParts.infos.movements = payload;
   saveScoreInfos(scoreParts.pdfName, { movements: payload }, function (err) {
     if (err) console.error('Erreur saveScoreInfos (movements)', err);
   });
+};
+
+Movements.ensureStavesPerSystem = function (movementName) {
+  const movement = state.MOVEMENTS.find(
+    (candidateMovement) => candidateMovement.name === movementName
+  );
+  if (!movement) return null;
+  if (Number.isInteger(movement.stavesPerSystem) && movement.stavesPerSystem > 0) {
+    return movement.stavesPerSystem;
+  }
+
+  const stavesPerSystemInput = prompt(
+    'Combien de portées contient un système complet dans ce mouvement ?'
+  );
+  if (stavesPerSystemInput === null) return null;
+
+  const stavesPerSystem = Number(stavesPerSystemInput);
+  if (!Movements.setStavesPerSystem(movementName, stavesPerSystem)) {
+    alert('Veuillez entrer un nombre entier de portées supérieur à zéro.');
+    return null;
+  }
+
+  return stavesPerSystem;
+};
+
+Movements.setStavesPerSystem = function (movementName, stavesPerSystem) {
+  if (!Number.isInteger(stavesPerSystem) || stavesPerSystem <= 0) return false;
+
+  const movement = state.MOVEMENTS.find(
+    (candidateMovement) => candidateMovement.name === movementName
+  );
+  if (!movement) return false;
+
+  movement.stavesPerSystem = stavesPerSystem;
+  Movements.persist();
+  return true;
 };
 
 // Charge la liste dans le state global et émet 'movements-changed'. Retourne
@@ -117,6 +157,7 @@ Movements.load = function () {
       id: 1,
       name: '',
       startPage: 1,
+      stavesPerSystem: null,
     });
     state.activeMvt = 1;
     emit('movements-changed');
@@ -140,8 +181,8 @@ Movements.add = function (currentPage) {
     emit('movements-changed');
     return { created: false };
   }
-  const newId = Math.max(...state.MOVEMENTS.map((m) => m.id)) + 1;
-  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage });
+  const newId = Math.max(...state.MOVEMENTS.map((movement) => movement.id)) + 1;
+  state.MOVEMENTS.push({ id: newId, name: '', startPage: currentPage, stavesPerSystem: null });
   state.activeMvt = newId;
   emit('movements-changed');
   return { created: true };
