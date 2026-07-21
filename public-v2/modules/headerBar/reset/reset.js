@@ -1,6 +1,6 @@
 // headerBar/reset — bouton scindé : « Tout recommencer » (voix+zones+mouvements)
 // et « Effacer toutes les pages » (zones uniquement).
-import { resetAll } from '../../partitions.state.js';
+import { emit, resetAll } from '../../partitions.state.js';
 import { scoreParts } from '../../../common/scoreParts.js';
 import { saveScoreInfos } from '../../../common/proxy.js';
 
