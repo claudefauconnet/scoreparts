@@ -14,7 +14,7 @@ const dlPdfItem = dlMenu.querySelector('[data-fmt="pdf"]');
 const dlZipItem = dlMenu.querySelector('[data-fmt="zip"]');
 
 // Format déclenché par le bouton principal ; la coche du menu le reflète.
-let selectedFormat = 'pdf';
+let selectedFormat = 'zip';
 
 function refreshZipMenuCount() {
   const activeCount = state.VOICES.filter((voice) => voice.on).length;
@@ -38,7 +38,7 @@ function selectFormat(format) {
       : 'Télécharger la partition complète (PDF)';
 }
 
-selectFormat('pdf');
+selectFormat('zip');
 
 dlCaret.addEventListener('click', (event) => {
   event.stopPropagation();
@@ -81,12 +81,8 @@ dlMainBtn.addEventListener('click', () => Download.run(selectedFormat, progressU
 
 // Items du menu : sélectionnent le format (déplacent la coche) puis lancent.
 dlPdfItem.addEventListener('click', () => {
-selectFormat('pdf');
+  selectFormat('pdf');
 
-// Le badge de voix se met à jour automatiquement (reset, ajout/suppression voix).
-on('voices-changed', refreshZipMenuCount);
-on('score-loaded', refreshZipMenuCount);
-refreshZipMenuCount();
   dlMenu.classList.remove('open');
   Download.completePdf(progressUI);
 });
@@ -95,3 +91,8 @@ dlZipItem.addEventListener('click', () => {
   dlMenu.classList.remove('open');
   Download.zip(progressUI);
 });
+
+// Le badge de voix se met à jour automatiquement (reset, ajout/suppression voix).
+on('voices-changed', refreshZipMenuCount);
+on('score-loaded', refreshZipMenuCount);
+refreshZipMenuCount();
